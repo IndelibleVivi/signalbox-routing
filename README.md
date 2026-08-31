@@ -83,10 +83,11 @@ proves the tracked source contract only.
 
 ## Status and permission
 
-Foundation 0.2 is the active remote-and-semantic hardening tranche; full
-Signalbox v1 is not complete. No installed payload, live router integration,
-path evidence, or acceptance is implied; see [current state](docs/current-state.md)
-for the exact published commit and hosted-gate status.
+Foundation 0.2 is source-verified, published, and protected by its hosted gate;
+full Signalbox v1 is not complete. No installed payload, live router
+integration, path evidence, or acceptance is implied; see [current
+state](docs/current-state.md) for the exact published source commit, hosted run,
+and repository policy.
 
 No license has been selected. Possession of or visibility into this repository
 does not grant reuse rights. External code and documentation contributions are

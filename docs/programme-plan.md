@@ -1,7 +1,9 @@
 # Signalbox Programme Plan
 
 Status: active
-Current execution tranche: F0.2 remote and semantic hardening
+Current execution tranche: none
+Most recently completed tranche: F0.2 remote and semantic hardening
+Next planned tranche: F1 complete Human Surface (not started or authorized)
 Canonical specification: `docs/specification.md`, revision 2
 Normative companions: `contracts/*.json`, `schemas/*.schema.json`
 Repository baseline: public canonical repository on `main`
@@ -9,8 +11,8 @@ Repository baseline: public canonical repository on `main`
 ## Goal and boundaries
 
 Build the full source reference described by `ACCEPT-01` through `ACCEPT-08`.
-F0.2 includes source hardening, hosted source verification, and bounded GitHub
-authority settings for the already-public repository. It does not authorize a
+F0.2 completed source hardening, hosted source verification, and bounded GitHub
+authority settings for the already-public repository. It did not authorize a
 license, release, live-router access, installation, activation, or deployment.
 
 ## Authorization history
@@ -42,14 +44,14 @@ different phases. This plan ends at verified Signalbox source.
 
 | Acceptance | Intended outcome | Owning slice | Dependency / gate | Verification evidence | Status |
 | --- | --- | --- | --- | --- | --- |
-| `ACCEPT-01` | Normative contracts agree | F0/F0.2 contracts | Identity settled | semantic validator, JSON Schema, contract tests | F0.2 in-progress |
+| `ACCEPT-01` | Normative contracts agree | F0/F0.2 contracts | Identity settled | semantic validator, JSON Schema, contract tests | F0.2 hardening complete; v1 pending |
 | `ACCEPT-02` | Paired Human Surface teaches the complete model | F1 human guide | F0 IDs and diagrams | doc-pair parity plus manual read | planned |
-| `ACCEPT-03` | Agent Surface defines implementation and evidence behavior | F2 agent reference | F0 contracts | required-ID and link validation | in-progress |
-| `ACCEPT-04` | Mintie is a portable, public-safe reference deployment | F0.2/F3 Mintie example | F0 roles/routing/health | example validation and boundary scan | F0.2 in-progress |
-| `ACCEPT-05` | Reusable failure mechanisms are retained | F4 failure depth | F0 health/evidence | failure-ID coverage | in-progress |
-| `ACCEPT-06` | Validation rejects meaningful contract drift | F0.2 validator and F5 hardening | F0 contracts | positive and negative tests plus hosted gate | F0.2 in-progress |
-| `ACCEPT-07` | Repository surfaces agree | F0.2/F6 reconciliation | Current slice | `make verify`, links, diff review | F0.2 in-progress |
-| `ACCEPT-08` | External gates remain truthful | Every slice | Explicit owner authorization | current-state and remote readback | F0.2 in-progress |
+| `ACCEPT-03` | Agent Surface defines implementation and evidence behavior | F2 agent reference | F0 contracts | required-ID and link validation | F0.2 reconciled; F2 pending |
+| `ACCEPT-04` | Mintie is a portable, public-safe reference deployment | F0.2/F3 Mintie example | F0 roles/routing/health | example validation and boundary scan | F0.2 baseline complete; F3 pending |
+| `ACCEPT-05` | Reusable failure mechanisms are retained | F4 failure depth | F0 health/evidence | failure-ID coverage | F0.2 mechanisms added; F4 pending |
+| `ACCEPT-06` | Validation rejects meaningful contract drift | F0.2 validator and F5 hardening | F0 contracts | positive and negative tests plus hosted gate | F0.2 gate complete; F5 pending |
+| `ACCEPT-07` | Repository surfaces agree | F0.2/F6 reconciliation | Current slice | `make verify`, links, diff review | F0.2 reconciled; F6 pending |
+| `ACCEPT-08` | External gates remain truthful | Every slice | Explicit owner authorization | current-state and remote readback | F0.2 readback complete; future gates separate |
 
 ## Implementation slices
 
@@ -62,7 +64,7 @@ validator, regression fixtures, README, AGENTS, and current state.
 Stopping point reached: source contracts and entrypoints are usable and freshly
 verified and published. This was not full Signalbox v1.
 
-### F0.2 — Remote and semantic hardening (current)
+### F0.2 — Remote and semantic hardening (`completed-at-source-and-remote-boundary`)
 
 Protect the public source gate with hosted CI and a minimal `main` policy;
 repair publication-state authority; enforce specific-before-general private
@@ -71,9 +73,10 @@ and observation-complete; publish consumable JSON Schemas and a contract
 catalog; strengthen bilingual section parity; and remove unused GitHub
 documentation surfaces that could compete with repository authority.
 
-Stopping point: exact F0.2 source passes local and hosted verification, public
-`main` requires the named gate, GitHub settings match the authority contract,
-and exact remote readback agrees. This still does not complete F1 through F6.
+Stopping point reached: exact F0.2 source passed local and hosted verification,
+public `main` requires the named gate, GitHub settings match the authority
+contract, and exact remote readback agrees. This does not complete or authorize
+F1 through F6.
 
 ### F1 — Complete Human Surface
 
