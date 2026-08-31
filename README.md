@@ -76,10 +76,10 @@ contract only.
 
 ## Status and permission
 
-Foundation 0.1 is source-verified; full Signalbox v1 is not complete. Public
-GitHub publication is authorized but not yet configured. No installed payload,
-live router integration, path evidence, or acceptance is implied; see
-[current state](docs/current-state.md) for the exact volatile status.
+Foundation 0.1 is source-verified and published in this public GitHub
+repository; full Signalbox v1 is not complete. No installed payload, live
+router integration, path evidence, or acceptance is implied; see [current
+state](docs/current-state.md) for the exact volatile status.
 
 No license has been selected. Possession of or visibility into this repository
 does not grant reuse rights.
