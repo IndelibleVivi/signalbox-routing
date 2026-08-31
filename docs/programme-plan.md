@@ -1,8 +1,8 @@
 # Signalbox Programme Plan
 
 Status: active
-Current execution tranche: F0.2.1 semantic closure and F1 Human Surface remote readback
-Most recently completed tranche: F0.2 remote and semantic hardening
+Current execution tranche: none
+Most recently completed tranche: F0.2.1 semantic closure and F1 Human Surface
 Next planned tranche: F2 complete Agent Surface
 Canonical specification: `docs/specification.md`, revision 3
 Normative companions: `contracts/*.json`, `schemas/*.schema.json`
@@ -51,13 +51,13 @@ different phases. This plan ends at verified Signalbox source.
 | Acceptance | Intended outcome | Owning slice | Dependency / gate | Verification evidence | Status |
 | --- | --- | --- | --- | --- | --- |
 | `ACCEPT-01` | Normative contracts agree | F0/F0.2.1 contracts | Identity settled | semantic validator, JSON Schema, contract tests | aggregate-time closure implemented; full v1 pending |
-| `ACCEPT-02` | Paired Human Surface teaches the complete model | F1 human guide | F0 IDs and diagrams | doc-pair parity plus manual read | F1 implemented; exact remote receipt pending in current state |
+| `ACCEPT-02` | Paired Human Surface teaches the complete model | F1 human guide | F0 IDs and diagrams | doc-pair parity plus manual read | F1 source and remote boundary complete; full v1 pending |
 | `ACCEPT-03` | Agent Surface defines implementation and evidence behavior | F2 agent reference | F0 contracts | required-ID and link validation | Tailnet reference added; full F2 pending |
 | `ACCEPT-04` | Mintie is a portable, public-safe reference deployment | F0.2/F3 Mintie example | F0 roles/routing/health | example validation and boundary scan | reference platform bound; full F3 pending |
 | `ACCEPT-05` | Reusable failure mechanisms are retained | F4 failure depth | F0 health/evidence | failure-ID coverage | F0.2 mechanisms added; F4 pending |
 | `ACCEPT-06` | Validation rejects meaningful contract drift | F0.2.1 validator and F5 hardening | F0 contracts | positive and negative tests plus hosted gate | aggregate-time regressions added; F5 pending |
 | `ACCEPT-07` | Repository surfaces agree | F1/F6 reconciliation | Current slice | `make verify`, links, diff review | reader surfaces reconciled; F6 pending |
-| `ACCEPT-08` | External gates remain truthful | Every slice | Explicit owner authorization | current-state and remote readback | F0.2 readback complete; current readback pending |
+| `ACCEPT-08` | External gates remain truthful | Every slice | Explicit owner authorization | current-state and remote readback | F0.2.1/F1 readback complete; later gates remain separate |
 
 ## Implementation slices
 
@@ -84,7 +84,7 @@ public `main` requires the named gate, GitHub settings match the authority
 contract, and exact remote readback agrees. This does not complete or authorize
 F1 through F6.
 
-### F0.2.1 — Aggregate time-semantics closure (`implemented`)
+### F0.2.1 — Aggregate time-semantics closure (`completed-at-source-and-remote-boundary`)
 
 Replace the ambiguous aggregate member field with
 `effective_outcome_at_assembly`, require `evaluated_at == assembled_at`, and
@@ -96,7 +96,7 @@ Stopping point: machine contracts, schemas, sample, validator, regressions, and
 human/agent projections agree. Exact published commit and hosted evidence are
 owned by `docs/current-state.md`.
 
-### F1 — Complete Human Surface (`implemented`)
+### F1 — Complete Human Surface (`completed-at-source-and-remote-boundary`)
 
 Expand the paired Chinese/English reader path into the full proxy-layer mental
 model, packet flow, DNS ownership, routing roles, fail-closed semantics,

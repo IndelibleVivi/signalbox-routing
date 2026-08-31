@@ -110,11 +110,11 @@ the exact published boundary, see [current state](docs/current-state.md).
 <a id="status-and-permission"></a>
 ## Status and permission
 
-Foundation 0.2.1 and the F1 Human Surface are source-complete once the exact
-remote commit and hosted gate recorded in [current state](docs/current-state.md)
-agree. Full Signalbox v1 remains incomplete; no installed payload, live-router
-integration, private-ingress deployment, path evidence, or owner acceptance is
-implied. `ACCEPT-08`
+Foundation 0.2.1 and the F1 Human Surface are source-verified and published at
+the exact commit and hosted gate recorded in [current
+state](docs/current-state.md). Full Signalbox v1 remains incomplete; no
+installed payload, live-router integration, private-ingress deployment, path
+evidence, or owner acceptance is implied. `ACCEPT-08`
 
 No license has been selected. Possession of or visibility into this repository
 does not grant reuse rights. External code and documentation contributions are

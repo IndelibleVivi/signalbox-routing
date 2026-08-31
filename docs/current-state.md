@@ -4,17 +4,18 @@ Last updated: 2026-08-31
 
 - Project: Signalbox
 - Programme tranche: F0.2.1 aggregate time-semantics closure and F1 Human
-  Surface implemented as the current source candidate; exact remote and hosted
-  receipt pending
+  Surface completed at the source-and-remote boundary
 - Canonical branch: `main`
 - Remote visibility: public GitHub repository at
   `https://github.com/IndelibleVivi/signalbox-routing`
-- Current source candidate: this working tree; commit identity pending
-- Last confirmed F0.2 implementation commit:
-  `2cd265dbd75a6c77dbaa1f0bd5c39cb0e6a82342`
-- Last confirmed F0.2 hosted CI: [run 33395382682](https://github.com/IndelibleVivi/signalbox-routing/actions/runs/33395382682)
+- Published F0.2.1/F1 implementation commit:
+  `da2fa0a8d28be03b6ba9300f18305c165997023c`
+- Exact remote readback: local `HEAD`, `git ls-remote origin refs/heads/main`,
+  and the GitHub commits API all returned that implementation commit before
+  this receipt-only update
+- Hosted CI: [run 33404612179](https://github.com/IndelibleVivi/signalbox-routing/actions/runs/33404612179)
   passed Python 3.11, 3.12, and 3.13 plus the required `signalbox-verify`
-  context for that commit
+  context for that implementation commit
 - Branch policy: pull request required with strict `signalbox-verify`; linear
   history and resolved conversations required; force push and branch deletion
   disabled; administrators retain an explicit bypass
@@ -29,7 +30,7 @@ Last updated: 2026-08-31
   performed
 - Owner or client acceptance: not applicable to this source tranche
 
-Current local source evidence: Draft 2020-12 validation passes 26 cataloged
+Current source evidence: Draft 2020-12 validation passes 26 cataloged
 instances; semantic validation passes seven public reference reports and one
 staleness regression fixture; 35 unit regressions pass. The documentation
 contract covers the paired root README plus five paired Human Surface guides,
@@ -44,8 +45,7 @@ paths while retaining the normative core, adds the Tailnet/VPS canonical
 private-ingress reference and negative-proof requirements, and records Mintie's
 non-normative GL.iNet Beryl 7 (`GL-MT3600BE`) platform binding.
 
-The next closure action is to commit and push the candidate, wait for the exact
-hosted gate, read back the remote commit, then replace the pending receipt above
-with that evidence. Full v1 remains tracked in
-[`docs/programme-plan.md`](programme-plan.md); later installation, activation,
-runtime, release, license, and acceptance gates remain separate.
+Full v1 remains tracked in [`docs/programme-plan.md`](programme-plan.md). The
+next planned source tranche is F2, but it is not started by this receipt;
+installation, activation, runtime, release, license, and acceptance gates
+remain separate.
