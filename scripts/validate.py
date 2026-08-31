@@ -288,8 +288,10 @@ def validate_traffic_policy(
 
 def validate_health_contract(document: dict[str, Any]) -> list[str]:
     errors: list[str] = []
-    if document.get("schema") != "signalbox.health-contract/v2":
+    if document.get("schema") != "signalbox.health-contract/v3":
         errors.append("health-contract: unexpected schema")
+    if document.get("contract_revision") != 3:
+        errors.append("health-contract: unexpected revision")
     if set(document.get("terminal_outcomes", [])) != {"pass", "fail", "unknown"}:
         errors.append("health-contract: terminal outcomes must be pass, fail, and unknown")
     if set(document.get("transient_outcomes", [])) != {"checking"}:
@@ -393,6 +395,12 @@ def validate_health_contract(document: dict[str, Any]) -> list[str]:
         errors.append("health-contract: aggregate top-level outcome must be forbidden")
     if aggregate.get("recovery_preflight_members_forbidden") is not True:
         errors.append("health-contract: aggregate must exclude recovery-preflight reports")
+    if aggregate.get("evaluated_at_must_equal_assembled_at") is not True:
+        errors.append("health-contract: aggregate evaluation must occur at assembly")
+    if aggregate.get("member_outcome_field") != "effective_outcome_at_assembly":
+        errors.append("health-contract: aggregate member outcome field drifted")
+    if aggregate.get("historical_receipt") is not True:
+        errors.append("health-contract: aggregate must remain a historical receipt")
     if document.get("query_failure_outcome") != "unknown":
         errors.append("health-contract: query failure must become unknown")
     if document.get("observation_only") is not True:
@@ -863,12 +871,21 @@ def validate_deployment(
     errors: list[str] = []
     if deployment.get("schema") != "signalbox.reference-deployment/v2":
         errors.append("deployment: unexpected schema")
+    if deployment.get("contract_revision") != 3:
+        errors.append("deployment: unexpected revision")
     if deployment.get("deployment_id") != "mintie":
         errors.append("deployment: reference deployment must be mintie")
     if deployment.get("sample_only") is not True:
         errors.append("deployment: sample_only must be true")
     if deployment.get("private_live_bindings") != "external-and-absent":
         errors.append("deployment: private live bindings must be external and absent")
+    if deployment.get("reference_platform") != {
+        "vendor": "GL.iNet",
+        "product": "Beryl 7",
+        "model": "GL-MT3600BE",
+        "normative": False,
+    }:
+        errors.append("deployment: Mintie reference platform binding drifted")
     if deployment.get("traffic_policy_ref") != "traffic-policy.json":
         errors.append("deployment: traffic policy reference drifted")
     if deployment.get("health_profiles_ref") != "health-profiles.json":
@@ -1063,7 +1080,7 @@ def validate_health_aggregate(
     health_profiles: dict[str, Any],
 ) -> list[str]:
     errors: list[str] = []
-    if aggregate.get("schema") != "signalbox.health-aggregate/v1":
+    if aggregate.get("schema") != "signalbox.health-aggregate/v2":
         errors.append("health-aggregate: unexpected schema")
     if aggregate.get("deployment_ref") != "deployment.json":
         errors.append("health-aggregate: deployment reference drifted")
@@ -1074,6 +1091,13 @@ def validate_health_aggregate(
     except (TypeError, ValueError) as exc:
         errors.append(f"health-aggregate: assembled_at {exc}")
         assembled_at = None
+    try:
+        evaluated_at = parse_rfc3339(aggregate.get("evaluated_at"))
+    except (TypeError, ValueError) as exc:
+        errors.append(f"health-aggregate: evaluated_at {exc}")
+        evaluated_at = None
+    if assembled_at is not None and evaluated_at != assembled_at:
+        errors.append("health-aggregate: evaluated_at must equal assembled_at")
     members = aggregate.get("members")
     if not isinstance(members, list):
         return errors + ["health-aggregate: members must be an array"]
@@ -1121,12 +1145,14 @@ def validate_health_aggregate(
             if member.get(field) != expected_value:
                 errors.append(f"health-aggregate: member {index} {field} drifted")
         effective = (
-            effective_health_outcome(report, assembled_at)
-            if assembled_at is not None
+            effective_health_outcome(report, evaluated_at)
+            if evaluated_at is not None
             else "unknown"
         )
-        if member.get("effective_outcome") != effective:
-            errors.append(f"health-aggregate: member {index} effective outcome drifted")
+        if member.get("effective_outcome_at_assembly") != effective:
+            errors.append(
+                f"health-aggregate: member {index} assembly-time outcome drifted"
+            )
         if effective in outcome_counts:
             outcome_counts[effective] += 1
     if seen_subjects != expected_subjects:
@@ -1141,7 +1167,7 @@ def validate_doc_pairs(root: Path, document: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     if document.get("schema") != "signalbox.docs-pairs/v2":
         errors.append("docs-pairs: unexpected schema")
-    if document.get("contract_revision") != 2:
+    if document.get("contract_revision") != 3:
         errors.append("docs-pairs: unexpected revision")
     seen: set[str] = set()
     for pair in document.get("pairs", []):
@@ -1162,6 +1188,22 @@ def validate_doc_pairs(root: Path, document: dict[str, Any]) -> list[str]:
             text = path.read_text(encoding="utf-8")
             if f"doc_id: {doc_id}" not in text:
                 errors.append(f"docs-pairs: {relative} has the wrong doc_id")
+            sibling_language = "en" if language == "zh-CN" else "zh-CN"
+            sibling_relative = pair.get(sibling_language)
+            above_fold = "\n".join(text.splitlines()[:20])
+            if relative.startswith("docs/human/") and (
+                "authority: ../specification.md" not in above_fold
+            ):
+                errors.append(
+                    f"docs-pairs: {relative} must name ../specification.md as authority"
+                )
+            if (
+                not isinstance(sibling_relative, str)
+                or Path(sibling_relative).name not in above_fold
+            ):
+                errors.append(
+                    f"docs-pairs: {relative} must link its {sibling_language} sibling above fold"
+                )
             for contract_id in required_ids:
                 if contract_id not in text:
                     errors.append(f"docs-pairs: {relative} missing {contract_id}")
@@ -1268,11 +1310,11 @@ def validate_catalog(root: Path, document: dict[str, Any]) -> list[str]:
         "signalbox.claims/v1",
         "signalbox.acceptance-record/v1",
         "signalbox.traffic-policy/v2",
-        "signalbox.health-contract/v2",
+        "signalbox.health-contract/v3",
         "signalbox.health-profile/v2",
         "signalbox.health-profiles/v2",
         "signalbox.health-report/v2",
-        "signalbox.health-aggregate/v1",
+        "signalbox.health-aggregate/v2",
         "signalbox.docs-pairs/v2",
         "signalbox.reference-deployment/v2",
         "signalbox.reference-traffic-policy/v2",
@@ -1340,6 +1382,7 @@ def validate_repository(root: Path = ROOT) -> list[str]:
     errors: list[str] = []
     required_files = [
         "README.md",
+        "README.zh-CN.md",
         "AGENTS.md",
         "SECURITY.md",
         "CONTRIBUTING.md",
@@ -1428,6 +1471,7 @@ def validate_repository(root: Path = ROOT) -> list[str]:
 
     portable_paths = [
         root / "README.md",
+        root / "README.zh-CN.md",
         root / "AGENTS.md",
         root / "SECURITY.md",
         root / "CONTRIBUTING.md",
@@ -1443,6 +1487,7 @@ def validate_repository(root: Path = ROOT) -> list[str]:
             root,
             [
                 root / "README.md",
+                root / "README.zh-CN.md",
                 root / "AGENTS.md",
                 root / "SECURITY.md",
                 root / "CONTRIBUTING.md",
@@ -1468,6 +1513,7 @@ def validate_repository(root: Path = ROOT) -> list[str]:
         "HEALTH-07",
         "HEALTH-10",
         "HEALTH-14",
+        "HEALTH-15",
         "DOC-05",
         "UPDATE-03",
         "ACCEPT-08",

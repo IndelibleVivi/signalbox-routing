@@ -2,9 +2,11 @@
 doc_id: signalbox.human.start-here
 language: en
 status: foundation-explanatory
-authority: ../../specification.md
-contract_revision: 2
+authority: ../specification.md
+contract_revision: 3
 ---
+
+**English** · [简体中文](00-start-here.zh-CN.md)
 
 <a id="proxy-layer-model"></a>
 # Start here: move proxy selection to the router
@@ -79,7 +81,7 @@ diagnostic actor must not depend exclusively on the path it is repairing.
 <a id="health-model"></a>
 ## Health is more than opening a page
 
-`HEALTH-01` `HEALTH-10` `HEALTH-14`
+`HEALTH-01` `HEALTH-10` `HEALTH-14` `HEALTH-15`
 
 Signalbox separates transport, exit identity, DNS, control plane, enforcement,
 resources, persistence, and recovery readiness. A `HealthProfile` says what to
@@ -98,6 +100,10 @@ Each dimension is rolled up from explicit observations. A lane transport pass
 needs both a transport-neutral probe and a role-specific probe from independent
 dependency groups. Neither a profile, report, nor aggregate selects or mutates
 routes.
+
+An aggregate is a historical assembly receipt, not a value that silently
+changes as time passes. Its member outcomes are evaluated once at
+`assembled_at`; a current view requires fresh reports and a new aggregate.
 
 A cold-boot incident provides the key example: a route table may be logically
 empty while the platform cannot query it reliably. Recovery then has no basis

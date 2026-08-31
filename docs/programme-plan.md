@@ -1,10 +1,10 @@
 # Signalbox Programme Plan
 
 Status: active
-Current execution tranche: none
+Current execution tranche: F0.2.1 semantic closure and F1 Human Surface remote readback
 Most recently completed tranche: F0.2 remote and semantic hardening
-Next planned tranche: F1 complete Human Surface (not started or authorized)
-Canonical specification: `docs/specification.md`, revision 2
+Next planned tranche: F2 complete Agent Surface
+Canonical specification: `docs/specification.md`, revision 3
 Normative companions: `contracts/*.json`, `schemas/*.schema.json`
 Repository baseline: public canonical repository on `main`
 
@@ -12,8 +12,10 @@ Repository baseline: public canonical repository on `main`
 
 Build the full source reference described by `ACCEPT-01` through `ACCEPT-08`.
 F0.2 completed source hardening, hosted source verification, and bounded GitHub
-authority settings for the already-public repository. It did not authorize a
-license, release, live-router access, installation, activation, or deployment.
+authority settings for the already-public repository. F0.2.1 closes aggregate
+time semantics, and F1 adds the complete bilingual reader surface. Neither
+authorizes a license, release, live-router access, installation, activation, or
+deployment.
 
 ## Authorization history
 
@@ -23,6 +25,10 @@ license, release, live-router access, installation, activation, or deployment.
   2026-08-31; that completed gate is recorded in `docs/current-state.md`.
 - F0.2 may harden that existing public source and its repository settings. This
   later authorization does not retroactively widen the original F0 boundary.
+- Faye authorized the two-review follow-up on 2026-08-31: rebalance the reader
+  entrance, add paired Chinese/English guides, document the Tailnet/VPS pattern,
+  and identify Mintie's reference hardware. This authorizes public source work,
+  commit, and push under the standing repository workflow, not live mutation.
 
 ## Dependency order
 
@@ -44,14 +50,14 @@ different phases. This plan ends at verified Signalbox source.
 
 | Acceptance | Intended outcome | Owning slice | Dependency / gate | Verification evidence | Status |
 | --- | --- | --- | --- | --- | --- |
-| `ACCEPT-01` | Normative contracts agree | F0/F0.2 contracts | Identity settled | semantic validator, JSON Schema, contract tests | F0.2 hardening complete; v1 pending |
-| `ACCEPT-02` | Paired Human Surface teaches the complete model | F1 human guide | F0 IDs and diagrams | doc-pair parity plus manual read | planned |
-| `ACCEPT-03` | Agent Surface defines implementation and evidence behavior | F2 agent reference | F0 contracts | required-ID and link validation | F0.2 reconciled; F2 pending |
-| `ACCEPT-04` | Mintie is a portable, public-safe reference deployment | F0.2/F3 Mintie example | F0 roles/routing/health | example validation and boundary scan | F0.2 baseline complete; F3 pending |
+| `ACCEPT-01` | Normative contracts agree | F0/F0.2.1 contracts | Identity settled | semantic validator, JSON Schema, contract tests | aggregate-time closure implemented; full v1 pending |
+| `ACCEPT-02` | Paired Human Surface teaches the complete model | F1 human guide | F0 IDs and diagrams | doc-pair parity plus manual read | F1 implemented; exact remote receipt pending in current state |
+| `ACCEPT-03` | Agent Surface defines implementation and evidence behavior | F2 agent reference | F0 contracts | required-ID and link validation | Tailnet reference added; full F2 pending |
+| `ACCEPT-04` | Mintie is a portable, public-safe reference deployment | F0.2/F3 Mintie example | F0 roles/routing/health | example validation and boundary scan | reference platform bound; full F3 pending |
 | `ACCEPT-05` | Reusable failure mechanisms are retained | F4 failure depth | F0 health/evidence | failure-ID coverage | F0.2 mechanisms added; F4 pending |
-| `ACCEPT-06` | Validation rejects meaningful contract drift | F0.2 validator and F5 hardening | F0 contracts | positive and negative tests plus hosted gate | F0.2 gate complete; F5 pending |
-| `ACCEPT-07` | Repository surfaces agree | F0.2/F6 reconciliation | Current slice | `make verify`, links, diff review | F0.2 reconciled; F6 pending |
-| `ACCEPT-08` | External gates remain truthful | Every slice | Explicit owner authorization | current-state and remote readback | F0.2 readback complete; future gates separate |
+| `ACCEPT-06` | Validation rejects meaningful contract drift | F0.2.1 validator and F5 hardening | F0 contracts | positive and negative tests plus hosted gate | aggregate-time regressions added; F5 pending |
+| `ACCEPT-07` | Repository surfaces agree | F1/F6 reconciliation | Current slice | `make verify`, links, diff review | reader surfaces reconciled; F6 pending |
+| `ACCEPT-08` | External gates remain truthful | Every slice | Explicit owner authorization | current-state and remote readback | F0.2 readback complete; current readback pending |
 
 ## Implementation slices
 
@@ -78,12 +84,30 @@ public `main` requires the named gate, GitHub settings match the authority
 contract, and exact remote readback agrees. This does not complete or authorize
 F1 through F6.
 
-### F1 — Complete Human Surface
+### F0.2.1 — Aggregate time-semantics closure (`implemented`)
+
+Replace the ambiguous aggregate member field with
+`effective_outcome_at_assembly`, require `evaluated_at == assembled_at`, and
+define the aggregate as an immutable historical receipt. Because the member
+shape breaks compatibility, advance `signalbox.health-aggregate` to v2 and its
+owning health contract to v3 rather than creating an in-place dual path.
+
+Stopping point: machine contracts, schemas, sample, validator, regressions, and
+human/agent projections agree. Exact published commit and hosted evidence are
+owned by `docs/current-state.md`.
+
+### F1 — Complete Human Surface (`implemented`)
 
 Expand the paired Chinese/English reader path into the full proxy-layer mental
 model, packet flow, DNS ownership, routing roles, fail-closed semantics,
 health/recovery, and canonical-origin private ingress. Keep operational commands
 out of explanatory authority.
+
+Delivered reader paths: a lightweight root README pair, a basic router guide,
+a routing/DNS/fail-closed guide, and an advanced Tailnet/VPS canonical
+private-ingress guide. Depth remains in the normative core; the public entrance
+now exposes it progressively. Exact published commit and hosted evidence are
+owned by `docs/current-state.md`.
 
 ### F2 — Complete Agent Surface
 
@@ -94,7 +118,8 @@ source map, stop conditions, compatibility handling, and acceptance matrix.
 
 Grow Mintie from a role/health mapping into a complete public-safe sample with
 portable configuration fragments, dedicated gateway identities, expected
-reports, and failure walkthroughs. Never copy production bindings.
+reports, destination-policy negative proofs, authorization-boundary evidence,
+and failure walkthroughs. Never copy production bindings.
 
 ### F4 — Failure and health depth
 
@@ -106,7 +131,9 @@ readiness examples without turning health observation into mutation.
 
 Add only checks justified by stable contracts: internal links, stronger schema
 shape, report compatibility fixtures, and sample config relationships. Avoid
-building a general-purpose router validator.
+building a general-purpose router validator. Evaluate supply-chain hardening
+separately—immutable action pins, dependency-update policy, and transitive hash
+locking are candidates, not blockers retrofitted onto the Human Surface.
 
 ### F6 — v1 source reconciliation
 
@@ -120,6 +147,9 @@ No accepted product scope has been removed. The earlier proposal to place the
 documentation system inside a private infrastructure repository is superseded
 by the accepted independent Signalbox identity. The SSH readback procedure
 remains private implementation evidence and is not an execution tranche here.
+The F1 reader rebalance changes exposure order, not normative depth: basic
+readers enter through three bounded paths while contracts, schemas, and the
+Agent Surface retain the complete implementation model.
 
 ## Full acceptance
 

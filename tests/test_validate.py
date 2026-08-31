@@ -277,6 +277,29 @@ class SignalboxValidationTests(unittest.TestCase):
         )
         self.assertTrue(any("generation drifted" in error for error in errors), errors)
 
+    def test_health_aggregate_evaluation_time_is_assembly_time(self):
+        aggregate = copy.deepcopy(self.aggregate)
+        aggregate["evaluated_at"] = "2026-08-31T10:00:11Z"
+        errors = validator.validate_health_aggregate(
+            ROOT, aggregate, self.deployment, self.profiles_document
+        )
+        self.assertTrue(
+            any("evaluated_at must equal assembled_at" in error for error in errors),
+            errors,
+        )
+
+    def test_health_aggregate_rejects_legacy_member_outcome_field(self):
+        aggregate = copy.deepcopy(self.aggregate)
+        member = aggregate["members"][0]
+        member["effective_outcome"] = member.pop("effective_outcome_at_assembly")
+        errors = validator.validate_health_aggregate(
+            ROOT, aggregate, self.deployment, self.profiles_document
+        )
+        self.assertTrue(
+            any("assembly-time outcome drifted" in error for error in errors),
+            errors,
+        )
+
     def test_private_ingress_precedence_regression_fixtures(self):
         by_id = {
             route["id"]: route for route in self.reference_traffic["route_order"]
@@ -352,16 +375,16 @@ class SignalboxValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             (root / "zh.md").write_text(
-                "doc_id: sample\nSIG-01\n<a id=\"meaning\"></a>\n",
+                "doc_id: sample\n[English](en.md)\nSIG-01\n<a id=\"meaning\"></a>\n",
                 encoding="utf-8",
             )
             (root / "en.md").write_text(
-                "doc_id: sample\nmissing\n<a id=\"meaning\"></a>\n",
+                "doc_id: sample\n[Chinese](zh.md)\nmissing\n<a id=\"meaning\"></a>\n",
                 encoding="utf-8",
             )
             pairs = {
                 "schema": "signalbox.docs-pairs/v2",
-                "contract_revision": 2,
+                "contract_revision": 3,
                 "pairs": [
                     {
                         "doc_id": "sample",
@@ -379,13 +402,14 @@ class SignalboxValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             for language in ("zh", "en"):
+                sibling = "en.md" if language == "zh" else "zh.md"
                 (root / f"{language}.md").write_text(
-                    "doc_id: sample\nSIG-01\n",
+                    f"doc_id: sample\n[sibling]({sibling})\nSIG-01\n",
                     encoding="utf-8",
                 )
             pairs = {
                 "schema": "signalbox.docs-pairs/v2",
-                "contract_revision": 2,
+                "contract_revision": 3,
                 "pairs": [
                     {
                         "doc_id": "sample",
@@ -400,6 +424,36 @@ class SignalboxValidationTests(unittest.TestCase):
         self.assertEqual(
             sum("one meaning anchor" in error for error in errors),
             2,
+            errors,
+        )
+
+    def test_doc_pair_requires_visible_sibling_links(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            (root / "zh.md").write_text(
+                "doc_id: sample\nSIG-01\n<a id=\"meaning\"></a>\n",
+                encoding="utf-8",
+            )
+            (root / "en.md").write_text(
+                "doc_id: sample\n[Chinese](zh.md)\nSIG-01\n<a id=\"meaning\"></a>\n",
+                encoding="utf-8",
+            )
+            pairs = {
+                "schema": "signalbox.docs-pairs/v2",
+                "contract_revision": 3,
+                "pairs": [
+                    {
+                        "doc_id": "sample",
+                        "zh-CN": "zh.md",
+                        "en": "en.md",
+                        "required_contract_ids": ["SIG-01"],
+                        "required_sections": ["meaning"],
+                    }
+                ],
+            }
+            errors = validator.validate_doc_pairs(root, pairs)
+        self.assertTrue(
+            any("zh.md must link its en sibling above fold" in error for error in errors),
             errors,
         )
 

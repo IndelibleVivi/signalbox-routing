@@ -1,6 +1,6 @@
 {
-  "schema": "signalbox.health-contract/v2",
-  "contract_revision": 2,
+  "schema": "signalbox.health-contract/v3",
+  "contract_revision": 3,
   "transient_outcomes": [
     "checking"
   ],
@@ -129,7 +129,10 @@
     "member_reports_immutable": true,
     "preserve_per_subject_outcome": true,
     "top_level_outcome_forbidden": true,
-    "recovery_preflight_members_forbidden": true
+    "recovery_preflight_members_forbidden": true,
+    "evaluated_at_must_equal_assembled_at": true,
+    "member_outcome_field": "effective_outcome_at_assembly",
+    "historical_receipt": true
   },
   "publication": {
     "terminal_report_required_for_every_attempt": true,

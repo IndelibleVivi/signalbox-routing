@@ -20,7 +20,7 @@ runtime tags.
 | `contracts/*.json` | Language-neutral normative role, routing, claim, documentation-pair, and health semantics |
 | `contracts/catalog.json` | Contract ID, revision, owner, compatibility, instance, schema, and projection registry |
 | `schemas/*.schema.json` | Draft 2020-12 structural shape and primitive-type contracts; not cross-file semantics |
-| `README.md` | Present project identity, supported reader paths, verification entrypoint, and important limitations |
+| `README.md`, `README.zh-CN.md` | Paired project identity, supported reader paths, verification entrypoint, and important limitations |
 | `docs/current-state.md` | Volatile source/Git/remote/release status; never live-router truth |
 | `docs/human/*` | Explanatory projections for people; not independent operational authority |
 | `docs/agent/*` | Implementation, patch, evidence, and verification reference for agents |
@@ -56,8 +56,8 @@ replace the authority map above.
 - Health observation never mutates routing by itself. Failover or recovery
   automation requires its own explicit state machine and authorization.
 - Bind every health report to one subject, profile revision, producer, and
-  generation epoch. Deployment aggregation preserves member outcomes and never
-  emits a top-level health verdict.
+  generation epoch. Deployment aggregation preserves assembly-time member
+  outcomes as a historical receipt and never emits a top-level health verdict.
 
 ## Evidence and claim discipline
 
@@ -102,8 +102,8 @@ them.
 
 ## Documentation triggers
 
-- Update `README.md` when project identity, reader entrypoints, supported
-  capability, setup, verification, or durable limitation changes.
+- Update both root README siblings when project identity, reader entrypoints,
+  supported capability, setup, verification, or durable limitation changes.
 - Update `AGENTS.md` when authority, canonical paths, privacy rules, mutation
   gates, verification, or active implementation ownership changes.
 - Update `docs/current-state.md` for branch, remote, candidate/release, or

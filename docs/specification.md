@@ -1,7 +1,7 @@
 # Signalbox Product and Architecture Specification
 
 Status: canonical working specification
-Revision: 2
+Revision: 3
 Authority: current Faye/Cove task decisions, with earlier Mintie materials used
 as evidence rather than executable instructions
 
@@ -209,6 +209,12 @@ observation records probe identity, evidence class, dependency group, state,
 and observation time. Dimension state rolls up those observations, and profile
 requirements define minimum observations, evidence classes, and independent
 dependency groups so probe diversity is machine-verifiable.
+
+`HEALTH-15` — A deployment aggregate is a historical receipt evaluated once at
+assembly. Its `evaluated_at` equals `assembled_at`, and every member records
+`effective_outcome_at_assembly`. Consumers do not reinterpret that stored
+outcome against wall-clock time; they assemble a new aggregate from current
+member reports when they need a current view.
 
 ## 9. Incident-derived portable lessons
 

@@ -70,7 +70,14 @@
       "projection_dependencies": [
         "examples/mintie/traffic-policy.json",
         "docs/human/10-architecture.en.md",
-        "docs/human/10-architecture.zh-CN.md"
+        "docs/human/10-architecture.zh-CN.md",
+        "docs/human/20-basic-router-guide.en.md",
+        "docs/human/20-basic-router-guide.zh-CN.md",
+        "docs/human/30-routing-dns-and-fail-closed.en.md",
+        "docs/human/30-routing-dns-and-fail-closed.zh-CN.md",
+        "docs/human/40-tailnet-vps-private-ingress.en.md",
+        "docs/human/40-tailnet-vps-private-ingress.zh-CN.md",
+        "docs/agent/tailnet-vps-implementation-reference.md"
       ],
       "instances": [
         {
@@ -79,8 +86,8 @@
       ]
     },
     {
-      "schema_id": "signalbox.health-contract/v2",
-      "revision": 2,
+      "schema_id": "signalbox.health-contract/v3",
+      "revision": 3,
       "owner": "contracts/health-contract.json",
       "schema_path": "schemas/health-contract.schema.json",
       "compatibility": {
@@ -89,7 +96,14 @@
       },
       "projection_dependencies": [
         "examples/mintie/health-profiles.json",
-        "docs/reference/health-and-observability.md"
+        "docs/reference/health-and-observability.md",
+        "docs/agent/implementation-reference.md",
+        "docs/human/00-start-here.en.md",
+        "docs/human/00-start-here.zh-CN.md",
+        "docs/human/10-architecture.en.md",
+        "docs/human/10-architecture.zh-CN.md",
+        "docs/human/30-routing-dns-and-fail-closed.en.md",
+        "docs/human/30-routing-dns-and-fail-closed.zh-CN.md"
       ],
       "instances": [
         {
@@ -157,8 +171,8 @@
       ]
     },
     {
-      "schema_id": "signalbox.health-aggregate/v1",
-      "revision": 1,
+      "schema_id": "signalbox.health-aggregate/v2",
+      "revision": 2,
       "owner": "contracts/health-contract.json",
       "schema_path": "schemas/health-aggregate.schema.json",
       "compatibility": {
@@ -166,7 +180,9 @@
         "breaking_change": "new-schema-id-required"
       },
       "projection_dependencies": [
-        "examples/mintie/deployment.json"
+        "examples/mintie/deployment.json",
+        "docs/reference/health-and-observability.md",
+        "docs/agent/implementation-reference.md"
       ],
       "instances": [
         {
@@ -176,7 +192,7 @@
     },
     {
       "schema_id": "signalbox.docs-pairs/v2",
-      "revision": 2,
+      "revision": 3,
       "owner": "contracts/docs-pairs.json",
       "schema_path": "schemas/docs-pairs.schema.json",
       "compatibility": {
@@ -184,6 +200,8 @@
         "breaking_change": "new-schema-id-required"
       },
       "projection_dependencies": [
+        "README.md",
+        "README.zh-CN.md",
         "docs/human"
       ],
       "instances": [
@@ -194,7 +212,7 @@
     },
     {
       "schema_id": "signalbox.reference-deployment/v2",
-      "revision": 2,
+      "revision": 3,
       "owner": "examples/mintie/deployment.json",
       "schema_path": "schemas/reference-deployment.schema.json",
       "compatibility": {
@@ -203,7 +221,10 @@
       },
       "projection_dependencies": [
         "examples/mintie/traffic-policy.json",
-        "examples/mintie/health-profiles.json"
+        "examples/mintie/health-profiles.json",
+        "examples/mintie/README.md",
+        "README.md",
+        "README.zh-CN.md"
       ],
       "instances": [
         {

@@ -17,8 +17,10 @@ mutation.
    aggregate semantics.
 8. `../../schemas/` — structural contracts consumed through the catalog.
 9. `implementation-reference.md` — cross-contract implementation map.
-10. `patch-protocol.md` — update and incident-intake workflow.
-11. `acceptance-matrix.md` — realization evidence and acceptance boundaries.
+10. `tailnet-vps-implementation-reference.md` — advanced canonical private
+    ingress mapping and negative-proof requirements.
+11. `patch-protocol.md` — update and incident-intake workflow.
+12. `acceptance-matrix.md` — realization evidence and acceptance boundaries.
 
 ## Required assumptions
 
@@ -30,7 +32,8 @@ mutation.
 - Health observation is read-only. Selection and recovery mutation are
   separate contracts.
 - A health report observes one subject. Aggregates preserve member outcomes
-  and never manufacture a deployment-wide verdict.
+  at assembly, remain historical receipts, and never manufacture a
+  deployment-wide verdict.
 - Passing `make verify` proves source consistency only.
 
 ## Stop conditions

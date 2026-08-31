@@ -1,15 +1,16 @@
 {
-  "schema": "signalbox.health-aggregate/v1",
+  "schema": "signalbox.health-aggregate/v2",
   "id": "aggregate-mintie-2026-08-31T10:00Z",
   "deployment_ref": "deployment.json",
   "assembled_at": "2026-08-31T10:00:10Z",
+  "evaluated_at": "2026-08-31T10:00:10Z",
   "members": [
-    {"subject_ref": "control-plane/mintie", "report_ref": "reports/control-plane-pass.json", "report_id": "report-control-plane-pass-41", "profile_ref": "mintie-control-plane-operational", "profile_revision": 2, "producer_ref": "reference/mintie-observer", "generation_epoch": "sample-epoch-alpha", "generation": 41, "effective_outcome": "pass"},
-    {"subject_ref": "role-binding/alder", "report_ref": "reports/lane-alder-pass.json", "report_id": "report-lane-alder-pass-101", "profile_ref": "mintie-egress-alder", "profile_revision": 2, "producer_ref": "reference/mintie-observer", "generation_epoch": "sample-epoch-alpha", "generation": 101, "effective_outcome": "pass"},
-    {"subject_ref": "role-binding/rowan", "report_ref": "reports/lane-rowan-pass.json", "report_id": "report-lane-rowan-pass-101", "profile_ref": "mintie-egress-rowan", "profile_revision": 2, "producer_ref": "reference/mintie-observer", "generation_epoch": "sample-epoch-alpha", "generation": 101, "effective_outcome": "pass"},
-    {"subject_ref": "role-binding/hearth", "report_ref": "reports/lane-hearth-fail.json", "report_id": "report-lane-hearth-fail-101", "profile_ref": "mintie-egress-hearth", "profile_revision": 2, "producer_ref": "reference/mintie-observer", "generation_epoch": "sample-epoch-alpha", "generation": 101, "effective_outcome": "fail"},
-    {"subject_ref": "gateway/alder-private", "report_ref": "reports/private-alder-pass.json", "report_id": "report-private-alder-pass-101", "profile_ref": "mintie-private-alder", "profile_revision": 2, "producer_ref": "reference/mintie-observer", "generation_epoch": "sample-epoch-alpha", "generation": 101, "effective_outcome": "pass"},
-    {"subject_ref": "gateway/rowan-private", "report_ref": "reports/private-rowan-unknown.json", "report_id": "report-private-rowan-unknown-101", "profile_ref": "mintie-private-rowan", "profile_revision": 2, "producer_ref": "reference/mintie-observer", "generation_epoch": "sample-epoch-alpha", "generation": 101, "effective_outcome": "unknown"}
+    {"subject_ref": "control-plane/mintie", "report_ref": "reports/control-plane-pass.json", "report_id": "report-control-plane-pass-41", "profile_ref": "mintie-control-plane-operational", "profile_revision": 2, "producer_ref": "reference/mintie-observer", "generation_epoch": "sample-epoch-alpha", "generation": 41, "effective_outcome_at_assembly": "pass"},
+    {"subject_ref": "role-binding/alder", "report_ref": "reports/lane-alder-pass.json", "report_id": "report-lane-alder-pass-101", "profile_ref": "mintie-egress-alder", "profile_revision": 2, "producer_ref": "reference/mintie-observer", "generation_epoch": "sample-epoch-alpha", "generation": 101, "effective_outcome_at_assembly": "pass"},
+    {"subject_ref": "role-binding/rowan", "report_ref": "reports/lane-rowan-pass.json", "report_id": "report-lane-rowan-pass-101", "profile_ref": "mintie-egress-rowan", "profile_revision": 2, "producer_ref": "reference/mintie-observer", "generation_epoch": "sample-epoch-alpha", "generation": 101, "effective_outcome_at_assembly": "pass"},
+    {"subject_ref": "role-binding/hearth", "report_ref": "reports/lane-hearth-fail.json", "report_id": "report-lane-hearth-fail-101", "profile_ref": "mintie-egress-hearth", "profile_revision": 2, "producer_ref": "reference/mintie-observer", "generation_epoch": "sample-epoch-alpha", "generation": 101, "effective_outcome_at_assembly": "fail"},
+    {"subject_ref": "gateway/alder-private", "report_ref": "reports/private-alder-pass.json", "report_id": "report-private-alder-pass-101", "profile_ref": "mintie-private-alder", "profile_revision": 2, "producer_ref": "reference/mintie-observer", "generation_epoch": "sample-epoch-alpha", "generation": 101, "effective_outcome_at_assembly": "pass"},
+    {"subject_ref": "gateway/rowan-private", "report_ref": "reports/private-rowan-unknown.json", "report_id": "report-private-rowan-unknown-101", "profile_ref": "mintie-private-rowan", "profile_revision": 2, "producer_ref": "reference/mintie-observer", "generation_epoch": "sample-epoch-alpha", "generation": 101, "effective_outcome_at_assembly": "unknown"}
   ],
   "summary": {
     "member_count": 6,

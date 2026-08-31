@@ -2,9 +2,11 @@
 doc_id: signalbox.human.start-here
 language: zh-CN
 status: foundation-explanatory
-authority: ../../specification.md
-contract_revision: 2
+authority: ../specification.md
+contract_revision: 3
 ---
+
+[English](00-start-here.en.md) · **简体中文**
 
 <a id="proxy-layer-model"></a>
 # 从这里开始：把代理选择上移到路由器
@@ -74,7 +76,7 @@ DIRECT 只服务明确批准的 LAN、bootstrap 或直连 allowlist。受保护�
 <a id="health-model"></a>
 ## Health 不只是“网页能打开”
 
-`HEALTH-01` `HEALTH-10` `HEALTH-14`
+`HEALTH-01` `HEALTH-10` `HEALTH-14` `HEALTH-15`
 
 Signalbox 把 health 分为 transport、exit identity、DNS、control plane、
 enforcement、resources、persistence 和 recovery readiness。`HealthProfile`
@@ -90,6 +92,10 @@ report，以及每条 egress / private-ingress lane 各自的一份 report；agg
 每个 dimension 都由 explicit observations roll up。lane transport 要判 `pass`，
 至少要同时有 transport-neutral 与 role-specific probe，而且来自独立 dependency
 groups。profile、report 与 aggregate 都不会自己切 route。
+
+Aggregate 是 historical assembly receipt，不会随着 wall clock 静默改变。member
+outcome 只在 `assembled_at` 求值一次；要得到 current view，必须读取 fresh reports
+并生成新的 aggregate。
 
 今天的 cold-boot 事故提供了一个很好的例子：route table 逻辑上可能为空，
 但如果平台无法可靠查询它，恢复就没有证据声称 runtime 已经 `OFF`。因此

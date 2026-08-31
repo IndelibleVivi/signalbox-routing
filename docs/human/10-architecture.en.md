@@ -2,9 +2,11 @@
 doc_id: signalbox.human.architecture
 language: en
 status: foundation-explanatory
-authority: ../../specification.md
-contract_revision: 2
+authority: ../specification.md
+contract_revision: 3
 ---
+
+**English** · [简体中文](10-architecture.zh-CN.md)
 
 <a id="packet-path"></a>
 # Signalbox architecture and packet paths
@@ -81,7 +83,7 @@ gateway path.
 <a id="recovery-readiness"></a>
 ## Recovery readiness is health
 
-`HEALTH-07` `HEALTH-10`
+`HEALTH-07` `HEALTH-10` `HEALTH-15`
 
 Recovery requires more than starting a service. The system must query and prove
 prior kernel state, apply the intended state, verify postconditions, and retain
@@ -93,4 +95,5 @@ A `HealthReport` observes one subject only. Operational reports are maintained
 for the control plane and each lane; the deployment aggregate preserves every
 member outcome and has no top-level outcome. Automated failover or repair
 belongs to a separate mutation state machine with hysteresis, operation
-identity, rollback, and its own receipt.
+identity, rollback, and its own receipt. The aggregate is itself a historical
+receipt evaluated at assembly; consumers create a new one for current truth.

@@ -83,13 +83,17 @@ recorded pass + fresh + expected scope/revision/epoch -> effective pass
 recorded pass + unusable evidence                     -> effective unknown
 ```
 
-## Member-preserving aggregate
+## Member-preserving historical aggregate
 
-The deployment aggregate is a receipt over current operational member reports.
-It preserves each subject, report ID, profile revision, producer, epoch,
-generation, and effective outcome. It excludes recovery-preflight and has no
-top-level `outcome`; partial failure remains visible instead of collapsing into
-an unexplained “network unhealthy” bit.
+The deployment aggregate is a historical receipt over the operational member
+reports selected at assembly. `evaluated_at` must equal `assembled_at`; each
+member stores `effective_outcome_at_assembly`. That value is not re-evaluated
+later against the reader's wall clock. A consumer that needs current truth
+assembles a new aggregate from current reports. The receipt preserves each
+subject, report ID, profile revision, producer, epoch, generation, and
+assembly-time outcome. It excludes recovery-preflight and has no top-level
+`outcome`; partial failure remains visible instead of collapsing into an
+unexplained “network unhealthy” bit. `HEALTH-10` `HEALTH-15`
 
 ## Exact recovery gate
 

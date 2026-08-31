@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:signalbox:schema:health-contract:v2",
+  "$id": "urn:signalbox:schema:health-contract:v3",
   "title": "Signalbox health contract",
   "type": "object",
   "additionalProperties": false,
@@ -27,8 +27,8 @@
     "reason_codes"
   ],
   "properties": {
-    "schema": {"const": "signalbox.health-contract/v2"},
-    "contract_revision": {"type": "integer", "minimum": 2},
+    "schema": {"const": "signalbox.health-contract/v3"},
+    "contract_revision": {"type": "integer", "minimum": 3},
     "transient_outcomes": {"$ref": "#/$defs/stringSet"},
     "terminal_outcomes": {"$ref": "#/$defs/stringSet"},
     "rollup_precedence": {"$ref": "#/$defs/stringSet"},
@@ -111,13 +111,19 @@
         "member_reports_immutable",
         "preserve_per_subject_outcome",
         "top_level_outcome_forbidden",
-        "recovery_preflight_members_forbidden"
+        "recovery_preflight_members_forbidden",
+        "evaluated_at_must_equal_assembled_at",
+        "member_outcome_field",
+        "historical_receipt"
       ],
       "properties": {
         "member_reports_immutable": {"type": "boolean"},
         "preserve_per_subject_outcome": {"type": "boolean"},
         "top_level_outcome_forbidden": {"type": "boolean"},
-        "recovery_preflight_members_forbidden": {"type": "boolean"}
+        "recovery_preflight_members_forbidden": {"type": "boolean"},
+        "evaluated_at_must_equal_assembled_at": {"type": "boolean"},
+        "member_outcome_field": {"const": "effective_outcome_at_assembly"},
+        "historical_receipt": {"type": "boolean"}
       }
     },
     "publication": {

@@ -4,6 +4,20 @@ Mintie is Signalbox's complete named sample. These files demonstrate portable
 role binding and policy semantics without containing a production endpoint,
 credential, address, client identity, or current runtime claim.
 
+## Reference platform
+
+| Binding | Value | Contract meaning |
+| --- | --- | --- |
+| Vendor | GL.iNet | Descriptive sample metadata |
+| Product | [Beryl 7](https://www.gl-inet.com/products/gl-mt3600be/) | The router used for the named Mintie reference |
+| Model | `GL-MT3600BE` | Stable hardware model identifier |
+| Normative | no | Signalbox does not require this device |
+
+The platform binding makes the sample reproducible enough to understand
+without turning firmware, kernel, package versions, or private runtime state
+into root-project requirements. Another capable router may implement the same
+portable roles and contracts.
+
 ## Identity map
 
 | Sample identity | Portable role | Notes |
@@ -49,8 +63,9 @@ flowchart LR
   separate recovery-preflight receipt. Dimensions contain explicit observations
   so evidence-class and dependency-group diversity can be validated.
 - `health-aggregate.json` references all six operational members and preserves
-  their individual outcomes. It excludes recovery-preflight and deliberately
-  has no top-level outcome.
+  their individual outcomes as evaluated at assembly. It excludes
+  recovery-preflight, deliberately has no top-level outcome, and remains an
+  immutable historical receipt rather than silently aging into a current view.
 
 The sample operational interval is 15 minutes and each operational report
 remains fresh for at most 20 minutes. Recovery-preflight reports remain fresh

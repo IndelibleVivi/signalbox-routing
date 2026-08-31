@@ -27,6 +27,17 @@
     "display_name": {"type": "string", "minLength": 1},
     "sample_only": {"const": true},
     "private_live_bindings": {"const": "external-and-absent"},
+    "reference_platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["vendor", "product", "model", "normative"],
+      "properties": {
+        "vendor": {"type": "string", "minLength": 1},
+        "product": {"type": "string", "minLength": 1},
+        "model": {"type": "string", "minLength": 1},
+        "normative": {"const": false}
+      }
+    },
     "router": {
       "type": "object",
       "additionalProperties": false,

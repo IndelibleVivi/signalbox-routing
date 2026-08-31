@@ -9,7 +9,7 @@
 | Traffic actions, precedence, and fallback | `contracts/traffic-policy.json` | `ROUTE-01` to `ROUTE-06` |
 | Enforcement and restore gates | `contracts/traffic-policy.json` | `ENFORCE-01`, `ENFORCE-02` |
 | Private ingress | roles plus traffic policy | `PRIVATE-01` to `PRIVATE-04` |
-| Health profiles, observations, reports, and aggregates | `contracts/health-contract.json` | `HEALTH-01` to `HEALTH-14` |
+| Health profiles, observations, reports, and aggregates | `contracts/health-contract.json` | `HEALTH-01` to `HEALTH-15` |
 | Documentation parity | `contracts/docs-pairs.json` | `DOC-01` to `DOC-05` |
 | Structural schemas and compatibility routing | `contracts/catalog.json`, `schemas/` | `AUTH-03` |
 
@@ -122,9 +122,12 @@ epoch, subject/profile mismatch, or profile revision mismatch, effective
 outcome is `unknown` regardless of recorded `outcome`.
 
 Operational profiles bind the control plane and each lane separately. A
-deployment aggregate references immutable report identity and generation for
-every subject, preserves each effective outcome, excludes recovery-preflight,
-and has no top-level `outcome`.
+`signalbox.health-aggregate/v2` receipt references immutable report identity
+and generation for every subject, excludes recovery-preflight, and has no
+top-level `outcome`. Its `evaluated_at` equals `assembled_at`; each member stores
+`effective_outcome_at_assembly`. Treat it as immutable historical evidence.
+Build a new aggregate when a current view is required; never age or rewrite the
+stored member outcomes in place. `HEALTH-15`
 
 ## Recovery-readiness semantics
 

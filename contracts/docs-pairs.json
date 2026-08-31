@@ -1,7 +1,29 @@
 {
   "schema": "signalbox.docs-pairs/v2",
-  "contract_revision": 2,
+  "contract_revision": 3,
   "pairs": [
+    {
+      "doc_id": "signalbox.readme",
+      "zh-CN": "README.zh-CN.md",
+      "en": "README.md",
+      "required_contract_ids": [
+        "SIG-01",
+        "SIG-02",
+        "IDENT-01",
+        "CLAIM-01",
+        "DOC-02",
+        "ACCEPT-08"
+      ],
+      "required_sections": [
+        "project-identity",
+        "choose-your-path",
+        "what-signalbox-is",
+        "mintie-reference",
+        "source-of-truth",
+        "verification",
+        "status-and-permission"
+      ]
+    },
     {
       "doc_id": "signalbox.human.start-here",
       "zh-CN": "docs/human/00-start-here.zh-CN.md",
@@ -13,7 +35,8 @@
         "ROUTE-02",
         "HEALTH-01",
         "HEALTH-10",
-        "HEALTH-14"
+        "HEALTH-14",
+        "HEALTH-15"
       ],
       "required_sections": [
         "proxy-layer-model",
@@ -34,7 +57,8 @@
         "ENFORCE-01",
         "PRIVATE-01",
         "HEALTH-07",
-        "HEALTH-10"
+        "HEALTH-10",
+        "HEALTH-15"
       ],
       "required_sections": [
         "packet-path",
@@ -42,6 +66,68 @@
         "enforcement-boundary",
         "canonical-private-ingress",
         "recovery-readiness"
+      ]
+    },
+    {
+      "doc_id": "signalbox.human.basic-router-guide",
+      "zh-CN": "docs/human/20-basic-router-guide.zh-CN.md",
+      "en": "docs/human/20-basic-router-guide.en.md",
+      "required_contract_ids": [
+        "SIG-01",
+        "ROUTE-01",
+        "ROUTE-02",
+        "ENFORCE-01",
+        "CLAIM-01"
+      ],
+      "required_sections": [
+        "router-job",
+        "minimum-policy",
+        "safe-failure",
+        "what-proof-means",
+        "next-path"
+      ]
+    },
+    {
+      "doc_id": "signalbox.human.routing-dns-fail-closed",
+      "zh-CN": "docs/human/30-routing-dns-and-fail-closed.zh-CN.md",
+      "en": "docs/human/30-routing-dns-and-fail-closed.en.md",
+      "required_contract_ids": [
+        "ROUTE-01",
+        "ROUTE-02",
+        "ROUTE-04",
+        "ROUTE-05",
+        "ROUTE-06",
+        "ENFORCE-01",
+        "HEALTH-07",
+        "HEALTH-15"
+      ],
+      "required_sections": [
+        "routing-owner",
+        "dns-ownership",
+        "route-precedence",
+        "fail-closed-enforcement",
+        "health-and-recovery"
+      ]
+    },
+    {
+      "doc_id": "signalbox.human.tailnet-vps-private-ingress",
+      "zh-CN": "docs/human/40-tailnet-vps-private-ingress.zh-CN.md",
+      "en": "docs/human/40-tailnet-vps-private-ingress.en.md",
+      "required_contract_ids": [
+        "ROUTE-05",
+        "ROUTE-06",
+        "PRIVATE-01",
+        "PRIVATE-02",
+        "PRIVATE-03",
+        "PRIVATE-04",
+        "CLAIM-01"
+      ],
+      "required_sections": [
+        "canonical-origin",
+        "private-path",
+        "authorization-boundaries",
+        "dns-and-quic",
+        "evidence-and-fallback"
       ]
     }
   ]

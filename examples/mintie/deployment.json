@@ -1,10 +1,16 @@
 {
   "schema": "signalbox.reference-deployment/v2",
-  "contract_revision": 2,
+  "contract_revision": 3,
   "deployment_id": "mintie",
   "display_name": "Mintie",
   "sample_only": true,
   "private_live_bindings": "external-and-absent",
+  "reference_platform": {
+    "vendor": "GL.iNet",
+    "product": "Beryl 7",
+    "model": "GL-MT3600BE",
+    "normative": false
+  },
   "router": {
     "identity": "mintie",
     "display_name": "Mintie",

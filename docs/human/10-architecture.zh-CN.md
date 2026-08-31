@@ -2,9 +2,11 @@
 doc_id: signalbox.human.architecture
 language: zh-CN
 status: foundation-explanatory
-authority: ../../specification.md
-contract_revision: 2
+authority: ../specification.md
+contract_revision: 3
 ---
+
+[English](10-architecture.en.md) · **简体中文**
 
 <a id="packet-path"></a>
 # Signalbox 架构与 packet path
@@ -75,7 +77,7 @@ canonical private-ingress match 比 DIRECT allowlist 更 specific，必须先求
 <a id="recovery-readiness"></a>
 ## Recovery readiness is health
 
-`HEALTH-07` `HEALTH-10`
+`HEALTH-07` `HEALTH-10` `HEALTH-15`
 
 恢复不仅需要“服务能启动”，还需要能查询并证明 prior kernel state、应用新的
 state、验证 postcondition，并在失败时保留明确 recovery state。cold boot 下某个
@@ -85,4 +87,5 @@ policy table 尚未实例化而 query 失败，就是典型的 recovery-unready�
 一份 `HealthReport` 只观察一个 subject。日常状态要分别保留 control plane 与
 每条 lane 的 report；deployment aggregate 也必须保留所有 member outcome，且不设
 top-level outcome。自动 failover 或 repair 属于另一套有 hysteresis、operation
-identity、rollback 和 receipt 的 mutation state machine。
+identity、rollback 和 receipt 的 mutation state machine。aggregate 本身也是只在
+assembly 时求值的 historical receipt；要得到 current truth，consumer 应生成新的一份。
