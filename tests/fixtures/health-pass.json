@@ -1,0 +1,69 @@
+{
+  "schema": "signalbox.health-report/v1",
+  "id": "report-operational-pass-1001",
+  "profile_ref": "mintie-operational",
+  "profile_revision": 1,
+  "producer_ref": "deployment/mintie",
+  "generation": 1001,
+  "attempt_id": "attempt-operational-1001",
+  "started_at": "2026-08-31T10:00:00Z",
+  "completed_at": "2026-08-31T10:00:08Z",
+  "published_at": "2026-08-31T10:00:09Z",
+  "valid_until": "2026-08-31T10:20:00Z",
+  "outcome": "pass",
+  "dimensions": {
+    "transport": {
+      "state": "pass",
+      "evidence_class": "transport-neutral",
+      "observed_at": "2026-08-31T10:00:01Z",
+      "dependency_group": "neutral-transport"
+    },
+    "exit-identity": {
+      "state": "pass",
+      "evidence_class": "role-specific",
+      "observed_at": "2026-08-31T10:00:02Z",
+      "dependency_group": "role-egress"
+    },
+    "dns": {
+      "state": "pass",
+      "evidence_class": "resolver-path",
+      "observed_at": "2026-08-31T10:00:03Z",
+      "dependency_group": "resolver-control"
+    },
+    "control-plane": {
+      "state": "pass",
+      "evidence_class": "process-and-loaded-state",
+      "observed_at": "2026-08-31T10:00:04Z",
+      "dependency_group": "router-runtime"
+    },
+    "enforcement": {
+      "state": "pass",
+      "evidence_class": "kernel-query",
+      "observed_at": "2026-08-31T10:00:05Z",
+      "dependency_group": "kernel-enforcement"
+    },
+    "resources": {
+      "state": "pass",
+      "evidence_class": "resource-snapshot",
+      "observed_at": "2026-08-31T10:00:06Z",
+      "dependency_group": "router-runtime",
+      "metrics": {
+        "memory_pressure": "normal",
+        "storage_pressure": "normal",
+        "recent_oom": false
+      }
+    },
+    "persistence": {
+      "state": "pass",
+      "evidence_class": "owner-registration",
+      "observed_at": "2026-08-31T10:00:07Z",
+      "dependency_group": "boot-ownership"
+    },
+    "recovery-readiness": {
+      "state": "pass",
+      "evidence_class": "queryability",
+      "observed_at": "2026-08-31T10:00:08Z",
+      "dependency_group": "kernel-enforcement"
+    }
+  }
+}

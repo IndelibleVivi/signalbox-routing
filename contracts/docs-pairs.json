@@ -1,0 +1,30 @@
+{
+  "schema": "signalbox.docs-pairs/v1",
+  "contract_revision": 1,
+  "pairs": [
+    {
+      "doc_id": "signalbox.human.start-here",
+      "zh-CN": "docs/human/00-start-here.zh-CN.md",
+      "en": "docs/human/00-start-here.en.md",
+      "required_contract_ids": [
+        "SIG-01",
+        "IDENT-02",
+        "CLAIM-01",
+        "ROUTE-02",
+        "HEALTH-01"
+      ]
+    },
+    {
+      "doc_id": "signalbox.human.architecture",
+      "zh-CN": "docs/human/10-architecture.zh-CN.md",
+      "en": "docs/human/10-architecture.en.md",
+      "required_contract_ids": [
+        "ROUTE-01",
+        "ROUTE-04",
+        "ENFORCE-01",
+        "PRIVATE-01",
+        "HEALTH-07"
+      ]
+    }
+  ]
+}

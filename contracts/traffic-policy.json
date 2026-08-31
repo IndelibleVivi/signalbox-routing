@@ -1,0 +1,44 @@
+{
+  "schema": "signalbox.traffic-policy/v1",
+  "contract_revision": 1,
+  "routing_owner_role": "routing-control-plane",
+  "direct_action": {
+    "allowed_match_kind": "explicit-allowlist",
+    "allowed_as_default": false,
+    "allowed_on_proxy_failure": false
+  },
+  "protected_scope": {
+    "failure_mode": "fail-closed",
+    "management_path_must_survive": true,
+    "query_failure_outcome": "unknown",
+    "restore_requires_fresh_profile_kind": "recovery-preflight",
+    "operational_profile_kind": "operational",
+    "on_operational_fail": "retain-guard",
+    "on_operational_unknown": "retain-guard"
+  },
+  "default_proxy_required": {
+    "selection": {
+      "mode": "pinned",
+      "role": "general-primary"
+    },
+    "secondary_role": "general-secondary",
+    "automatic_failover": false
+  },
+  "protected_application": {
+    "role": "claude-residential",
+    "optimization_target": "recall",
+    "accepted_costs": [
+      "collateral-routing-of-shared-dependencies",
+      "higher-egress-cost-or-latency"
+    ],
+    "udp_443_policy": "reject-until-verified"
+  },
+  "private_ingress": {
+    "primary_role": "private-ingress-primary",
+    "secondary_role": "private-ingress-secondary",
+    "canonical_origin_preserved": true,
+    "dedicated_identity_required": true,
+    "general_egress_role_equivalence": false,
+    "automatic_failover": false
+  }
+}

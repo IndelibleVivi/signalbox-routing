@@ -1,0 +1,125 @@
+{
+  "schema": "signalbox.health-contract/v1",
+  "contract_revision": 1,
+  "transient_outcomes": [
+    "checking"
+  ],
+  "terminal_outcomes": [
+    "pass",
+    "fail",
+    "unknown"
+  ],
+  "rollup_precedence": [
+    "fail",
+    "unknown",
+    "pass"
+  ],
+  "profile_kinds": {
+    "recovery-preflight": {
+      "required_dimensions": [
+        "control-plane",
+        "enforcement",
+        "resources",
+        "persistence",
+        "recovery-readiness"
+      ],
+      "may_gate_restore": true,
+      "proves_operational_health": false
+    },
+    "operational": {
+      "required_dimensions": [
+        "transport",
+        "exit-identity",
+        "dns",
+        "control-plane",
+        "enforcement",
+        "resources",
+        "persistence",
+        "recovery-readiness"
+      ],
+      "may_gate_restore": false,
+      "proves_operational_health": true
+    }
+  },
+  "required_report_fields": [
+    "schema",
+    "id",
+    "profile_ref",
+    "profile_revision",
+    "producer_ref",
+    "generation",
+    "attempt_id",
+    "started_at",
+    "completed_at",
+    "published_at",
+    "valid_until",
+    "outcome",
+    "dimensions"
+  ],
+  "required_dimension_fields": [
+    "state",
+    "evidence_class",
+    "observed_at",
+    "dependency_group"
+  ],
+  "required_dimensions": [
+    "transport",
+    "exit-identity",
+    "dns",
+    "control-plane",
+    "enforcement",
+    "resources",
+    "persistence",
+    "recovery-readiness"
+  ],
+  "freshness": {
+    "required": true,
+    "basis": "valid_until",
+    "stale_effective_outcome": "unknown",
+    "missing_or_malformed_effective_outcome": "unknown",
+    "generation_regression_effective_outcome": "unknown",
+    "profile_revision_mismatch_effective_outcome": "unknown"
+  },
+  "publication": {
+    "terminal_report_required_for_every_attempt": true,
+    "early_failure_must_publish": true,
+    "current_write": "atomic-replace",
+    "failed_and_unknown_attempts_advance_generation": true,
+    "report_immutable": true
+  },
+  "query_failure_outcome": "unknown",
+  "observation_only": true,
+  "retention_policy_required_fields": [
+    "max_file_bytes",
+    "archive_count",
+    "max_entries"
+  ],
+  "forbidden_durable_keys": [
+    "credential",
+    "password",
+    "token",
+    "private_key",
+    "exit_ip",
+    "client_ip",
+    "client_mac",
+    "raw_url",
+    "raw_response"
+  ],
+  "reason_codes": [
+    "timeout",
+    "unreachable",
+    "identity-mismatch",
+    "query-unsupported",
+    "query-failed",
+    "stale",
+    "resource-pressure",
+    "storage-pressure",
+    "oom-observed",
+    "persistence-unverified",
+    "recovery-unready",
+    "missing-required-result",
+    "malformed-evidence",
+    "generation-regressed",
+    "profile-revision-mismatch"
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "schema": "signalbox.claims/v1",
+  "contract_revision": 1,
+  "observation_outcomes": [
+    "pass",
+    "fail",
+    "unknown"
+  ],
+  "realization_stages": [
+    {
+      "id": "source",
+      "rank": 10,
+      "authority": "canonical tracked source and tests",
+      "proves": "The repository expresses the intended contract.",
+      "does_not_prove": "Any payload is installed, active, reachable, or accepted."
+    },
+    {
+      "id": "installed",
+      "rank": 20,
+      "authority": "exact target filesystem and registration readback",
+      "proves": "A particular payload exists at the target boundary.",
+      "does_not_prove": "The active process loaded it or kernel policy matches it."
+    },
+    {
+      "id": "activated",
+      "rank": 30,
+      "authority": "process, loaded configuration, service state, and kernel enforcement",
+      "proves": "The observed control plane and enforcement state are active.",
+      "does_not_prove": "A real client traverses the intended path."
+    },
+    {
+      "id": "path-evidence",
+      "rank": 40,
+      "authority": "fresh lane-specific transport and identity probes",
+      "proves": "The probed path reached its expected boundary under observed conditions.",
+      "does_not_prove": "A browser, app, or device accepts that behavior."
+    }
+  ],
+  "required_realization_references": {
+    "installed": [
+      "source_ref"
+    ],
+    "activated": [
+      "installed_ref",
+      "runtime_generation"
+    ],
+    "path-evidence": [
+      "activated_ref",
+      "health_report_ref"
+    ]
+  },
+  "acceptance_record": {
+    "schema": "signalbox.acceptance-record/v1",
+    "decisions": [
+      "accepted",
+      "rejected",
+      "revoked"
+    ],
+    "required_fields": [
+      "record_id",
+      "actor_class",
+      "decision",
+      "scope_ref",
+      "claim_refs",
+      "evidence_refs",
+      "decided_at"
+    ],
+    "can_upgrade_realization_stage": false,
+    "is_current_path_proof": false
+  }
+}

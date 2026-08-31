@@ -1,0 +1,104 @@
+{
+  "schema": "signalbox.health-profiles/v1",
+  "contract_revision": 1,
+  "health_contract_ref": "../../contracts/health-contract.json",
+  "profiles": [
+    {
+      "id": "mintie-recovery-preflight",
+      "revision": 1,
+      "kind": "recovery-preflight",
+      "subject_ref": "deployment/mintie",
+      "observation_only": true,
+      "triggers": [
+        "boot",
+        "restore-attempt"
+      ],
+      "required_dimensions": [
+        "control-plane",
+        "enforcement",
+        "resources",
+        "persistence",
+        "recovery-readiness"
+      ],
+      "aggregation": {
+        "pass_when": "all-required-pass",
+        "fail_when": "any-required-fail",
+        "unknown_when": "otherwise"
+      },
+      "freshness": {
+        "max_report_age_seconds": 300
+      },
+      "publication": {
+        "current_write": "atomic-replace",
+        "completed_attempt_must_publish": true
+      },
+      "retention": {
+        "max_file_bytes": 262144,
+        "archive_count": 2,
+        "max_entries": 288
+      },
+      "privacy": {
+        "result_detail": "reason-code-only",
+        "raw_diagnostics": "forbidden"
+      },
+      "resource_threshold_owner": "deployment-envelope"
+    },
+    {
+      "id": "mintie-operational",
+      "revision": 1,
+      "kind": "operational",
+      "subject_ref": "deployment/mintie",
+      "observation_only": true,
+      "triggers": [
+        "periodic",
+        "post-network-change"
+      ],
+      "run_interval_seconds": 900,
+      "required_dimensions": [
+        "transport",
+        "exit-identity",
+        "dns",
+        "control-plane",
+        "enforcement",
+        "resources",
+        "persistence",
+        "recovery-readiness"
+      ],
+      "aggregation": {
+        "pass_when": "all-required-pass",
+        "fail_when": "any-required-fail",
+        "unknown_when": "otherwise"
+      },
+      "freshness": {
+        "max_report_age_seconds": 1200
+      },
+      "publication": {
+        "current_write": "atomic-replace",
+        "completed_attempt_must_publish": true
+      },
+      "retention": {
+        "max_file_bytes": 262144,
+        "archive_count": 2,
+        "max_entries": 288
+      },
+      "privacy": {
+        "result_detail": "reason-code-only",
+        "raw_diagnostics": "forbidden"
+      },
+      "probe_diversity": {
+        "transport_neutral_minimum": 1,
+        "role_specific_minimum": 1,
+        "single_provider_sufficient": false
+      },
+      "resource_observations": [
+        "memory-available",
+        "routing-process-rss",
+        "compressed-swap-state",
+        "storage-free",
+        "load",
+        "recent-oom-evidence"
+      ],
+      "resource_threshold_owner": "deployment-envelope"
+    }
+  ]
+}

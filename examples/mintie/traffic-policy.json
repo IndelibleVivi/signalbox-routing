@@ -1,0 +1,68 @@
+{
+  "schema": "signalbox.reference-traffic-policy/v1",
+  "contract_revision": 1,
+  "deployment_ref": "deployment.json",
+  "protected_scope": "sample-main-network",
+  "health_profile_refs": {
+    "recovery_preflight": "mintie-recovery-preflight",
+    "operational": "mintie-operational"
+  },
+  "route_order": [
+    {
+      "id": "protocol-observation",
+      "action": "observe-protocol"
+    },
+    {
+      "id": "dns-capture",
+      "action": "capture-client-dns"
+    },
+    {
+      "id": "private-direct",
+      "match": {
+        "kind": "explicit-allowlist",
+        "set_ref": "approved-private-destinations"
+      },
+      "action": "direct"
+    },
+    {
+      "id": "protected-udp-policy",
+      "match": "protected-application-udp-443",
+      "action": "reject-until-verified"
+    },
+    {
+      "id": "protected-application",
+      "match": "high-recall-protected-set",
+      "action": "route",
+      "role_binding_ref": "hearth"
+    },
+    {
+      "id": "approved-direct",
+      "match": {
+        "kind": "explicit-allowlist",
+        "set_ref": "deployment-approved-direct-set"
+      },
+      "action": "direct"
+    },
+    {
+      "id": "canonical-private-ingress",
+      "match": "approved-canonical-origin-set",
+      "action": "private-ingress",
+      "gateway_binding_ref": "alder-private",
+      "canonical_origin_ref": "sample-app"
+    },
+    {
+      "id": "default-proxy-required",
+      "match": "otherwise",
+      "action": "route",
+      "selection": {
+        "mode": "pinned",
+        "role_binding_ref": "alder"
+      }
+    }
+  ],
+  "failure_behavior": {
+    "mode": "fail-closed",
+    "on_fail": "retain-guard",
+    "on_unknown": "retain-guard"
+  }
+}

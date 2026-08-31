@@ -1,0 +1,73 @@
+{
+  "schema": "signalbox.roles/v1",
+  "contract_revision": 1,
+  "roles": {
+    "routing-control-plane": {
+      "kind": "control-plane",
+      "responsibility": "Own transparent routing and DNS policy for the protected scope.",
+      "required_capabilities": [
+        "transparent-interception",
+        "policy-routing",
+        "health-reports",
+        "fail-closed-enforcement"
+      ]
+    },
+    "general-primary": {
+      "kind": "general-egress",
+      "responsibility": "Carry the default proxy-required Internet path.",
+      "server_control_required": false,
+      "required_capabilities": [
+        "transport-health",
+        "exit-policy-observation"
+      ]
+    },
+    "general-secondary": {
+      "kind": "general-egress",
+      "responsibility": "Provide an independently observable secondary general egress.",
+      "server_control_required": false,
+      "automatic_failover_implied": false,
+      "required_capabilities": [
+        "independent-transport-health"
+      ]
+    },
+    "claude-residential": {
+      "kind": "protected-application-egress",
+      "responsibility": "Carry high-recall protected application traffic through a residential-class egress.",
+      "optimization_target": "recall",
+      "required_capabilities": [
+        "exit-policy-observation",
+        "no-route-degradation"
+      ],
+      "forbidden_degradations": [
+        "general-primary",
+        "general-secondary",
+        "direct"
+      ]
+    },
+    "private-ingress-primary": {
+      "kind": "private-ingress-gateway",
+      "responsibility": "Carry approved canonical-origin traffic to exact private origins.",
+      "server_control_required": true,
+      "required_capabilities": [
+        "dedicated-authenticated-identity",
+        "server-side-identity-routing",
+        "exact-private-destination-allow",
+        "ordinary-identity-private-deny",
+        "independent-health"
+      ]
+    },
+    "private-ingress-secondary": {
+      "kind": "private-ingress-gateway",
+      "responsibility": "Provide an independently observable secondary private-ingress gateway.",
+      "server_control_required": true,
+      "automatic_failover_implied": false,
+      "required_capabilities": [
+        "dedicated-authenticated-identity",
+        "server-side-identity-routing",
+        "exact-private-destination-allow",
+        "ordinary-identity-private-deny",
+        "independent-health"
+      ]
+    }
+  }
+}
