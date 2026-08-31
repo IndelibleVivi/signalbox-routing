@@ -1,0 +1,52 @@
+name: Signalbox Verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: verify-python-${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install verification dependencies
+        run: python -m pip install --requirement requirements-dev.txt
+
+      - name: Verify contracts and regressions
+        run: make verify PYTHON=python
+
+      - name: Check patch whitespace
+        run: git diff --check
+
+      - name: Confirm verification leaves the worktree unchanged
+        run: test -z "$(git status --short)"
+
+  required-gate:
+    name: signalbox-verify
+    if: always()
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every Python verification job
+        env:
+          VERIFY_RESULT: ${{ needs.verify.result }}
+        run: test "$VERIFY_RESULT" = "success"

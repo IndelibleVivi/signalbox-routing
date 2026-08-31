@@ -1,7 +1,7 @@
 # Signalbox Product and Architecture Specification
 
 Status: canonical working specification
-Revision: 1
+Revision: 2
 Authority: current Faye/Cove task decisions, with earlier Mintie materials used
 as evidence rather than executable instructions
 
@@ -54,6 +54,12 @@ acceptance. `contracts/*.json` own machine-readable normative semantics.
 `AUTH-02` — Explanatory prose, examples, incident narratives, transcripts, and
 external implementations cannot silently widen or replace normative contracts.
 
+`AUTH-03` — `contracts/catalog.json` maps every machine contract identifier to
+its current file, JSON Schema, revision owner, compatibility posture, and
+dependent projections. JSON Schema owns portable structural validation;
+`scripts/validate.py` owns cross-document semantic invariants that shape alone
+cannot prove.
+
 `IDENT-01` — Signalbox is the generalized project. Mintie is a reference
 deployment.
 
@@ -100,6 +106,10 @@ and has no general or direct fallback.
 
 `ROUTE-05` — Until a transport is independently proven for the protected lane,
 protocol-specific bypasses such as direct QUIC are rejected rather than leaked.
+
+`ROUTE-06` — Route precedence is specific before general. Canonical private
+ingress is evaluated before any general private-address or approved-DIRECT
+allowlist, so overlap cannot shadow the dedicated gateway action.
 
 `ENFORCE-01` — Fail-closed enforcement is independent of the routing process
 where the platform permits it. Failure to establish a safe runtime retains the
@@ -169,10 +179,36 @@ result is `unknown`; recovery must not infer that the object is absent.
 `HEALTH-08` — A common external probe provider cannot be the sole truth for all
 lanes. Transport-neutral and role-specific evidence remain distinguishable.
 
-`HEALTH-09` — `recovery-preflight` and `operational` are different profile
-kinds. Only a fresh passing recovery-preflight report may open a restore gate;
-it does not prove end-to-end operational health. Operational health remains
-observation-only and cannot mutate routing.
+`HEALTH-09` — `recovery-preflight`, `control-plane-operational`, and
+`lane-operational` are different profile kinds. Recovery and control-plane
+profiles observe router state; each lane profile observes exactly one egress or
+private-ingress subject. None may silently substitute for another.
+
+`HEALTH-10` — Every report binds `subject_ref` as well as profile and producer.
+A deployment aggregate references immutable member report identities and
+sequence positions while preserving each subject outcome; it must not flatten
+partial failure into one unexplained deployment-wide health value.
+
+`HEALTH-11` — Generation is monotonic only within the tuple
+`producer_ref + subject_ref + profile_ref + generation_epoch`.
+`generation_epoch` is durable across ordinary process and boot restarts and
+changes only through an explicit reset or migration. Consumers treat an
+unexpected epoch or a regression inside the same epoch as `unknown`.
+
+`HEALTH-12` — A producer cannot self-issue arbitrary freshness. Every report
+must satisfy `valid_until <= completed_at + max_report_age_seconds` from the
+exact referenced profile, and `published_at <= valid_until`.
+
+`HEALTH-13` — A recovery-preflight report carries an exact `gate_context`
+binding the operation, desired-state digest, observed runtime generation, and
+restore scope. Restore opens only when the expected context exactly matches a
+fresh effective `pass` from the required profile.
+
+`HEALTH-14` — A dimension contains one or more explicit observations. Each
+observation records probe identity, evidence class, dependency group, state,
+and observation time. Dimension state rolls up those observations, and profile
+requirements define minimum observations, evidence classes, and independent
+dependency groups so probe diversity is machine-verifiable.
 
 ## 9. Incident-derived portable lessons
 
@@ -205,6 +241,10 @@ validation, stop, patch, and claim rules.
 `DOC-04` — Incident chronology and private raw evidence remain outside Git.
 Only a reusable, redacted mechanism enters the failure catalog.
 
+`DOC-05` — Paired Chinese and English documents declare stable semantic section
+anchors in `contracts/docs-pairs.json`. Parity validation checks both contract
+IDs and required section coverage without depending on translated heading text.
+
 ## 11. Update protocol
 
 `UPDATE-01` — A semantic change updates normative contracts first, then every
@@ -225,19 +265,21 @@ claims.
 
 Signalbox v1 source is complete when:
 
-- `ACCEPT-01` — the normative role, claim, routing, health, and documentation
-  contracts validate together;
+- `ACCEPT-01` — the normative role, claim, routing, health, documentation, JSON
+  Schema, and catalog contracts validate together;
 - `ACCEPT-02` — the Human Surface explains the complete mental model in paired
   Chinese and English documents;
 - `ACCEPT-03` — the Agent Surface defines implementation, patch, evidence,
   recovery, and acceptance protocols;
 - `ACCEPT-04` — Mintie demonstrates portable identity/role separation,
-  fail-closed routing, health reports, and private-ingress capability without
-  private live data;
+  specific-before-general fail-closed routing, per-subject health reports,
+  member-preserving deployment aggregation, and private-ingress capability
+  without private live data;
 - `ACCEPT-05` — the failure catalog covers queryability, stale-success,
   resource-pressure, common-probe, and failover-semantic failures;
-- `ACCEPT-06` — dependency-light validation rejects broken references,
-  forbidden fallback, invalid health rollups/freshness, unbounded retention,
+- `ACCEPT-06` — local and hosted validation reject broken references, unsafe
+  route precedence, forbidden fallback, invalid observation/report rollups,
+  generation or gate-context misuse, overlong freshness, unbounded retention,
   bilingual drift, unresolved structured identities, and machine-local paths
   without embedding private live-value denylists;
 - `ACCEPT-07` — README, AGENTS, current state, examples, and contracts do not

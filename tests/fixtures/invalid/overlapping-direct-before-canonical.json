@@ -1,0 +1,18 @@
+{
+  "case": "overlapping broad DIRECT shadows canonical private ingress",
+  "overlap": {
+    "direct_set": "approved-private-destinations",
+    "canonical_origin_set": "approved-canonical-origin-set"
+  },
+  "route_ids": [
+    "protocol-observation",
+    "dns-capture",
+    "private-direct",
+    "approved-direct",
+    "canonical-private-ingress",
+    "protected-udp-policy",
+    "protected-application",
+    "default-proxy-required"
+  ],
+  "expected_error": "canonical private ingress must precede private-direct"
+}

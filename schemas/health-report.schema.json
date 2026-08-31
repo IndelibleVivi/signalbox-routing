@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:signalbox:schema:health-report:v2",
+  "title": "Signalbox subject-bound health report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "id",
+    "profile_ref",
+    "profile_revision",
+    "producer_ref",
+    "subject_ref",
+    "generation_epoch",
+    "generation",
+    "attempt_id",
+    "started_at",
+    "completed_at",
+    "published_at",
+    "valid_until",
+    "outcome",
+    "dimensions"
+  ],
+  "properties": {
+    "schema": {"const": "signalbox.health-report/v2"},
+    "id": {"type": "string", "minLength": 1},
+    "profile_ref": {"type": "string", "minLength": 1},
+    "profile_revision": {"type": "integer", "minimum": 1},
+    "producer_ref": {"type": "string", "minLength": 1},
+    "subject_ref": {"type": "string", "minLength": 1},
+    "generation_epoch": {"type": "string", "minLength": 1},
+    "generation": {"type": "integer", "minimum": 1},
+    "attempt_id": {"type": "string", "minLength": 1},
+    "started_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"type": "string", "format": "date-time"},
+    "published_at": {"type": "string", "format": "date-time"},
+    "valid_until": {"type": "string", "format": "date-time"},
+    "outcome": {"$ref": "#/$defs/outcome"},
+    "gate_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation_ref",
+        "desired_state_digest",
+        "observed_runtime_generation",
+        "restore_scope_ref"
+      ],
+      "properties": {
+        "operation_ref": {"type": "string", "minLength": 1},
+        "desired_state_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "observed_runtime_generation": {"type": "string", "minLength": 1},
+        "restore_scope_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "dimensions": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/dimension"}
+    }
+  },
+  "$defs": {
+    "outcome": {"enum": ["pass", "fail", "unknown"]},
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["probe_ref", "evidence_class", "dependency_group", "state", "observed_at"],
+      "properties": {
+        "probe_ref": {"type": "string", "minLength": 1},
+        "evidence_class": {"type": "string", "minLength": 1},
+        "dependency_group": {"type": "string", "minLength": 1},
+        "state": {"$ref": "#/$defs/outcome"},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "reason_code": {"type": "string", "minLength": 1},
+        "metrics": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": ["string", "number", "integer", "boolean"]
+          }
+        }
+      }
+    },
+    "dimension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "observations"],
+      "properties": {
+        "state": {"$ref": "#/$defs/outcome"},
+        "reason_code": {"type": "string", "minLength": 1},
+        "observations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/observation"}
+        }
+      }
+    }
+  }
+}

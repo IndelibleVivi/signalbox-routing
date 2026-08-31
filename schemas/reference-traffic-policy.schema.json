@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:signalbox:schema:reference-traffic-policy:v2",
+  "title": "Signalbox Mintie reference traffic policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "contract_revision",
+    "deployment_ref",
+    "protected_scope",
+    "health_profile_refs",
+    "route_order",
+    "failure_behavior"
+  ],
+  "properties": {
+    "schema": {"const": "signalbox.reference-traffic-policy/v2"},
+    "contract_revision": {"type": "integer", "minimum": 2},
+    "deployment_ref": {"type": "string", "minLength": 1},
+    "protected_scope": {"type": "string", "minLength": 1},
+    "health_profile_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recovery_preflight", "control_plane", "lanes"],
+      "properties": {
+        "recovery_preflight": {"type": "string", "minLength": 1},
+        "control_plane": {"type": "string", "minLength": 1},
+        "lanes": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "route_order": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/route"}
+    },
+    "failure_behavior": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "on_fail", "on_unknown"],
+      "properties": {
+        "mode": {"const": "fail-closed"},
+        "on_fail": {"const": "retain-guard"},
+        "on_unknown": {"const": "retain-guard"}
+      }
+    }
+  },
+  "$defs": {
+    "match": {
+      "oneOf": [
+        {"type": "string", "minLength": 1},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "set_ref"],
+          "properties": {
+            "kind": {"const": "explicit-allowlist"},
+            "set_ref": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    },
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "role_binding_ref"],
+      "properties": {
+        "mode": {"const": "pinned"},
+        "role_binding_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "action"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "action": {"type": "string", "minLength": 1},
+        "match": {"$ref": "#/$defs/match"},
+        "gateway_binding_ref": {"type": "string", "minLength": 1},
+        "canonical_origin_ref": {"type": "string", "minLength": 1},
+        "role_binding_ref": {"type": "string", "minLength": 1},
+        "selection": {"$ref": "#/$defs/selection"}
+      }
+    }
+  }
+}

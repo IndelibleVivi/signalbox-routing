@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:signalbox:schema:acceptance-record:v1",
+  "title": "Signalbox acceptance-record contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "decisions",
+    "required_fields",
+    "can_upgrade_realization_stage",
+    "is_current_path_proof"
+  ],
+  "properties": {
+    "schema": {"const": "signalbox.acceptance-record/v1"},
+    "decisions": {
+      "type": "array",
+      "minItems": 3,
+      "uniqueItems": true,
+      "items": {"enum": ["accepted", "rejected", "revoked"]}
+    },
+    "required_fields": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "can_upgrade_realization_stage": {"const": false},
+    "is_current_path_proof": {"const": false}
+  }
+}

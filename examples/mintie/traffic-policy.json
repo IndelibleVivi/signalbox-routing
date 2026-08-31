@@ -1,11 +1,18 @@
 {
-  "schema": "signalbox.reference-traffic-policy/v1",
-  "contract_revision": 1,
+  "schema": "signalbox.reference-traffic-policy/v2",
+  "contract_revision": 2,
   "deployment_ref": "deployment.json",
   "protected_scope": "sample-main-network",
   "health_profile_refs": {
     "recovery_preflight": "mintie-recovery-preflight",
-    "operational": "mintie-operational"
+    "control_plane": "mintie-control-plane-operational",
+    "lanes": {
+      "alder": "mintie-egress-alder",
+      "rowan": "mintie-egress-rowan",
+      "hearth": "mintie-egress-hearth",
+      "alder-private": "mintie-private-alder",
+      "rowan-private": "mintie-private-rowan"
+    }
   },
   "route_order": [
     {
@@ -17,12 +24,11 @@
       "action": "capture-client-dns"
     },
     {
-      "id": "private-direct",
-      "match": {
-        "kind": "explicit-allowlist",
-        "set_ref": "approved-private-destinations"
-      },
-      "action": "direct"
+      "id": "canonical-private-ingress",
+      "match": "approved-canonical-origin-set",
+      "action": "private-ingress",
+      "gateway_binding_ref": "alder-private",
+      "canonical_origin_ref": "sample-app"
     },
     {
       "id": "protected-udp-policy",
@@ -36,19 +42,20 @@
       "role_binding_ref": "hearth"
     },
     {
+      "id": "private-direct",
+      "match": {
+        "kind": "explicit-allowlist",
+        "set_ref": "approved-private-destinations"
+      },
+      "action": "direct"
+    },
+    {
       "id": "approved-direct",
       "match": {
         "kind": "explicit-allowlist",
         "set_ref": "deployment-approved-direct-set"
       },
       "action": "direct"
-    },
-    {
-      "id": "canonical-private-ingress",
-      "match": "approved-canonical-origin-set",
-      "action": "private-ingress",
-      "gateway_binding_ref": "alder-private",
-      "canonical_origin_ref": "sample-app"
     },
     {
       "id": "default-proxy-required",

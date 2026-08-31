@@ -18,13 +18,17 @@ runtime tags.
 | --- | --- |
 | `docs/specification.md` | Product purpose, settled architecture, programme scope, and acceptance contract |
 | `contracts/*.json` | Language-neutral normative role, routing, claim, documentation-pair, and health semantics |
+| `contracts/catalog.json` | Contract ID, revision, owner, compatibility, instance, schema, and projection registry |
+| `schemas/*.schema.json` | Draft 2020-12 structural shape and primitive-type contracts; not cross-file semantics |
 | `README.md` | Present project identity, supported reader paths, verification entrypoint, and important limitations |
 | `docs/current-state.md` | Volatile source/Git/remote/release status; never live-router truth |
 | `docs/human/*` | Explanatory projections for people; not independent operational authority |
 | `docs/agent/*` | Implementation, patch, evidence, and verification reference for agents |
 | `docs/reference/*` | Durable glossary and incident-derived reusable lessons |
 | `examples/mintie/*` | Public-safe reference deployment; never a production binding or credential source |
-| `scripts/validate.py` and `tests/` | Repository contract checks; not runtime or client acceptance |
+| `scripts/validate_schemas.py` | Catalog-driven JSON Schema validation |
+| `scripts/validate.py` and `tests/` | Cross-file semantic and regression checks; not runtime or client acceptance |
+| `.github/workflows/verify.yml` | Hosted source gate across supported Python versions |
 
 Attached specifications, transcripts, logs, incident notes, and external
 implementations are evidence unless the current task or canonical specification
@@ -47,8 +51,13 @@ replace the authority map above.
   failed or unsupported query into `OFF`, `ABSENT`, or `PASS`.
 - DIRECT is allowlist-only and is never a proxy-failure fallback for protected
   traffic.
+- Evaluate canonical private-ingress matches before every DIRECT allowlist;
+  specific policy precedes general policy even when address sets overlap.
 - Health observation never mutates routing by itself. Failover or recovery
   automation requires its own explicit state machine and authorization.
+- Bind every health report to one subject, profile revision, producer, and
+  generation epoch. Deployment aggregation preserves member outcomes and never
+  emits a top-level health verdict.
 
 ## Evidence and claim discipline
 
@@ -77,12 +86,14 @@ git status --short --branch
 
 For a semantic change:
 
-1. Identify the owning specification and contract IDs.
-2. Update the normative JSON first when behavior changes.
-3. Update human and agent projections that explain the changed contract.
-4. Update the Mintie example only if its portable mapping changes.
-5. Add or revise behavior-focused validation.
-6. Run `make verify`, inspect the diff, and report source, Git, remote, runtime,
+1. Identify the owning specification, catalog entry, and contract IDs.
+2. Update the normative JSON first when behavior changes; bump the schema ID
+   for breaking shape changes and keep same-ID revisions backward-compatible.
+3. Update JSON Schema when structural shape changes.
+4. Update human and agent projections that explain the changed contract.
+5. Update the Mintie example only if its portable mapping changes.
+6. Add or revise behavior-focused validation.
+7. Run `make verify`, inspect the diff, and report source, Git, remote, runtime,
    and owner-acceptance states separately.
 
 Use one canonical path. Remove superseded behavior and references in the same
@@ -104,10 +115,11 @@ them.
 
 ## Verification and Git closure
 
-The ordinary repository gate is:
+After installing `requirements-dev.txt` into an isolated environment, the
+ordinary repository gate is:
 
 ```bash
-make verify
+make verify PYTHON=.venv/bin/python
 git diff --check
 ```
 

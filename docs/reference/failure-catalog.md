@@ -64,3 +64,36 @@ or current live-system truth.
 - Portable response: reserve identity, seal the binding for an operation, and
   revalidate it before mutation. Keep exact identities outside Signalbox.
 - Protecting contracts: `IDENT-02`, `UPDATE-03`.
+
+## `FAIL-007` — General DIRECT shadows canonical private ingress
+
+- First broken boundary: ordered route precedence.
+- Pattern: a private-address or approved-direct allowlist is evaluated before
+  the more specific canonical-origin private-ingress match.
+- Unsafe interpretation: independently reasonable sets are assumed never to
+  overlap, so rule order does not matter.
+- Portable response: evaluate canonical private ingress before every DIRECT
+  class and retain overlap/order negative tests.
+- Protecting contracts: `ROUTE-02`, `ROUTE-06`, `PRIVATE-01`.
+
+## `FAIL-008` — One deployment report hides a broken lane
+
+- First broken boundary: observation subject identity.
+- Pattern: one transport and exit result is labelled as health for a deployment
+  containing several independent egress and private-ingress lanes.
+- Unsafe interpretation: one green lane means all lanes are green, or one
+  failure becomes an unexplained deployment-wide red bit.
+- Portable response: bind reports to one control plane or lane and aggregate by
+  immutable member reference without a top-level outcome.
+- Protecting contracts: `HEALTH-09`, `HEALTH-10`.
+
+## `FAIL-009` — A fresh PASS escapes its sequence or restore scope
+
+- First broken boundary: evidence identity and recovery authorization.
+- Pattern: generation is compared globally, producer chooses unbounded
+  `valid_until`, or a recovery pass for one desired state is reused for another.
+- Unsafe interpretation: a larger number or recent timestamp makes any report
+  current and authorizes restore.
+- Portable response: scope generation by producer, subject, profile, and durable
+  epoch; bind freshness to the profile; exact-match restore gate context.
+- Protecting contracts: `HEALTH-11`, `HEALTH-12`, `HEALTH-13`.

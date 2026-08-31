@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:signalbox:schema:traffic-policy:v2",
+  "title": "Signalbox portable traffic policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "contract_revision",
+    "routing_owner_role",
+    "route_precedence",
+    "direct_action",
+    "protected_scope",
+    "default_proxy_required",
+    "protected_application",
+    "private_ingress"
+  ],
+  "properties": {
+    "schema": {"const": "signalbox.traffic-policy/v2"},
+    "contract_revision": {"type": "integer", "minimum": 2},
+    "routing_owner_role": {"type": "string", "minLength": 1},
+    "route_precedence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["specific_before_general", "canonical_private_ingress_before_direct"],
+      "properties": {
+        "specific_before_general": {"const": true},
+        "canonical_private_ingress_before_direct": {"const": true}
+      }
+    },
+    "direct_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed_match_kind", "allowed_as_default", "allowed_on_proxy_failure"],
+      "properties": {
+        "allowed_match_kind": {"const": "explicit-allowlist"},
+        "allowed_as_default": {"const": false},
+        "allowed_on_proxy_failure": {"const": false}
+      }
+    },
+    "protected_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "failure_mode",
+        "management_path_must_survive",
+        "query_failure_outcome",
+        "restore_requires_fresh_profile_kind",
+        "operational_profile_kinds",
+        "on_operational_fail",
+        "on_operational_unknown"
+      ],
+      "properties": {
+        "failure_mode": {"const": "fail-closed"},
+        "management_path_must_survive": {"const": true},
+        "query_failure_outcome": {"const": "unknown"},
+        "restore_requires_fresh_profile_kind": {"const": "recovery-preflight"},
+        "operational_profile_kinds": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {"enum": ["control-plane-operational", "lane-operational"]}
+        },
+        "on_operational_fail": {"const": "retain-guard"},
+        "on_operational_unknown": {"const": "retain-guard"}
+      }
+    },
+    "default_proxy_required": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selection", "secondary_role", "automatic_failover"],
+      "properties": {
+        "selection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "role"],
+          "properties": {
+            "mode": {"const": "pinned"},
+            "role": {"type": "string", "minLength": 1}
+          }
+        },
+        "secondary_role": {"type": "string", "minLength": 1},
+        "automatic_failover": {"const": false}
+      }
+    },
+    "protected_application": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "optimization_target", "accepted_costs", "udp_443_policy"],
+      "properties": {
+        "role": {"type": "string", "minLength": 1},
+        "optimization_target": {"const": "recall"},
+        "accepted_costs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "udp_443_policy": {"const": "reject-until-verified"}
+      }
+    },
+    "private_ingress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "primary_role",
+        "secondary_role",
+        "canonical_origin_preserved",
+        "dedicated_identity_required",
+        "general_egress_role_equivalence",
+        "automatic_failover"
+      ],
+      "properties": {
+        "primary_role": {"type": "string", "minLength": 1},
+        "secondary_role": {"type": "string", "minLength": 1},
+        "canonical_origin_preserved": {"const": true},
+        "dedicated_identity_required": {"const": true},
+        "general_egress_role_equivalence": {"const": false},
+        "automatic_failover": {"const": false}
+      }
+    }
+  }
+}

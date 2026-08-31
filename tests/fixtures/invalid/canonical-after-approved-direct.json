@@ -1,0 +1,14 @@
+{
+  "case": "canonical private ingress after approved DIRECT",
+  "route_ids": [
+    "protocol-observation",
+    "dns-capture",
+    "protected-udp-policy",
+    "protected-application",
+    "private-direct",
+    "approved-direct",
+    "canonical-private-ingress",
+    "default-proxy-required"
+  ],
+  "expected_error": "canonical private ingress must precede approved-direct"
+}

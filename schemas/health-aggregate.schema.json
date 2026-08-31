@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:signalbox:schema:health-aggregate:v1",
+  "title": "Signalbox member-preserving deployment health aggregate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "deployment_ref", "assembled_at", "members", "summary"],
+  "properties": {
+    "schema": {"const": "signalbox.health-aggregate/v1"},
+    "id": {"type": "string", "minLength": 1},
+    "deployment_ref": {"type": "string", "minLength": 1},
+    "assembled_at": {"type": "string", "format": "date-time"},
+    "members": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "subject_ref",
+          "report_ref",
+          "report_id",
+          "profile_ref",
+          "profile_revision",
+          "producer_ref",
+          "generation_epoch",
+          "generation",
+          "effective_outcome"
+        ],
+        "properties": {
+          "subject_ref": {"type": "string", "minLength": 1},
+          "report_ref": {"type": "string", "minLength": 1},
+          "report_id": {"type": "string", "minLength": 1},
+          "profile_ref": {"type": "string", "minLength": 1},
+          "profile_revision": {"type": "integer", "minimum": 1},
+          "producer_ref": {"type": "string", "minLength": 1},
+          "generation_epoch": {"type": "string", "minLength": 1},
+          "generation": {"type": "integer", "minimum": 1},
+          "effective_outcome": {"enum": ["pass", "fail", "unknown"]}
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["member_count", "pass", "fail", "unknown"],
+      "properties": {
+        "member_count": {"type": "integer", "minimum": 0},
+        "pass": {"type": "integer", "minimum": 0},
+        "fail": {"type": "integer", "minimum": 0},
+        "unknown": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

@@ -3,9 +3,10 @@ doc_id: signalbox.human.start-here
 language: en
 status: foundation-explanatory
 authority: ../../specification.md
-contract_revision: 1
+contract_revision: 2
 ---
 
+<a id="proxy-layer-model"></a>
 # Start here: move proxy selection to the router
 
 Signalbox is not primarily about which proxy port an application should use.
@@ -24,6 +25,7 @@ awareness. It also gives the control plane more responsibility for DNS,
 routing, failure semantics, observation, and recovery. Router transparency is
 valuable when that centralized policy remains understandable and verifiable.
 
+<a id="identity-namespaces"></a>
 ## Keep three namespaces separate
 
 `IDENT-02`
@@ -38,6 +40,7 @@ Mintie is the reference deployment, not another name for Signalbox. She gives
 the guide one complete topology without turning a private live network into a
 portable constant.
 
+<a id="realization-and-acceptance"></a>
 ## One green light proves one layer; acceptance is separate
 
 `CLAIM-01`
@@ -60,6 +63,7 @@ SOURCE -> INSTALLED -> ACTIVATED -> PATH-EVIDENCE
 If a layer cannot be queried, its outcome is `unknown`. Query failure is not
 evidence that a rule is absent or a subsystem is off.
 
+<a id="fail-closed"></a>
 ## Fail closed is a policy, not an outage shortcut
 
 `ROUTE-02`
@@ -72,19 +76,28 @@ instead of silently degrading to the raw WAN.
 That contract also requires an independent management or break-glass path. A
 diagnostic actor must not depend exclusively on the path it is repairing.
 
+<a id="health-model"></a>
 ## Health is more than opening a page
 
-`HEALTH-01`
+`HEALTH-01` `HEALTH-10` `HEALTH-14`
 
 Signalbox separates transport, exit identity, DNS, control plane, enforcement,
 resources, persistence, and recovery readiness. A `HealthProfile` says what to
 observe; every attempt publishes an immutable `HealthReport`. Once a successful
-report passes `valid_until`, regresses in generation, or mismatches the expected
+report passes `valid_until`, regresses within its producer/subject/profile/epoch
+generation scope, changes epoch unexpectedly, or mismatches the expected
 profile revision, its effective outcome is `unknown`.
 
 A `recovery-preflight` profile asks only whether state can be queried,
-reconciled, and restored safely. The `operational` profile covers the complete
-path. Neither profile selects or mutates routes.
+reconciled, and restored safely for one exact operation and desired-state
+digest. Operational health is split into one control-plane report and one
+report per egress or private-ingress lane. An aggregate preserves those member
+outcomes; it never flattens them into a single green network status.
+
+Each dimension is rolled up from explicit observations. A lane transport pass
+needs both a transport-neutral probe and a role-specific probe from independent
+dependency groups. Neither a profile, report, nor aggregate selects or mutates
+routes.
 
 A cold-boot incident provides the key example: a route table may be logically
 empty while the platform cannot query it reliably. Recovery then has no basis

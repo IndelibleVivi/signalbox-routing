@@ -1,6 +1,6 @@
 {
-  "schema": "signalbox.docs-pairs/v1",
-  "contract_revision": 1,
+  "schema": "signalbox.docs-pairs/v2",
+  "contract_revision": 2,
   "pairs": [
     {
       "doc_id": "signalbox.human.start-here",
@@ -11,7 +11,16 @@
         "IDENT-02",
         "CLAIM-01",
         "ROUTE-02",
-        "HEALTH-01"
+        "HEALTH-01",
+        "HEALTH-10",
+        "HEALTH-14"
+      ],
+      "required_sections": [
+        "proxy-layer-model",
+        "identity-namespaces",
+        "realization-and-acceptance",
+        "fail-closed",
+        "health-model"
       ]
     },
     {
@@ -21,9 +30,18 @@
       "required_contract_ids": [
         "ROUTE-01",
         "ROUTE-04",
+        "ROUTE-06",
         "ENFORCE-01",
         "PRIVATE-01",
-        "HEALTH-07"
+        "HEALTH-07",
+        "HEALTH-10"
+      ],
+      "required_sections": [
+        "packet-path",
+        "protected-lane",
+        "enforcement-boundary",
+        "canonical-private-ingress",
+        "recovery-readiness"
       ]
     }
   ]

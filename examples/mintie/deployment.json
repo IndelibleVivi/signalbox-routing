@@ -1,6 +1,6 @@
 {
-  "schema": "signalbox.reference-deployment/v1",
-  "contract_revision": 1,
+  "schema": "signalbox.reference-deployment/v2",
+  "contract_revision": 2,
   "deployment_id": "mintie",
   "display_name": "Mintie",
   "sample_only": true,
@@ -52,6 +52,33 @@
       "private_path_optional": true
     }
   },
+  "health_subjects": {
+    "control-plane/mintie": {
+      "kind": "control-plane",
+      "binding_ref": "mintie"
+    },
+    "role-binding/alder": {
+      "kind": "egress-lane",
+      "binding_ref": "alder"
+    },
+    "role-binding/rowan": {
+      "kind": "egress-lane",
+      "binding_ref": "rowan"
+    },
+    "role-binding/hearth": {
+      "kind": "egress-lane",
+      "binding_ref": "hearth"
+    },
+    "gateway/alder-private": {
+      "kind": "private-ingress-lane",
+      "binding_ref": "alder-private"
+    },
+    "gateway/rowan-private": {
+      "kind": "private-ingress-lane",
+      "binding_ref": "rowan-private"
+    }
+  },
   "traffic_policy_ref": "traffic-policy.json",
-  "health_profiles_ref": "health-profiles.json"
+  "health_profiles_ref": "health-profiles.json",
+  "health_aggregate_ref": "health-aggregate.json"
 }

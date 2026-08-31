@@ -1,0 +1,29 @@
+{
+  "schema": "signalbox.health-report/v2",
+  "id": "report-recovery-preflight-pass-42",
+  "profile_ref": "mintie-recovery-preflight",
+  "profile_revision": 2,
+  "producer_ref": "reference/mintie-observer",
+  "subject_ref": "control-plane/mintie",
+  "generation_epoch": "sample-epoch-alpha",
+  "generation": 42,
+  "attempt_id": "attempt-recovery-preflight-42",
+  "started_at": "2026-08-31T10:00:00Z",
+  "completed_at": "2026-08-31T10:00:08Z",
+  "published_at": "2026-08-31T10:00:09Z",
+  "valid_until": "2026-08-31T10:05:00Z",
+  "outcome": "pass",
+  "gate_context": {
+    "operation_ref": "operation/sample-restore-001",
+    "desired_state_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "observed_runtime_generation": "runtime/sample-041",
+    "restore_scope_ref": "control-plane/mintie"
+  },
+  "dimensions": {
+    "control-plane": {"state": "pass", "observations": [{"probe_ref": "loaded-state", "evidence_class": "process-and-loaded-state", "dependency_group": "router-runtime", "state": "pass", "observed_at": "2026-08-31T10:00:01Z"}]},
+    "enforcement": {"state": "pass", "observations": [{"probe_ref": "kernel-guard", "evidence_class": "kernel-query", "dependency_group": "kernel-enforcement", "state": "pass", "observed_at": "2026-08-31T10:00:03Z"}]},
+    "resources": {"state": "pass", "observations": [{"probe_ref": "resource-envelope", "evidence_class": "resource-snapshot", "dependency_group": "router-runtime", "state": "pass", "observed_at": "2026-08-31T10:00:05Z"}]},
+    "persistence": {"state": "pass", "observations": [{"probe_ref": "boot-owners", "evidence_class": "owner-registration", "dependency_group": "boot-ownership", "state": "pass", "observed_at": "2026-08-31T10:00:07Z"}]},
+    "recovery-readiness": {"state": "pass", "observations": [{"probe_ref": "state-queryability", "evidence_class": "queryability", "dependency_group": "kernel-enforcement", "state": "pass", "observed_at": "2026-08-31T10:00:08Z"}]}
+  }
+}

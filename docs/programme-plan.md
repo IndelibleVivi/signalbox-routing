@@ -1,16 +1,26 @@
 # Signalbox Programme Plan
 
 Status: active
-Current execution tranche: Foundation 0.1 source closure
-Canonical specification: `docs/specification.md`, revision 1
-Normative companions: `contracts/*.json`
-Repository baseline: local Git repository initialized on 2026-08-31
+Current execution tranche: F0.2 remote and semantic hardening
+Canonical specification: `docs/specification.md`, revision 2
+Normative companions: `contracts/*.json`, `schemas/*.schema.json`
+Repository baseline: public canonical repository on `main`
 
 ## Goal and boundaries
 
 Build the full source reference described by `ACCEPT-01` through `ACCEPT-08`.
-This programme does not authorize a Git remote, public visibility, license,
-release, live-router access, installation, activation, or deployment.
+F0.2 includes source hardening, hosted source verification, and bounded GitHub
+authority settings for the already-public repository. It does not authorize a
+license, release, live-router access, installation, activation, or deployment.
+
+## Authorization history
+
+- F0 began as local source work and did not itself authorize a remote or public
+  visibility.
+- Faye separately authorized creation of the public GitHub repository on
+  2026-08-31; that completed gate is recorded in `docs/current-state.md`.
+- F0.2 may harden that existing public source and its repository settings. This
+  later authorization does not retroactively widen the original F0 boundary.
 
 ## Dependency order
 
@@ -18,6 +28,7 @@ release, live-router access, installation, activation, or deployment.
 identity and authority
   -> machine contracts
   -> validation model
+  -> remote and semantic hardening
   -> Human and Agent projections
   -> Mintie reference deployment
   -> incident and private-ingress depth
@@ -31,25 +42,38 @@ different phases. This plan ends at verified Signalbox source.
 
 | Acceptance | Intended outcome | Owning slice | Dependency / gate | Verification evidence | Status |
 | --- | --- | --- | --- | --- | --- |
-| `ACCEPT-01` | Normative contracts agree | F0 contracts | Identity settled | `scripts/validate.py`, contract tests | foundation-verified |
+| `ACCEPT-01` | Normative contracts agree | F0/F0.2 contracts | Identity settled | semantic validator, JSON Schema, contract tests | F0.2 in-progress |
 | `ACCEPT-02` | Paired Human Surface teaches the complete model | F1 human guide | F0 IDs and diagrams | doc-pair parity plus manual read | planned |
 | `ACCEPT-03` | Agent Surface defines implementation and evidence behavior | F2 agent reference | F0 contracts | required-ID and link validation | in-progress |
-| `ACCEPT-04` | Mintie is a portable, public-safe reference deployment | F3 Mintie example | F0 roles/routing/health | example validation and boundary scan | in-progress |
+| `ACCEPT-04` | Mintie is a portable, public-safe reference deployment | F0.2/F3 Mintie example | F0 roles/routing/health | example validation and boundary scan | F0.2 in-progress |
 | `ACCEPT-05` | Reusable failure mechanisms are retained | F4 failure depth | F0 health/evidence | failure-ID coverage | in-progress |
-| `ACCEPT-06` | Validation rejects meaningful contract drift | F0 validator and F5 hardening | F0 contracts | positive and negative unit tests | foundation-verified; F5 depth planned |
-| `ACCEPT-07` | Repository surfaces agree | F6 reconciliation | F1-F5 | `make verify`, links, diff review | foundation-verified; v1 reconciliation planned |
-| `ACCEPT-08` | External gates remain truthful | Every slice | Explicit owner authorization | current-state and final report | verified at current boundary |
+| `ACCEPT-06` | Validation rejects meaningful contract drift | F0.2 validator and F5 hardening | F0 contracts | positive and negative tests plus hosted gate | F0.2 in-progress |
+| `ACCEPT-07` | Repository surfaces agree | F0.2/F6 reconciliation | Current slice | `make verify`, links, diff review | F0.2 in-progress |
+| `ACCEPT-08` | External gates remain truthful | Every slice | Explicit owner authorization | current-state and remote readback | F0.2 in-progress |
 
 ## Implementation slices
 
-### F0 — Foundation 0.1 (source complete)
+### F0 — Foundation 0.1 (`completed-at-source-boundary`)
 
 Deliver repository identity and authority, canonical specification, complete
 programme ledger, role/claim/routing/health/doc-pair contracts, dependency-free
 validator, regression fixtures, README, AGENTS, and current state.
 
 Stopping point reached: source contracts and entrypoints are usable and freshly
-verified. This is not full Signalbox v1; F1 is the next programme slice.
+verified and published. This was not full Signalbox v1.
+
+### F0.2 — Remote and semantic hardening (current)
+
+Protect the public source gate with hosted CI and a minimal `main` policy;
+repair publication-state authority; enforce specific-before-general private
+ingress; make health reports subject-scoped, sequence-scoped, restore-bound,
+and observation-complete; publish consumable JSON Schemas and a contract
+catalog; strengthen bilingual section parity; and remove unused GitHub
+documentation surfaces that could compete with repository authority.
+
+Stopping point: exact F0.2 source passes local and hosted verification, public
+`main` requires the named gate, GitHub settings match the authority contract,
+and exact remote readback agrees. This still does not complete F1 through F6.
 
 ### F1 — Complete Human Surface
 

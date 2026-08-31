@@ -6,11 +6,12 @@
 | --- | --- | --- |
 | Project and reference identity | `contracts/roles.json`, `examples/mintie/deployment.json` | `IDENT-01` to `IDENT-03` |
 | Realization and acceptance boundaries | `contracts/claims.json` | `CLAIM-01` to `CLAIM-03` |
-| Traffic actions and fallback | `contracts/traffic-policy.json` | `ROUTE-01` to `ROUTE-05` |
+| Traffic actions, precedence, and fallback | `contracts/traffic-policy.json` | `ROUTE-01` to `ROUTE-06` |
 | Enforcement and restore gates | `contracts/traffic-policy.json` | `ENFORCE-01`, `ENFORCE-02` |
 | Private ingress | roles plus traffic policy | `PRIVATE-01` to `PRIVATE-04` |
-| Health profiles and reports | `contracts/health-contract.json` | `HEALTH-01` to `HEALTH-09` |
-| Documentation parity | `contracts/docs-pairs.json` | `DOC-01` to `DOC-04` |
+| Health profiles, observations, reports, and aggregates | `contracts/health-contract.json` | `HEALTH-01` to `HEALTH-14` |
+| Documentation parity | `contracts/docs-pairs.json` | `DOC-01` to `DOC-05` |
+| Structural schemas and compatibility routing | `contracts/catalog.json`, `schemas/` | `AUTH-03` |
 
 ## Role binding and action rules
 
@@ -33,13 +34,17 @@ DIRECT                -> explicit-allowlist action; never a role or fallback
 - Protected scope failure mode is `fail-closed`.
 - Query failure produces `unknown`.
 - DIRECT cannot be a default or proxy-failure fallback.
+- Canonical private ingress is evaluated before every DIRECT allowlist. A broad
+  private or approved-direct set may overlap but cannot shadow the more
+  specific gateway action.
 - The protected-application object structurally lacks fallback fields. Do not
   encode “none” in a field whose presence encourages consumers to implement a
   fallback mechanism.
 - Default general egress is pinned; a secondary role does not activate itself.
 - Private-ingress gateway capability is distinct from general egress.
-- A fresh passing `recovery-preflight` report may open a restore gate.
-  `operational` health cannot open that gate or mutate routing.
+- A fresh passing `recovery-preflight` report may open only the exact restore
+  gate named by its operation, desired-state digest, runtime generation, and
+  restore scope. Operational health cannot open that gate or mutate routing.
 
 An implementation may use different engines, transports, firewall backends,
 or policy-table identifiers. Those are deployment bindings unless a portable
@@ -51,16 +56,18 @@ contract depends on them.
 the purpose, required dimensions, schedule or triggers, freshness, publication,
 privacy, retention, and resource-threshold owner.
 
-`HealthReport` is an immutable observation conforming to
-`signalbox.health-report/v1`:
+`HealthReport` is an immutable, single-subject observation conforming to
+`signalbox.health-report/v2`:
 
 ```json
 {
-  "schema": "signalbox.health-report/v1",
+  "schema": "signalbox.health-report/v2",
   "id": "report-id",
   "profile_ref": "profile-id",
   "profile_revision": 1,
-  "producer_ref": "deployment-id",
+  "producer_ref": "observer-id",
+  "subject_ref": "role-binding/example",
+  "generation_epoch": "durable-epoch-id",
   "generation": 42,
   "attempt_id": "attempt-id",
   "started_at": "RFC3339 timestamp",
@@ -71,17 +78,32 @@ privacy, retention, and resource-threshold owner.
   "dimensions": {
     "transport": {
       "state": "pass | fail | unknown",
-      "evidence_class": "transport-neutral",
-      "observed_at": "RFC3339 timestamp",
-      "dependency_group": "neutral-transport"
+      "observations": [
+        {
+          "probe_ref": "neutral-https",
+          "evidence_class": "transport-neutral",
+          "dependency_group": "neutral-connectivity",
+          "state": "pass | fail | unknown",
+          "observed_at": "RFC3339 timestamp"
+        },
+        {
+          "probe_ref": "role-path",
+          "evidence_class": "role-specific",
+          "dependency_group": "role-policy",
+          "state": "pass | fail | unknown",
+          "observed_at": "RFC3339 timestamp"
+        }
+      ]
     }
   }
 }
 ```
 
-Every dimension required by the referenced profile is present. A failing or
-unknown dimension adds a privacy-safe `reason_code`; a passing dimension must
-not. Reports may add bounded coarse metrics, but never forbidden durable keys.
+Every dimension required by the referenced profile is present. Its state rolls
+up explicit observations. Failing or unknown observations add a privacy-safe
+`reason_code`; passing observations do not. Profile requirements enforce
+minimum observations, evidence classes, and dependency groups. Reports may add
+bounded coarse metrics, but never forbidden durable keys.
 
 Rollup order is:
 
@@ -92,9 +114,17 @@ else              -> outcome pass
 ```
 
 Every attempt publishes a terminal report using atomic replacement of the
-current pointer. Failed and unknown attempts advance generation. After
-`valid_until`, after a generation regression, or under a profile revision
-mismatch, effective outcome is `unknown` regardless of recorded `outcome`.
+current pointer. Failed and unknown attempts advance generation. Generation is
+monotonic only inside `producer_ref + subject_ref + profile_ref +
+generation_epoch`; an epoch changes only through explicit reset or migration.
+After profile-bounded `valid_until`, a same-epoch regression, an unexpected
+epoch, subject/profile mismatch, or profile revision mismatch, effective
+outcome is `unknown` regardless of recorded `outcome`.
+
+Operational profiles bind the control plane and each lane separately. A
+deployment aggregate references immutable report identity and generation for
+every subject, preserves each effective outcome, excludes recovery-preflight,
+and has no top-level `outcome`.
 
 ## Recovery-readiness semantics
 
@@ -105,6 +135,10 @@ reconcile the state it intends to restore. It includes:
 - ownership of durable desired state;
 - ability to distinguish verified `OFF` from `UNKNOWN`;
 - a named recovery outcome when postconditions cannot be established.
+
+Its `gate_context` binds `operation_ref`, `desired_state_digest`,
+`observed_runtime_generation`, and `restore_scope_ref`. A fresh pass for one
+context cannot authorize a different restore.
 
 Platform-specific table warm-up, module loading, or listener initialization
 may satisfy the contract, but those mechanisms do not become portable

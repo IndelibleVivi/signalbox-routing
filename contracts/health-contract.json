@@ -1,6 +1,6 @@
 {
-  "schema": "signalbox.health-contract/v1",
-  "contract_revision": 1,
+  "schema": "signalbox.health-contract/v2",
+  "contract_revision": 2,
   "transient_outcomes": [
     "checking"
   ],
@@ -23,30 +23,55 @@
         "persistence",
         "recovery-readiness"
       ],
+      "observation_scope": "single-control-plane",
       "may_gate_restore": true,
-      "proves_operational_health": false
+      "may_feed_deployment_aggregate": false
     },
-    "operational": {
+    "control-plane-operational": {
       "required_dimensions": [
-        "transport",
-        "exit-identity",
-        "dns",
         "control-plane",
         "enforcement",
         "resources",
         "persistence",
         "recovery-readiness"
       ],
+      "observation_scope": "single-control-plane",
       "may_gate_restore": false,
-      "proves_operational_health": true
+      "may_feed_deployment_aggregate": true
+    },
+    "lane-operational": {
+      "required_dimensions": [
+        "transport",
+        "exit-identity",
+        "dns"
+      ],
+      "observation_scope": "single-lane",
+      "may_gate_restore": false,
+      "may_feed_deployment_aggregate": true
     }
   },
+  "required_profile_fields": [
+    "id",
+    "revision",
+    "kind",
+    "subject_ref",
+    "observation_only",
+    "required_dimensions",
+    "probe_requirements",
+    "aggregation",
+    "freshness",
+    "publication",
+    "retention",
+    "privacy"
+  ],
   "required_report_fields": [
     "schema",
     "id",
     "profile_ref",
     "profile_revision",
     "producer_ref",
+    "subject_ref",
+    "generation_epoch",
     "generation",
     "attempt_id",
     "started_at",
@@ -58,27 +83,53 @@
   ],
   "required_dimension_fields": [
     "state",
+    "observations"
+  ],
+  "required_observation_fields": [
+    "probe_ref",
     "evidence_class",
-    "observed_at",
-    "dependency_group"
+    "dependency_group",
+    "state",
+    "observed_at"
   ],
-  "required_dimensions": [
-    "transport",
-    "exit-identity",
-    "dns",
-    "control-plane",
-    "enforcement",
-    "resources",
-    "persistence",
-    "recovery-readiness"
-  ],
+  "generation": {
+    "scope_fields": [
+      "producer_ref",
+      "subject_ref",
+      "profile_ref",
+      "generation_epoch"
+    ],
+    "monotonic_within_scope": true,
+    "epoch_durable_across_process_and_boot_restart": true,
+    "epoch_change_requires": "explicit-reset-or-migration",
+    "unexpected_epoch_effective_outcome": "unknown",
+    "regression_effective_outcome": "unknown"
+  },
   "freshness": {
     "required": true,
     "basis": "valid_until",
+    "maximum_formula": "valid_until <= completed_at + profile.max_report_age_seconds",
+    "published_before_or_at_valid_until": true,
     "stale_effective_outcome": "unknown",
     "missing_or_malformed_effective_outcome": "unknown",
-    "generation_regression_effective_outcome": "unknown",
     "profile_revision_mismatch_effective_outcome": "unknown"
+  },
+  "recovery_gate": {
+    "profile_kind": "recovery-preflight",
+    "required_context_fields": [
+      "operation_ref",
+      "desired_state_digest",
+      "observed_runtime_generation",
+      "restore_scope_ref"
+    ],
+    "exact_context_match_required": true,
+    "required_effective_outcome": "pass"
+  },
+  "deployment_aggregate": {
+    "member_reports_immutable": true,
+    "preserve_per_subject_outcome": true,
+    "top_level_outcome_forbidden": true,
+    "recovery_preflight_members_forbidden": true
   },
   "publication": {
     "terminal_report_required_for_every_attempt": true,
@@ -120,6 +171,8 @@
     "missing-required-result",
     "malformed-evidence",
     "generation-regressed",
-    "profile-revision-mismatch"
+    "generation-epoch-mismatch",
+    "profile-revision-mismatch",
+    "gate-context-mismatch"
   ]
 }

@@ -22,13 +22,23 @@ activated to path evidence, or old path evidence to current path evidence.
 ## Health evidence checks
 
 - latest attempted generation has a terminal immutable `HealthReport`;
-- report identity, profile reference/revision, producer, and attempt are present;
-- timestamp order and `valid_until` are valid;
-- generation has not regressed;
+- report identity, profile reference/revision, producer, subject, epoch, and
+  attempt are present;
+- timestamp order is valid and `valid_until` stays inside the exact profile's
+  maximum report age;
+- generation has not regressed inside its producer/subject/profile/epoch scope,
+  and the expected epoch has not changed unexpectedly;
 - all dimensions required by that profile are present;
-- rollup matches dimension states;
-- failure and unknown use allowed privacy-safe reason codes;
+- every dimension contains the profile-required observations, evidence classes,
+  and independent dependency groups;
+- dimension rollups match observation states and report rollup matches
+  dimension states;
+- failing and unknown observations use allowed privacy-safe reason codes;
 - byte, archive, and entry retention are bounded;
 - forbidden durable keys are absent;
-- recovery-preflight and operational profiles are not substituted for one another;
+- operational reports stay per-subject; aggregates preserve every member and
+  have no top-level outcome;
+- recovery-preflight and operational profiles are not substituted for one
+  another, and a restore gate exact-matches operation, desired-state digest,
+  runtime generation, scope, and epoch;
 - observation remains separate from routing or recovery mutation.

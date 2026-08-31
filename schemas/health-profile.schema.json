@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:signalbox:schema:health-profile:v2",
+  "title": "Signalbox health profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "revision",
+    "kind",
+    "subject_ref",
+    "observation_only",
+    "triggers",
+    "required_dimensions",
+    "probe_requirements",
+    "aggregation",
+    "freshness",
+    "publication",
+    "retention",
+    "privacy"
+  ],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "revision": {"type": "integer", "minimum": 1},
+    "kind": {"enum": ["recovery-preflight", "control-plane-operational", "lane-operational"]},
+    "subject_ref": {"type": "string", "minLength": 1},
+    "observation_only": {"const": true},
+    "triggers": {"$ref": "#/$defs/stringSet"},
+    "run_interval_seconds": {"type": "integer", "minimum": 1},
+    "required_dimensions": {"$ref": "#/$defs/stringSet"},
+    "probe_requirements": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/probeRequirement"}
+    },
+    "aggregation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pass_when", "fail_when", "unknown_when"],
+      "properties": {
+        "pass_when": {"const": "all-required-pass"},
+        "fail_when": {"const": "any-required-fail"},
+        "unknown_when": {"const": "otherwise"}
+      }
+    },
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_report_age_seconds"],
+      "properties": {
+        "max_report_age_seconds": {"type": "integer", "minimum": 1}
+      }
+    },
+    "publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["current_write", "completed_attempt_must_publish"],
+      "properties": {
+        "current_write": {"const": "atomic-replace"},
+        "completed_attempt_must_publish": {"const": true}
+      }
+    },
+    "retention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_file_bytes", "archive_count", "max_entries"],
+      "properties": {
+        "max_file_bytes": {"type": "integer", "minimum": 1},
+        "archive_count": {"type": "integer", "minimum": 0},
+        "max_entries": {"type": "integer", "minimum": 1}
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result_detail", "raw_diagnostics"],
+      "properties": {
+        "result_detail": {"const": "reason-code-only"},
+        "raw_diagnostics": {"const": "forbidden"}
+      }
+    },
+    "gate_context_required": {"type": "boolean"},
+    "resource_observations": {"$ref": "#/$defs/stringSet"},
+    "resource_threshold_owner": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "stringSet": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "probeRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minimum_observations",
+        "minimum_by_evidence_class",
+        "minimum_dependency_groups"
+      ],
+      "properties": {
+        "minimum_observations": {"type": "integer", "minimum": 1},
+        "minimum_by_evidence_class": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {"type": "integer", "minimum": 1}
+        },
+        "minimum_dependency_groups": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}

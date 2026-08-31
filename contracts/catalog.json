@@ -1,0 +1,251 @@
+{
+  "schema": "signalbox.contract-catalog/v1",
+  "catalog_revision": 1,
+  "entries": [
+    {
+      "schema_id": "signalbox.roles/v1",
+      "revision": 1,
+      "owner": "contracts/roles.json",
+      "schema_path": "schemas/roles.schema.json",
+      "compatibility": {
+        "same_schema_id": "backward-compatible-only",
+        "breaking_change": "new-schema-id-required"
+      },
+      "projection_dependencies": [
+        "contracts/traffic-policy.json",
+        "examples/mintie/deployment.json"
+      ],
+      "instances": [
+        {
+          "path": "contracts/roles.json"
+        }
+      ]
+    },
+    {
+      "schema_id": "signalbox.claims/v1",
+      "revision": 1,
+      "owner": "contracts/claims.json",
+      "schema_path": "schemas/claims.schema.json",
+      "compatibility": {
+        "same_schema_id": "backward-compatible-only",
+        "breaking_change": "new-schema-id-required"
+      },
+      "projection_dependencies": [
+        "docs/agent/acceptance-matrix.md"
+      ],
+      "instances": [
+        {
+          "path": "contracts/claims.json"
+        }
+      ]
+    },
+    {
+      "schema_id": "signalbox.acceptance-record/v1",
+      "revision": 1,
+      "owner": "contracts/claims.json",
+      "schema_path": "schemas/acceptance-record.schema.json",
+      "compatibility": {
+        "same_schema_id": "backward-compatible-only",
+        "breaking_change": "new-schema-id-required"
+      },
+      "projection_dependencies": [
+        "docs/agent/acceptance-matrix.md"
+      ],
+      "instances": [
+        {
+          "path": "contracts/claims.json",
+          "pointer": "/acceptance_record"
+        }
+      ]
+    },
+    {
+      "schema_id": "signalbox.traffic-policy/v2",
+      "revision": 2,
+      "owner": "contracts/traffic-policy.json",
+      "schema_path": "schemas/traffic-policy.schema.json",
+      "compatibility": {
+        "same_schema_id": "backward-compatible-only",
+        "breaking_change": "new-schema-id-required"
+      },
+      "projection_dependencies": [
+        "examples/mintie/traffic-policy.json",
+        "docs/human/10-architecture.en.md",
+        "docs/human/10-architecture.zh-CN.md"
+      ],
+      "instances": [
+        {
+          "path": "contracts/traffic-policy.json"
+        }
+      ]
+    },
+    {
+      "schema_id": "signalbox.health-contract/v2",
+      "revision": 2,
+      "owner": "contracts/health-contract.json",
+      "schema_path": "schemas/health-contract.schema.json",
+      "compatibility": {
+        "same_schema_id": "backward-compatible-only",
+        "breaking_change": "new-schema-id-required"
+      },
+      "projection_dependencies": [
+        "examples/mintie/health-profiles.json",
+        "docs/reference/health-and-observability.md"
+      ],
+      "instances": [
+        {
+          "path": "contracts/health-contract.json"
+        }
+      ]
+    },
+    {
+      "schema_id": "signalbox.health-profile/v2",
+      "revision": 2,
+      "owner": "contracts/health-contract.json",
+      "schema_path": "schemas/health-profile.schema.json",
+      "compatibility": {
+        "same_schema_id": "backward-compatible-only",
+        "breaking_change": "new-schema-id-required"
+      },
+      "projection_dependencies": [
+        "examples/mintie/reports"
+      ],
+      "instances": [
+        {
+          "path": "examples/mintie/health-profiles.json",
+          "pointer": "/profiles/*"
+        }
+      ]
+    },
+    {
+      "schema_id": "signalbox.health-profiles/v2",
+      "revision": 2,
+      "owner": "examples/mintie/health-profiles.json",
+      "schema_path": "schemas/health-profiles.schema.json",
+      "compatibility": {
+        "same_schema_id": "backward-compatible-only",
+        "breaking_change": "new-schema-id-required"
+      },
+      "projection_dependencies": [
+        "examples/mintie/traffic-policy.json",
+        "examples/mintie/health-aggregate.json"
+      ],
+      "instances": [
+        {
+          "path": "examples/mintie/health-profiles.json"
+        }
+      ]
+    },
+    {
+      "schema_id": "signalbox.health-report/v2",
+      "revision": 2,
+      "owner": "contracts/health-contract.json",
+      "schema_path": "schemas/health-report.schema.json",
+      "compatibility": {
+        "same_schema_id": "backward-compatible-only",
+        "breaking_change": "new-schema-id-required"
+      },
+      "projection_dependencies": [
+        "examples/mintie/health-aggregate.json"
+      ],
+      "instances": [
+        {
+          "glob": "examples/mintie/reports/*.json"
+        },
+        {
+          "glob": "tests/fixtures/health-*.json"
+        }
+      ]
+    },
+    {
+      "schema_id": "signalbox.health-aggregate/v1",
+      "revision": 1,
+      "owner": "contracts/health-contract.json",
+      "schema_path": "schemas/health-aggregate.schema.json",
+      "compatibility": {
+        "same_schema_id": "backward-compatible-only",
+        "breaking_change": "new-schema-id-required"
+      },
+      "projection_dependencies": [
+        "examples/mintie/deployment.json"
+      ],
+      "instances": [
+        {
+          "path": "examples/mintie/health-aggregate.json"
+        }
+      ]
+    },
+    {
+      "schema_id": "signalbox.docs-pairs/v2",
+      "revision": 2,
+      "owner": "contracts/docs-pairs.json",
+      "schema_path": "schemas/docs-pairs.schema.json",
+      "compatibility": {
+        "same_schema_id": "backward-compatible-only",
+        "breaking_change": "new-schema-id-required"
+      },
+      "projection_dependencies": [
+        "docs/human"
+      ],
+      "instances": [
+        {
+          "path": "contracts/docs-pairs.json"
+        }
+      ]
+    },
+    {
+      "schema_id": "signalbox.reference-deployment/v2",
+      "revision": 2,
+      "owner": "examples/mintie/deployment.json",
+      "schema_path": "schemas/reference-deployment.schema.json",
+      "compatibility": {
+        "same_schema_id": "backward-compatible-only",
+        "breaking_change": "new-schema-id-required"
+      },
+      "projection_dependencies": [
+        "examples/mintie/traffic-policy.json",
+        "examples/mintie/health-profiles.json"
+      ],
+      "instances": [
+        {
+          "path": "examples/mintie/deployment.json"
+        }
+      ]
+    },
+    {
+      "schema_id": "signalbox.reference-traffic-policy/v2",
+      "revision": 2,
+      "owner": "examples/mintie/traffic-policy.json",
+      "schema_path": "schemas/reference-traffic-policy.schema.json",
+      "compatibility": {
+        "same_schema_id": "backward-compatible-only",
+        "breaking_change": "new-schema-id-required"
+      },
+      "projection_dependencies": [
+        "examples/mintie/README.md"
+      ],
+      "instances": [
+        {
+          "path": "examples/mintie/traffic-policy.json"
+        }
+      ]
+    },
+    {
+      "schema_id": "signalbox.contract-catalog/v1",
+      "revision": 1,
+      "owner": "contracts/catalog.json",
+      "schema_path": "schemas/catalog.schema.json",
+      "compatibility": {
+        "same_schema_id": "backward-compatible-only",
+        "breaking_change": "new-schema-id-required"
+      },
+      "projection_dependencies": [
+        "schemas/README.md"
+      ],
+      "instances": [
+        {
+          "path": "contracts/catalog.json"
+        }
+      ]
+    }
+  ]
+}

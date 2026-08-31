@@ -1,8 +1,11 @@
 PYTHON ?= python3
 
-.PHONY: verify contracts test
+.PHONY: verify schemas contracts test
 
-verify: contracts test
+verify: schemas contracts test
+
+schemas:
+	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/validate_schemas.py
 
 contracts:
 	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/validate.py

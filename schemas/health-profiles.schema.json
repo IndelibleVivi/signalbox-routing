@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:signalbox:schema:health-profiles:v2",
+  "title": "Signalbox health profile collection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "contract_revision", "health_contract_ref", "profiles"],
+  "properties": {
+    "schema": {"const": "signalbox.health-profiles/v2"},
+    "contract_revision": {"type": "integer", "minimum": 2},
+    "health_contract_ref": {"type": "string", "minLength": 1},
+    "profiles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "object"}
+    }
+  }
+}

@@ -21,8 +21,10 @@ authority and is never implied by a Signalbox patch.
 | --- | --- |
 | Portable role | roles, routing references, Mintie bindings, human/agent explanation, tests |
 | Fallback policy | routing contract, protected-lane explanation, negative tests |
+| Route precedence | routing contract, ordered sample, overlap/order negatives, both architecture siblings |
 | Realization or acceptance boundary | claims contract, acceptance matrix, validator |
-| Health dimension, profile, or report | health contract, sample profiles, report fixtures, health reference, tests |
+| Health dimension, profile, observation, report, or aggregate | health contract, sample profiles/reports/aggregate, health reference, tests |
+| Contract shape or revision | owning JSON, catalog, JSON Schema, dependent projections, compatibility check |
 | Sample identity | Mintie deployment and explanatory projection; portable role remains stable |
 | Incident lesson | failure catalog and owning contract only when a reusable invariant changed |
 | Documentation pair | both sibling files and `docs-pairs.json` |
@@ -33,6 +35,7 @@ authority and is never implied by a Signalbox patch.
 read current authority
   -> classify semantic delta
   -> update normative JSON
+  -> update catalog and JSON Schema when shape changed
   -> update affected projections and example
   -> add focused positive and negative checks
   -> make verify

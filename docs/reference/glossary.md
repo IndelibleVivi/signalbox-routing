@@ -5,13 +5,25 @@
 - **acceptance record** — A scope- and actor-bound accepted, rejected, or
   revoked decision that references evidence without upgrading it.
 - **health profile** — Versioned observation policy defining purpose,
-  dimensions, freshness, publication, privacy, and retention.
+  one subject, dimensions, observation diversity, freshness, publication,
+  privacy, and retention.
 - **health report** — An immutable, generation-bound terminal observation tied
-  to one profile revision and containing per-dimension results.
+  to one subject and profile revision, with dimensions rolled up from explicit
+  observations.
+- **generation epoch** — Durable identity that scopes a report sequence across
+  ordinary process and boot restarts; it changes only through explicit reset or
+  migration.
+- **health aggregate** — A deployment receipt that preserves each operational
+  subject's report identity, sequence, and effective outcome without emitting a
+  top-level health verdict.
+- **observation** — One probe result with evidence class, dependency group,
+  state, and observation time inside a health dimension.
 - **fail closed** — Preserve protection and fail the protected path when safe
   routing cannot be established; do not degrade to DIRECT.
 - **private ingress** — Approved canonical-origin traffic reaching an exact
   private origin through a dedicated gateway identity.
+- **route precedence** — The ordered specific-before-general contract under
+  which canonical private ingress is evaluated before DIRECT allowlists.
 - **portable role** — Stable capability and policy semantics independent of a
   provider, endpoint, protocol, or friendly sample name.
 - **recovery readiness** — The ability to query prior state, apply intended

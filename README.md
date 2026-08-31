@@ -55,31 +55,39 @@ evidence.
 - Start in Chinese: [从这里开始](docs/human/00-start-here.zh-CN.md)
 - Start in English: [Start here](docs/human/00-start-here.en.md)
 - Canonical product and architecture contract: [Specification](docs/specification.md)
+- Machine contract registry and schemas: [Schema catalog](contracts/catalog.json)
+  and [schema guide](schemas/README.md)
 - For agents: [Agent reference](docs/agent/README.md)
 - Reference deployment: [Mintie](examples/mintie/README.md)
 - Incident-derived mechanisms: [Failure catalog](docs/reference/failure-catalog.md)
 - Current repository truth: [Current state](docs/current-state.md)
+- Private security reports: [Security policy](SECURITY.md)
+- External contribution boundary: [Contributing](CONTRIBUTING.md)
 
 ## Validate it
 
-Signalbox deliberately uses only the Python standard library for its repository
-contract checks:
+Create an isolated development environment once, then run the complete gate:
 
 ```bash
-make verify
+python3 -m venv .venv
+.venv/bin/python -m pip install --requirement requirements-dev.txt
+make verify PYTHON=.venv/bin/python
 ```
 
-The gate validates machine contracts, cross-file role references, routing
-invariants, health report semantics, bilingual document pairs, public-safe
-sample boundaries, and regression fixtures. It proves the tracked source
-contract only.
+The gate validates Draft 2020-12 JSON Schemas and the catalog first, then checks
+cross-file role references, route precedence, per-subject health reports,
+observation diversity, generation/freshness/gate semantics, member-preserving
+aggregation, bilingual document pairs, public-safe sample boundaries, and
+regression fixtures. Hosted CI repeats it on Python 3.11, 3.12, and 3.13. It
+proves the tracked source contract only.
 
 ## Status and permission
 
-Foundation 0.1 is source-verified and published in this public GitHub
-repository; full Signalbox v1 is not complete. No installed payload, live
-router integration, path evidence, or acceptance is implied; see [current
-state](docs/current-state.md) for the exact volatile status.
+Foundation 0.2 is the active remote-and-semantic hardening tranche; full
+Signalbox v1 is not complete. No installed payload, live router integration,
+path evidence, or acceptance is implied; see [current state](docs/current-state.md)
+for the exact published commit and hosted-gate status.
 
 No license has been selected. Possession of or visibility into this repository
-does not grant reuse rights.
+does not grant reuse rights. External code and documentation contributions are
+not currently accepted until explicit contribution and rights terms exist.
