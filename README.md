@@ -115,10 +115,9 @@ the exact published boundary, see [current state](docs/current-state.md).
 <a id="status-and-permission"></a>
 ## Status and permission
 
-Foundation 0.2.1 and the F1 Human Surface remain source-verified and published.
-F0.2.2 executable-authority closure is a local source-verified candidate until
-the exact commit and hosted gate are recorded in [current
-state](docs/current-state.md). Full Signalbox v1 remains incomplete; no
+F0.2.2 executable-authority closure and the F1 Human Surface are source-verified
+and published at the exact implementation commit and hosted gate recorded in
+[current state](docs/current-state.md). Full Signalbox v1 remains incomplete; no
 installed payload, live-router integration, private-ingress deployment, path
 evidence, or owner acceptance is implied. `ACCEPT-08`
 

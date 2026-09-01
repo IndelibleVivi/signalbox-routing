@@ -3,18 +3,17 @@
 Last updated: 2026-09-01
 
 - Project: Signalbox
-- Programme tranche: F0.2.2 executable-authority closure is a local
-  source-verified candidate; the prior F0.2.1/F1 boundary remains published
+- Programme tranche: F0.2.2 executable-authority closure completed at the
+  source-and-remote boundary; the prior F0.2.1/F1 boundary remains published
 - Canonical branch: `main`
 - Remote visibility: public GitHub repository at
   `https://github.com/IndelibleVivi/signalbox-routing`
-- Last confirmed public `main` before the F0.2.2 candidate:
-  `fd47b79d8f97689b4b7a902fa2feca5919baf290`
-- Published F0.2.1/F1 implementation commit:
-  `da2fa0a8d28be03b6ba9300f18305c165997023c`
-- F0.2.2 implementation commit, hosted CI, and exact remote/API readback:
-  pending; no local result is represented as published
-- Hosted CI: [run 33404612179](https://github.com/IndelibleVivi/signalbox-routing/actions/runs/33404612179)
+- Published F0.2.2 implementation commit:
+  `099662a4b66f3ab1ef3b62b720e97b503fa7555d`
+- Exact implementation readback: local `HEAD`,
+  `git ls-remote origin refs/heads/main`, and the GitHub commits API all
+  returned that implementation commit before this receipt-only update
+- Hosted CI: [run 33467434452](https://github.com/IndelibleVivi/signalbox-routing/actions/runs/33467434452)
   passed Python 3.11, 3.12, and 3.13 plus the required `signalbox-verify`
   context for that implementation commit
 - Branch policy: pull request required with strict `signalbox-verify`; linear
@@ -31,11 +30,11 @@ Last updated: 2026-09-01
   performed
 - Owner or client acceptance: not applicable to this source tranche
 
-Current F0.2.2 local staged-tree source evidence: Draft 2020-12 validation
+Published F0.2.2 source evidence: Draft 2020-12 validation
 passes 26 cataloged instances; semantic validation passes seven public
 reference reports and one staleness fixture; 54 unit regressions pass. The
-staged gate includes the new validator modules in Git-index enumeration. The
-candidate bootstraps the catalog from its fixed schema, resolves authority
+gate includes the new validator modules in Git-index enumeration. The source
+bootstraps the catalog from its fixed schema, resolves authority
 paths inside the repository, and scans current worktree bytes for every textual
 path listed in the Git index rather than a selected directory/suffix list. The
 detector remains bounded defense in depth, not a Git-history audit or universal
@@ -56,9 +55,9 @@ F0.2.2 advances the owning health contract to
 aggregate membership through report structure, full semantics, publication
 window, and exact current identity. Profile kind/cardinality, exact route
 grammar, safety-field mutation regressions, catalog bootstrap, and contained
-path resolution are part of the same source candidate.
+path resolution are part of the same published source boundary.
 
-Full v1 remains tracked in [`docs/programme-plan.md`](programme-plan.md). After
-F0.2.2 receives its exact commit, hosted gate, and remote receipt, the next
-planned source tranche is F2. Installation, activation, runtime, release,
-license, and acceptance gates remain separate.
+Full v1 remains tracked in [`docs/programme-plan.md`](programme-plan.md). The
+next planned source tranche is F2, but it is not started by this receipt.
+Installation, activation, runtime, release, license, and acceptance gates
+remain separate.

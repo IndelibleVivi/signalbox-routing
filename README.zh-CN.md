@@ -103,11 +103,11 @@ state](docs/current-state.md)。
 <a id="status-and-permission"></a>
 ## 状态与许可
 
-Foundation 0.2.1 与 F1 Human Surface 仍然完成了 source verification 与 publication。
-F0.2.2 executable-authority closure 在 [current state](docs/current-state.md) 记录
-exact commit 与 hosted gate 前，只是 local source-verified candidate。完整 Signalbox
-v1 尚未完成；这里不暗示 installed payload、live-router integration、private-ingress
-deployment、path evidence 或 owner acceptance。`ACCEPT-08`
+F0.2.2 executable-authority closure 与 F1 Human Surface 已在 [current
+state](docs/current-state.md) 记录的 exact implementation commit 和 hosted gate 上
+完成 source verification 与 publication。完整 Signalbox v1 尚未完成；这里不暗示
+installed payload、live-router integration、private-ingress deployment、path evidence
+或 owner acceptance。`ACCEPT-08`
 
 目前尚未选择 license。能够看到或持有本 repo 不等于获得 reuse rights。在明确
 contribution 与 rights terms 之前，暂不接受外部 code 或 documentation contribution。

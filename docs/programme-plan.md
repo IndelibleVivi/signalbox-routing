@@ -1,9 +1,9 @@
 # Signalbox Programme Plan
 
 Status: active
-Current execution tranche: F0.2.2 executable-authority closure (local source-verified candidate)
-Most recently completed tranche: F0.2.1 semantic closure and F1 Human Surface
-Next planned tranche after F0.2.2 closure: F2 complete Agent Surface
+Current execution tranche: none
+Most recently completed tranche: F0.2.2 executable-authority closure
+Next planned tranche: F2 complete Agent Surface
 Canonical specification: `docs/specification.md`, revision 4
 Normative companions: `contracts/*.json`, `schemas/*.schema.json`
 Repository baseline: public canonical repository on `main`
@@ -57,14 +57,14 @@ different phases. This plan ends at verified Signalbox source.
 
 | Acceptance | Intended outcome | Owning slice | Dependency / gate | Verification evidence | Status |
 | --- | --- | --- | --- | --- | --- |
-| `ACCEPT-01` | Normative contracts agree | F0/F0.2.1/F0.2.2 contracts | Identity settled | semantic validator, JSON Schema, contract tests | canonical health and route authority are an F0.2.2 source-verified candidate; full v1 pending |
+| `ACCEPT-01` | Normative contracts agree | F0/F0.2.1/F0.2.2 contracts | Identity settled | semantic validator, JSON Schema, contract tests | F0.2.2 source and remote boundary complete; full v1 pending |
 | `ACCEPT-02` | Paired Human Surface teaches the complete model | F1 human guide | F0 IDs and diagrams | doc-pair parity plus manual read | F1 source and remote boundary complete; full v1 pending |
 | `ACCEPT-03` | Agent Surface defines implementation and evidence behavior | F2 agent reference | F0 contracts | required-ID and link validation | Tailnet reference added; full F2 pending |
-| `ACCEPT-04` | Mintie is a portable, public-safe reference deployment | F0.2/F0.2.2/F3 Mintie example | F0 roles/routing/health | example validation and Git-index boundary scan | exact reference route grammar and broader source scan are source-verified; full F3 pending |
+| `ACCEPT-04` | Mintie is a portable, public-safe reference deployment | F0.2/F0.2.2/F3 Mintie example | F0 roles/routing/health | example validation and Git-index boundary scan | exact reference route grammar and broader source scan are published; full F3 pending |
 | `ACCEPT-05` | Reusable failure mechanisms are retained | F4 failure depth | F0 health/evidence | failure-ID coverage | F0.2 mechanisms added; F4 pending |
-| `ACCEPT-06` | Validation rejects meaningful contract drift | F0.2.2 validator and F5 hardening | F0 contracts | positive and negative tests plus hosted gate | canonical evaluator, mutation matrix, path containment, and tracked-source regressions pass locally; hosted gate and F5 remain pending |
-| `ACCEPT-07` | Repository surfaces agree | F0.2.2/F1/F6 reconciliation | Current slice | `make verify`, links, diff review | F0.2.2 projections agree locally; F6 pending |
-| `ACCEPT-08` | External gates remain truthful | Every slice | Explicit owner authorization | current-state and remote readback | prior F0.2.1/F1 readback remains complete; F0.2.2 exact remote gate pending |
+| `ACCEPT-06` | Validation rejects meaningful contract drift | F0.2.2 validator and F5 hardening | F0 contracts | positive and negative tests plus hosted gate | 54 regressions and the hosted implementation gate pass; F5 pending |
+| `ACCEPT-07` | Repository surfaces agree | F0.2.2/F1/F6 reconciliation | Current slice | `make verify`, links, diff review | F0.2.2 projections are reconciled and published; F6 pending |
+| `ACCEPT-08` | External gates remain truthful | Every slice | Explicit owner authorization | current-state and remote readback | F0.2.2 implementation readback complete; later gates remain separate |
 
 ## Implementation slices
 
@@ -103,7 +103,7 @@ Stopping point: machine contracts, schemas, sample, validator, regressions, and
 human/agent projections agree. Exact published commit and hosted evidence are
 owned by `docs/current-state.md`.
 
-### F0.2.2 — Executable-authority closure (`local-source-verified-candidate`)
+### F0.2.2 — Executable-authority closure (`completed-at-source-and-remote-boundary`)
 
 Route restore and aggregation through one canonical health-evidence evaluator:
 Draft 2020-12 structure, full report/profile semantics, publication and expiry
@@ -116,9 +116,11 @@ selected directories and suffixes.
 
 Protect those safety-bearing fields with a contract-mutation matrix.
 
-Current stopping point: implementation, schemas, samples, regressions, and
-documentation pass the local source gate. Exact commit publication, hosted
-Python 3.11/3.12/3.13 verification, remote readback, and receipt remain pending.
+Stopping point reached: implementation, schemas, samples, regressions, and
+documentation passed the local source gate. Implementation commit
+`099662a4b66f3ab1ef3b62b720e97b503fa7555d` passed hosted Python
+3.11/3.12/3.13 verification and the required aggregate check in run
+`33467434452`; exact remote and GitHub API readback agreed before the receipt.
 Runtime current-pointer CAS/lock and report-set sequencing, metrics-key
 whitelists, validator modularization, historical compatibility fixtures, and
 supply-chain policy remain deliberately assigned to F2/F5 rather than being
