@@ -3,7 +3,7 @@ doc_id: signalbox.human.architecture
 language: zh-CN
 status: foundation-explanatory
 authority: ../specification.md
-contract_revision: 3
+contract_revision: 4
 ---
 
 [English](10-architecture.en.md) · **简体中文**
@@ -36,6 +36,10 @@ flowchart TD
 `ROUTE-01` 要求一个 transparent routing owner。这里的“一个”不是说系统不能
 有 dnsmasq、firewall 或多个 upstream，而是不能让多个控制面同时争夺 DNS、
 default route、packet mark 和 interception ownership。
+
+Mintie executable projection 还把每个 settled route ID 绑定到 exact action、match
+form 与 allowed field set。route order 仍然必要，但替换 action 或多塞一个 field
+属于 contract drift，不是等价实现。`ROUTE-07`
 
 <a id="protected-lane"></a>
 ## Protected lane

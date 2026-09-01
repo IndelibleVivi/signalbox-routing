@@ -3,7 +3,7 @@ doc_id: signalbox.human.routing-dns-fail-closed
 language: zh-CN
 status: f1-reader-path
 authority: ../specification.md
-contract_revision: 3
+contract_revision: 4
 ---
 
 [English](30-routing-dns-and-fail-closed.en.md) · **简体中文**
@@ -53,7 +53,7 @@ DIRECT 漏出去安全。
 <a id="route-precedence"></a>
 ## Specific route 必须先于 general route
 
-`ROUTE-04` `ROUTE-06`
+`ROUTE-04` `ROUTE-06` `ROUTE-07`
 
 Mintie reference order 表达的是下面这套 portable intent：
 
@@ -63,6 +63,10 @@ Mintie reference order 表达的是下面这套 portable intent：
 4. match high-recall protected application set；
 5. evaluate explicit private / ordinary DIRECT allowlists；
 6. 其余 proxy-required 流量交给 pinned `general-primary`。
+
+在 Mintie reference projection 里，这些 settled route IDs 还绑定 exact action、match
+form 与 allowed fields。只有顺序正确仍然不够：替换 action 或添加未声明 route field
+都会被当作 grammar drift 拒绝。
 
 最重要的 overlap 是 private ingress 与 DIRECT。宽泛 private-address allowlist 不能先
 吃掉 canonical hostname，否则 packet 会绕过 dedicated gateway identity。即使
@@ -92,16 +96,20 @@ forbidden public DIRECT。二者都要分别验证：
 <a id="health-and-recovery"></a>
 ## 先 observe；mutation 由另一份 contract 管
 
-`HEALTH-07` `HEALTH-15`
+`HEALTH-07` `HEALTH-15` `HEALTH-16`
 
 Health reports 分别观察 control plane 与每条 lane；query failure 保持 `unknown`。
-recovery-preflight 只能为与 operation、desired state、observed runtime generation、
-scope exact-match 的 restore gate 开门。ordinary operational health 不授权 route
-mutation。
+任何 recorded pass 在打开 restore gate 前，都必须经过 canonical evaluator：先验证
+structure 与 semantics，要求 `published_at <= evaluated_at <= valid_until`，再
+exact-match producer、subject、profile 与 revision、epoch、generation、report ID、
+attempt ID 和 operation context。更高 generation 也不是“足够新”；它会中止这次
+decision，让 consumer 重新读取 current pointer。ordinary operational health 不授权
+route mutation。
 
 Deployment aggregate 是 historical receipt。它的 `evaluated_at` 等于
-`assembled_at`，member field 叫 `effective_outcome_at_assembly`。不能把旧 aggregate
-当成 current health；需要现在的视图时，要从 fresh member reports 重新 assemble。
+`assembled_at`，member field 叫 `effective_outcome_at_assembly`；每个 member 都经过
+同一个 canonical evaluator。不能把旧 aggregate 当成 current health；需要现在的
+视图时，要从 fresh member reports 重新 assemble。
 
 如果 deployment 以后选择 automatic failover，也要另设带 hysteresis、operation
 identity、rollback 与 receipt 的 state machine。latency selector 不是 strict

@@ -1,6 +1,6 @@
 {
-  "schema": "signalbox.docs-pairs/v2",
-  "contract_revision": 3,
+  "schema": "signalbox.docs-pairs/v3",
+  "contract_revision": 4,
   "pairs": [
     {
       "doc_id": "signalbox.readme",
@@ -12,6 +12,7 @@
         "IDENT-01",
         "CLAIM-01",
         "DOC-02",
+        "AUTH-05",
         "ACCEPT-08"
       ],
       "required_sections": [
@@ -36,7 +37,9 @@
         "HEALTH-01",
         "HEALTH-10",
         "HEALTH-14",
-        "HEALTH-15"
+        "HEALTH-15",
+        "HEALTH-16",
+        "HEALTH-17"
       ],
       "required_sections": [
         "proxy-layer-model",
@@ -54,6 +57,7 @@
         "ROUTE-01",
         "ROUTE-04",
         "ROUTE-06",
+        "ROUTE-07",
         "ENFORCE-01",
         "PRIVATE-01",
         "HEALTH-07",
@@ -97,9 +101,11 @@
         "ROUTE-04",
         "ROUTE-05",
         "ROUTE-06",
+        "ROUTE-07",
         "ENFORCE-01",
         "HEALTH-07",
-        "HEALTH-15"
+        "HEALTH-15",
+        "HEALTH-16"
       ],
       "required_sections": [
         "routing-owner",

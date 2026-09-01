@@ -55,10 +55,11 @@ flowchart LR
 
 - `deployment.json` binds sample identities to portable roles.
 - `traffic-policy.json` evaluates canonical private ingress before DIRECT,
-  demonstrates protected no-fallback, and preserves dedicated gateway identity.
+  demonstrates protected no-fallback, preserves dedicated gateway identity,
+  and binds each settled route ID to its exact action, match form, and fields.
 - `health-profiles.json` defines one recovery profile, one control-plane
-  operational profile, and one operational profile per egress or private-ingress
-  lane.
+  operational profile, and exactly one operational profile per registered
+  egress or private-ingress lane. Subject kind and profile kind cannot cross.
 - `reports/` contains public-safe immutable examples for each subject plus a
   separate recovery-preflight receipt. Dimensions contain explicit observations
   so evidence-class and dependency-group diversity can be validated.
@@ -70,9 +71,11 @@ flowchart LR
 The sample operational interval is 15 minutes and each operational report
 remains fresh for at most 20 minutes. Recovery-preflight reports remain fresh
 for at most five minutes and exact-match one operation, desired-state digest,
-runtime generation, restore scope, and expected generation epoch. History is
-bounded by a 256 KiB file limit, two archives, and 288 entries. The numbers are
-sample deployment policy, not universal router requirements.
+runtime generation, restore scope, producer, subject, profile and revision,
+generation epoch, exact generation, report ID, and attempt ID. Its pass is
+usable only after publication and canonical structural and semantic validation.
+History is bounded by a 256 KiB file limit, two archives, and 288 entries. The
+numbers are sample deployment policy, not universal router requirements.
 
 ## Deliberate boundary
 

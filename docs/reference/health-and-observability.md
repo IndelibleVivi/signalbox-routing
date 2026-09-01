@@ -12,14 +12,15 @@ does not repair the system.
 
 | Profile kind | Subject cardinality | May gate restore | Aggregate member |
 | --- | --- | --- | --- |
-| `recovery-preflight` | one control plane | yes, exact context only | no |
-| `control-plane-operational` | one control plane | no | yes |
-| `lane-operational` | one egress or private-ingress lane | no | yes |
+| `recovery-preflight` | exactly one profile per registered control plane | yes, exact context and current identity only | no |
+| `control-plane-operational` | exactly one profile per registered control plane | no | yes |
+| `lane-operational` | exactly one profile per registered egress or private-ingress lane | no | yes |
 
 A deployment registers its health subjects explicitly. Every profile binds one
-`subject_ref`; every report must match that profile and subject. A recovery
-pass therefore cannot stand in for operational evidence, and one lane cannot
-stand in for another.
+compatible `subject_ref`; every registered subject must have exactly one profile
+of each compatible kind, and every report must match that profile and subject.
+A recovery pass therefore cannot stand in for operational evidence, and one
+lane cannot stand in for another. `HEALTH-17`
 
 ## Dimensions and observations
 
@@ -68,25 +69,42 @@ The epoch is durable across ordinary process and boot restarts and changes only
 through explicit reset or migration. A same-epoch regression or unexpected
 epoch becomes effective `unknown`.
 
-`valid_until` is bounded by the referenced profile:
+`valid_until` is bounded by the referenced profile, but the effective window
+also starts at publication:
 
 ```text
 valid_until <= completed_at + profile.max_report_age_seconds
-published_at <= valid_until
+published_at <= evaluated_at <= valid_until
 ```
 
-Recorded and effective outcomes therefore differ when evidence is stale,
-malformed, regressed, or mismatched:
+Before interpreting the recorded outcome, one canonical evaluator validates
+the report against `signalbox.health-report/v2`, applies all report and profile
+semantics, and exact-matches the expected current identity:
 
 ```text
-recorded pass + fresh + expected scope/revision/epoch -> effective pass
-recorded pass + unusable evidence                     -> effective unknown
+producer_ref + subject_ref + profile_ref + profile_revision
++ generation_epoch + generation + report_id + attempt_id
 ```
+
+Recorded and effective outcomes therefore differ when evidence is unpublished,
+stale, structurally or semantically invalid, regressed, superseded, or
+mismatched:
+
+```text
+recorded pass + canonically valid + published + exact current identity -> effective pass
+recorded pass + unusable or mismatched evidence                         -> effective unknown
+```
+
+A higher generation is not accepted as “at least current.” It means the caller
+read a superseded expectation and must abort the decision and re-read the
+current pointer. `HEALTH-16`
 
 ## Member-preserving historical aggregate
 
 The deployment aggregate is a historical receipt over the operational member
-reports selected at assembly. `evaluated_at` must equal `assembled_at`; each
+reports selected at assembly. Every member passes through the same structural,
+semantic, and time-window evaluator; the aggregate separately exact-checks its
+recorded member identity fields. `evaluated_at` must equal `assembled_at`; each
 member stores `effective_outcome_at_assembly`. That value is not re-evaluated
 later against the reader's wall clock. A consumer that needs current truth
 assembles a new aggregate from current reports. The receipt preserves each
@@ -104,9 +122,13 @@ Only `recovery-preflight` may gate restore. Its `gate_context` binds:
 - `observed_runtime_generation`; and
 - `restore_scope_ref`.
 
-The expected context and epoch must exact-match a fresh effective `pass`.
-`unknown` cannot open the gate, and a pass for one operation, desired state,
-runtime generation, or scope cannot authorize another.
+The expected gate context and full current identity — producer, subject,
+profile, profile revision, epoch, generation, report ID, and attempt ID — must
+exact-match a canonically valid, published, fresh effective `pass`. `unknown`
+cannot open the gate, and a pass for one operation, identity, desired state,
+runtime generation, or scope cannot authorize another. The source evaluator
+enforces this decision boundary; implementing a race-safe runtime pointer read
+still belongs to the deployment's mutation state machine.
 
 ## Privacy and retention
 

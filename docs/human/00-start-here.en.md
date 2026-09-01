@@ -3,7 +3,7 @@ doc_id: signalbox.human.start-here
 language: en
 status: foundation-explanatory
 authority: ../specification.md
-contract_revision: 3
+contract_revision: 4
 ---
 
 **English** · [简体中文](00-start-here.zh-CN.md)
@@ -81,14 +81,20 @@ diagnostic actor must not depend exclusively on the path it is repairing.
 <a id="health-model"></a>
 ## Health is more than opening a page
 
-`HEALTH-01` `HEALTH-10` `HEALTH-14` `HEALTH-15`
+`HEALTH-01` `HEALTH-10` `HEALTH-14` `HEALTH-15` `HEALTH-16` `HEALTH-17`
 
 Signalbox separates transport, exit identity, DNS, control plane, enforcement,
 resources, persistence, and recovery readiness. A `HealthProfile` says what to
-observe; every attempt publishes an immutable `HealthReport`. Once a successful
-report passes `valid_until`, regresses within its producer/subject/profile/epoch
-generation scope, changes epoch unexpectedly, or mismatches the expected
-profile revision, its effective outcome is `unknown`.
+observe; every attempt publishes an immutable `HealthReport`. Each registered
+control plane has exactly one recovery-preflight and one control-plane
+operational profile, while each registered egress or private-ingress lane has
+exactly one lane-operational profile. Profile kind cannot cross subject kind.
+
+A report has no effective outcome until the canonical evaluator proves its v2
+structure and semantics, checks `published_at <= evaluated_at <= valid_until`,
+and exact-matches the expected current producer, subject, profile and revision,
+epoch, generation, report ID, and attempt ID. A stale, unpublished, malformed,
+regressed, superseded, or mismatched recorded pass is therefore `unknown`.
 
 A `recovery-preflight` profile asks only whether state can be queried,
 reconciled, and restored safely for one exact operation and desired-state
@@ -102,8 +108,9 @@ dependency groups. Neither a profile, report, nor aggregate selects or mutates
 routes.
 
 An aggregate is a historical assembly receipt, not a value that silently
-changes as time passes. Its member outcomes are evaluated once at
-`assembled_at`; a current view requires fresh reports and a new aggregate.
+changes as time passes. Its member outcomes pass through that same canonical
+evaluator once at `assembled_at`; a current view requires fresh reports and a
+new aggregate.
 
 A cold-boot incident provides the key example: a route table may be logically
 empty while the platform cannot query it reliably. Recovery then has no basis

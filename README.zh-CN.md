@@ -1,5 +1,5 @@
-<!-- doc_id: signalbox.readme; language: zh-CN; contract_revision: 3 -->
-<!-- contracts: SIG-01 SIG-02 IDENT-01 CLAIM-01 DOC-02 ACCEPT-08 -->
+<!-- doc_id: signalbox.readme; language: zh-CN; contract_revision: 4 -->
+<!-- contracts: SIG-01 SIG-02 IDENT-01 CLAIM-01 DOC-02 AUTH-05 ACCEPT-08 -->
 
 [English](README.md) · **简体中文**
 
@@ -88,10 +88,13 @@ python3 -m venv .venv
 make verify PYTHON=.venv/bin/python
 ```
 
-这个 gate 验证 Draft 2020-12 JSON Schemas、跨文件 policy semantics、
-health/report/aggregate behavior、双语 document pairs、public-safe sample boundary、
-links 与 regression fixtures。Hosted CI 会在 Python 3.11、3.12、3.13 上重复执行；
-这些证据只证明 tracked source contract。
+这个 gate 先用 fixed Draft 2020-12 schema bootstrap contract catalog，再验证跨文件
+policy 与 health semantics、双语 document pairs、repo 内 contained links，并对
+Git index 列出的每个 textual path 扫描其当前 worktree bytes 中的一组 bounded
+public-boundary violations。binary blob 不会被 follow 或 decode；symlink 只检查
+target，不会跟随。这个 detector 不是 Git history audit，也不是 universal secret
+scanner。Hosted CI 会在 Python 3.11、3.12、3.13 上重复执行这个 source gate。
+`AUTH-05`
 
 Agent 从 [Agent Surface](docs/agent/README.md) 继续；事故机制见 [failure
 catalog](docs/reference/failure-catalog.md)；准确 publication boundary 见 [current
@@ -100,11 +103,11 @@ state](docs/current-state.md)。
 <a id="status-and-permission"></a>
 ## 状态与许可
 
-Foundation 0.2.1 与 F1 Human Surface 已在 [current
-state](docs/current-state.md) 记录的 exact commit 和 hosted gate 上完成 source
-verification 与 publication。完整 Signalbox v1 尚未完成；这里不暗示 installed
-payload、live-router integration、private-ingress deployment、path evidence 或
-owner acceptance。`ACCEPT-08`
+Foundation 0.2.1 与 F1 Human Surface 仍然完成了 source verification 与 publication。
+F0.2.2 executable-authority closure 在 [current state](docs/current-state.md) 记录
+exact commit 与 hosted gate 前，只是 local source-verified candidate。完整 Signalbox
+v1 尚未完成；这里不暗示 installed payload、live-router integration、private-ingress
+deployment、path evidence 或 owner acceptance。`ACCEPT-08`
 
 目前尚未选择 license。能够看到或持有本 repo 不等于获得 reuse rights。在明确
 contribution 与 rights terms 之前，暂不接受外部 code 或 documentation contribution。

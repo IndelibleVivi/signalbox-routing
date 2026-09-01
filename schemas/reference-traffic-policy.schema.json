@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:signalbox:schema:reference-traffic-policy:v2",
+  "$id": "urn:signalbox:schema:reference-traffic-policy:v3",
   "title": "Signalbox Mintie reference traffic policy",
   "type": "object",
   "additionalProperties": false,
@@ -14,8 +14,8 @@
     "failure_behavior"
   ],
   "properties": {
-    "schema": {"const": "signalbox.reference-traffic-policy/v2"},
-    "contract_revision": {"type": "integer", "minimum": 2},
+    "schema": {"const": "signalbox.reference-traffic-policy/v3"},
+    "contract_revision": {"type": "integer", "minimum": 3},
     "deployment_ref": {"type": "string", "minLength": 1},
     "protected_scope": {"type": "string", "minLength": 1},
     "health_profile_refs": {
@@ -49,19 +49,14 @@
     }
   },
   "$defs": {
-    "match": {
-      "oneOf": [
-        {"type": "string", "minLength": 1},
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["kind", "set_ref"],
-          "properties": {
-            "kind": {"const": "explicit-allowlist"},
-            "set_ref": {"type": "string", "minLength": 1}
-          }
-        }
-      ]
+    "explicitMatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "set_ref"],
+      "properties": {
+        "kind": {"const": "explicit-allowlist"},
+        "set_ref": {"type": "string", "minLength": 1}
+      }
     },
     "selection": {
       "type": "object",
@@ -73,16 +68,112 @@
       }
     },
     "route": {
+      "oneOf": [
+        {"$ref": "#/$defs/protocolObservation"},
+        {"$ref": "#/$defs/dnsCapture"},
+        {"$ref": "#/$defs/canonicalPrivateIngress"},
+        {"$ref": "#/$defs/protectedUdpPolicy"},
+        {"$ref": "#/$defs/protectedApplication"},
+        {"$ref": "#/$defs/privateDirect"},
+        {"$ref": "#/$defs/approvedDirect"},
+        {"$ref": "#/$defs/defaultProxyRequired"}
+      ]
+    },
+    "protocolObservation": {
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "action"],
       "properties": {
-        "id": {"type": "string", "minLength": 1},
-        "action": {"type": "string", "minLength": 1},
-        "match": {"$ref": "#/$defs/match"},
+        "id": {"const": "protocol-observation"},
+        "action": {"const": "observe-protocol"}
+      }
+    },
+    "dnsCapture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "action"],
+      "properties": {
+        "id": {"const": "dns-capture"},
+        "action": {"const": "capture-client-dns"}
+      }
+    },
+    "canonicalPrivateIngress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "match",
+        "action",
+        "gateway_binding_ref",
+        "canonical_origin_ref"
+      ],
+      "properties": {
+        "id": {"const": "canonical-private-ingress"},
+        "match": {"const": "approved-canonical-origin-set"},
+        "action": {"const": "private-ingress"},
         "gateway_binding_ref": {"type": "string", "minLength": 1},
-        "canonical_origin_ref": {"type": "string", "minLength": 1},
-        "role_binding_ref": {"type": "string", "minLength": 1},
+        "canonical_origin_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "protectedUdpPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "match", "action"],
+      "properties": {
+        "id": {"const": "protected-udp-policy"},
+        "match": {"const": "protected-application-udp-443"},
+        "action": {"const": "reject-until-verified"}
+      }
+    },
+    "protectedApplication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "match", "action", "role_binding_ref"],
+      "properties": {
+        "id": {"const": "protected-application"},
+        "match": {"const": "high-recall-protected-set"},
+        "action": {"const": "route"},
+        "role_binding_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "privateDirect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "match", "action"],
+      "properties": {
+        "id": {"const": "private-direct"},
+        "match": {
+          "allOf": [
+            {"$ref": "#/$defs/explicitMatch"},
+            {"properties": {"set_ref": {"const": "approved-private-destinations"}}}
+          ]
+        },
+        "action": {"const": "direct"}
+      }
+    },
+    "approvedDirect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "match", "action"],
+      "properties": {
+        "id": {"const": "approved-direct"},
+        "match": {
+          "allOf": [
+            {"$ref": "#/$defs/explicitMatch"},
+            {"properties": {"set_ref": {"const": "deployment-approved-direct-set"}}}
+          ]
+        },
+        "action": {"const": "direct"}
+      }
+    },
+    "defaultProxyRequired": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "match", "action", "selection"],
+      "properties": {
+        "id": {"const": "default-proxy-required"},
+        "match": {"const": "otherwise"},
+        "action": {"const": "route"},
         "selection": {"$ref": "#/$defs/selection"}
       }
     }

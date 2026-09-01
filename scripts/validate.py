@@ -1,14 +1,34 @@
 #!/usr/bin/env python3
-"""Validate Signalbox's portable source contracts without external packages."""
+"""Validate Signalbox's portable source contracts and executable semantics."""
 
 from __future__ import annotations
 
+import ipaddress
 import json
+import os
 import re
+import subprocess
 import sys
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterable
+
+from jsonschema import Draft202012Validator, FormatChecker
+from jsonschema.exceptions import SchemaError
+
+if __package__:
+    from .repository_paths import (
+        RepositoryPathError,
+        resolve_repository_glob,
+        resolve_repository_path,
+    )
+else:
+    from repository_paths import (  # type: ignore[no-redef]
+        RepositoryPathError,
+        resolve_repository_glob,
+        resolve_repository_path,
+    )
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -44,6 +64,20 @@ REQUIRED_REPORT_FIELDS = {
     "outcome",
     "dimensions",
 }
+REQUIRED_PROFILE_FIELDS = {
+    "id",
+    "revision",
+    "kind",
+    "subject_ref",
+    "observation_only",
+    "required_dimensions",
+    "probe_requirements",
+    "aggregation",
+    "freshness",
+    "publication",
+    "retention",
+    "privacy",
+}
 REQUIRED_DIMENSION_FIELDS = {
     "state",
     "observations",
@@ -65,6 +99,58 @@ REQUIRED_SAMPLE_ROUTE_ORDER = [
     "approved-direct",
     "default-proxy-required",
 ]
+REFERENCE_ROUTE_GRAMMAR = {
+    "protocol-observation": {
+        "action": "observe-protocol",
+        "fields": {"id", "action"},
+    },
+    "dns-capture": {
+        "action": "capture-client-dns",
+        "fields": {"id", "action"},
+    },
+    "canonical-private-ingress": {
+        "action": "private-ingress",
+        "fields": {
+            "id",
+            "match",
+            "action",
+            "gateway_binding_ref",
+            "canonical_origin_ref",
+        },
+        "match": "approved-canonical-origin-set",
+    },
+    "protected-udp-policy": {
+        "action": "reject-until-verified",
+        "fields": {"id", "match", "action"},
+        "match": "protected-application-udp-443",
+    },
+    "protected-application": {
+        "action": "route",
+        "fields": {"id", "match", "action", "role_binding_ref"},
+        "match": "high-recall-protected-set",
+    },
+    "private-direct": {
+        "action": "direct",
+        "fields": {"id", "match", "action"},
+        "match": {
+            "kind": "explicit-allowlist",
+            "set_ref": "approved-private-destinations",
+        },
+    },
+    "approved-direct": {
+        "action": "direct",
+        "fields": {"id", "match", "action"},
+        "match": {
+            "kind": "explicit-allowlist",
+            "set_ref": "deployment-approved-direct-set",
+        },
+    },
+    "default-proxy-required": {
+        "action": "route",
+        "fields": {"id", "match", "action", "selection"},
+        "match": "otherwise",
+    },
+}
 REQUIRED_RESOURCE_OBSERVATIONS = {
     "memory-available",
     "routing-process-rss",
@@ -73,22 +159,56 @@ REQUIRED_RESOURCE_OBSERVATIONS = {
     "load",
     "recent-oom-evidence",
 }
+REQUIRED_CURRENT_EVIDENCE_FIELDS = (
+    "producer_ref",
+    "subject_ref",
+    "profile_ref",
+    "profile_revision",
+    "generation_epoch",
+    "generation",
+    "report_id",
+    "attempt_id",
+)
+REQUIRED_FORBIDDEN_DURABLE_KEYS = {
+    "credential",
+    "password",
+    "token",
+    "private_key",
+    "exit_ip",
+    "client_ip",
+    "client_mac",
+    "raw_url",
+    "raw_response",
+}
 
-PORTABLE_TEXT_SUFFIXES = {".md", ".json", ".txt", ".yaml", ".yml"}
 MACHINE_LOCAL_PATH = re.compile(
-    r"(?:/(?:Users|home)/|[A-Za-z]:\\Users\\|~/\.codex(?:/|\b))"
+    r"(?:/(?:"
+    + "|".join(("Users", "home", "Volumes", "private", "root", "tmp", "var/folders"))
+    + r")/[^\s\"'<>]+|[A-Za-z]:[\\/](?:Users|Documents and Settings)"
+    + r"[\\/][^\s\"'<>]+|"
+    + "~"
+    + r"/[^\s\"'<>]+)"
 )
-IPV4_LITERAL = re.compile(
+IPV4_CANDIDATE = re.compile(
     r"(?<![\w.])(?:25[0-5]|2[0-4]\d|1?\d?\d)"
-    r"(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}(?![\w.])"
+    r"(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}(?:/\d{1,2})?(?![\w.])"
 )
+IPV6_CANDIDATE = re.compile(
+    r"(?<![0-9A-Fa-f:])(?:[0-9A-Fa-f]{0,4}:){2,}"
+    r"[0-9A-Fa-f]{0,4}(?:/\d{1,3})?(?![0-9A-Fa-f:])"
+)
+MAC_LITERAL = re.compile(r"(?i)(?<![0-9a-f])(?:[0-9a-f]{2}:){5}[0-9a-f]{2}(?![0-9a-f])")
 SECRET_URI = re.compile(r"\b(?:trojan|hysteria2?|ss)://", re.IGNORECASE)
 PRIVATE_KEY_BLOCK = re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")
-SECRET_VALUE = re.compile(
-    r'''["'](?:password|token|secret|private_key)["']\s*[:=]\s*["'][^"'$<][^"']+["']''',
+CREDENTIAL_ASSIGNMENT = re.compile(
+    r'''\b(?:api[_-]?key|client[_-]?secret|authorization|cookie|password|private[_-]?key)\b\s*["']?\s*(?:[:]|(?<![=!<>])=(?!=))\s*["']?[^\s"'$<][^\s"']*''',
     re.IGNORECASE,
 )
+URL_USERINFO = re.compile(r"\b[a-z][a-z0-9+.-]*://[^\s/@:]+:[^\s/@]+@", re.IGNORECASE)
 MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
+
+# Any future exception must name one exact tracked path, rule, literal, and reason.
+PUBLIC_BOUNDARY_EXCEPTIONS: tuple[dict[str, str], ...] = ()
 
 
 def load_json(path: Path) -> Any:
@@ -118,6 +238,20 @@ def nested_keys(value: Any) -> Iterable[str]:
 
 def non_empty_string(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
+
+
+def positive_integer(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value > 0
+
+
+@dataclass(frozen=True)
+class HealthEvidenceEvaluation:
+    structurally_valid: bool
+    semantically_valid: bool
+    current_identity_match: bool
+    effective_outcome: str
+    reason_codes: tuple[str, ...]
+    errors: tuple[str, ...]
 
 
 def validate_roles(document: dict[str, Any]) -> list[str]:
@@ -288,9 +422,9 @@ def validate_traffic_policy(
 
 def validate_health_contract(document: dict[str, Any]) -> list[str]:
     errors: list[str] = []
-    if document.get("schema") != "signalbox.health-contract/v3":
+    if document.get("schema") != "signalbox.health-contract/v4":
         errors.append("health-contract: unexpected schema")
-    if document.get("contract_revision") != 3:
+    if document.get("contract_revision") != 4:
         errors.append("health-contract: unexpected revision")
     if set(document.get("terminal_outcomes", [])) != {"pass", "fail", "unknown"}:
         errors.append("health-contract: terminal outcomes must be pass, fail, and unknown")
@@ -300,6 +434,8 @@ def validate_health_contract(document: dict[str, Any]) -> list[str]:
         errors.append("health-contract: rollup precedence must be fail, unknown, pass")
     if set(document.get("required_report_fields", [])) != REQUIRED_REPORT_FIELDS:
         errors.append("health-contract: required report fields drifted")
+    if set(document.get("required_profile_fields", [])) != REQUIRED_PROFILE_FIELDS:
+        errors.append("health-contract: required profile fields drifted")
     if set(document.get("required_dimension_fields", [])) != REQUIRED_DIMENSION_FIELDS:
         errors.append("health-contract: required dimension fields drifted")
     if set(document.get("required_observation_fields", [])) != REQUIRED_OBSERVATION_FIELDS:
@@ -314,6 +450,12 @@ def validate_health_contract(document: dict[str, Any]) -> list[str]:
     if set(kinds) != expected_kinds:
         errors.append("health-contract: required profile kinds drifted")
     recovery = kinds.get("recovery-preflight", {})
+    if recovery.get("observation_scope") != "single-control-plane":
+        errors.append("health-contract: recovery-preflight observation scope drifted")
+    if recovery.get("compatible_subject_kinds") != ["control-plane"]:
+        errors.append("health-contract: recovery-preflight subject kinds drifted")
+    if recovery.get("cardinality_per_subject") != "exactly-one":
+        errors.append("health-contract: recovery-preflight cardinality drifted")
     if recovery.get("may_gate_restore") is not True:
         errors.append("health-contract: recovery-preflight must be allowed to gate restore")
     if recovery.get("may_feed_deployment_aggregate") is not False:
@@ -326,6 +468,21 @@ def validate_health_contract(document: dict[str, Any]) -> list[str]:
             errors.append(f"health-contract: {kind_id} must feed the aggregate")
         if not kind.get("required_dimensions"):
             errors.append(f"health-contract: {kind_id} dimensions are missing")
+        if kind.get("cardinality_per_subject") != "exactly-one":
+            errors.append(f"health-contract: {kind_id} cardinality drifted")
+    control = kinds.get("control-plane-operational", {})
+    if control.get("observation_scope") != "single-control-plane":
+        errors.append("health-contract: control-plane observation scope drifted")
+    if control.get("compatible_subject_kinds") != ["control-plane"]:
+        errors.append("health-contract: control-plane subject kinds drifted")
+    lane = kinds.get("lane-operational", {})
+    if lane.get("observation_scope") != "single-lane":
+        errors.append("health-contract: lane observation scope drifted")
+    if set(lane.get("compatible_subject_kinds", [])) != {
+        "egress-lane",
+        "private-ingress-lane",
+    }:
+        errors.append("health-contract: lane subject kinds drifted")
     if set(kinds.get("lane-operational", {}).get("required_dimensions", [])) != {
         "transport",
         "exit-identity",
@@ -343,6 +500,16 @@ def validate_health_contract(document: dict[str, Any]) -> list[str]:
         if set(kinds.get(kind_id, {}).get("required_dimensions", [])) != control_dimensions:
             errors.append(f"health-contract: {kind_id} dimensions drifted")
 
+    evaluation = document.get("evidence_evaluation", {})
+    if evaluation != {
+        "canonical_report_schema": "signalbox.health-report/v2",
+        "structural_and_semantic_validity_required": True,
+        "effective_window": "published_at <= evaluated_at <= valid_until",
+        "invalid_effective_outcome": "unknown",
+        "current_identity_match": "exact",
+    }:
+        errors.append("health-contract: canonical evidence evaluation drifted")
+
     generation = document.get("generation", {})
     if generation.get("scope_fields") != [
         "producer_ref",
@@ -353,12 +520,18 @@ def validate_health_contract(document: dict[str, Any]) -> list[str]:
         errors.append("health-contract: generation scope must bind producer, subject, profile, and epoch")
     if generation.get("monotonic_within_scope") is not True:
         errors.append("health-contract: generation must be monotonic within its scope")
+    if generation.get("epoch_durable_across_process_and_boot_restart") is not True:
+        errors.append("health-contract: generation epoch must survive process and boot restart")
     if generation.get("epoch_change_requires") != "explicit-reset-or-migration":
         errors.append("health-contract: generation epoch changes require reset or migration")
     if generation.get("unexpected_epoch_effective_outcome") != "unknown":
         errors.append("health-contract: unexpected generation epoch must become unknown")
+    if generation.get("regression_effective_outcome") != "unknown":
+        errors.append("health-contract: generation regression must become unknown")
 
     freshness = document.get("freshness", {})
+    if freshness.get("required") is not True:
+        errors.append("health-contract: freshness must be required")
     if freshness.get("basis") != "valid_until":
         errors.append("health-contract: freshness must use valid_until")
     for key in (
@@ -387,8 +560,22 @@ def validate_health_contract(document: dict[str, Any]) -> list[str]:
         errors.append("health-contract: restore gate context fields are incomplete")
     if gate.get("exact_context_match_required") is not True:
         errors.append("health-contract: restore gate context must exact-match")
+    if gate.get("required_current_identity_fields") != list(
+        REQUIRED_CURRENT_EVIDENCE_FIELDS
+    ):
+        errors.append("health-contract: restore gate current identity fields drifted")
+    if gate.get("exact_current_identity_match_required") is not True:
+        errors.append("health-contract: restore gate current identity must exact-match")
+    if gate.get("higher_than_expected_generation_action") != (
+        "abort-and-reread-current-pointer"
+    ):
+        errors.append("health-contract: unexpected future generation must abort")
+    if gate.get("required_effective_outcome") != "pass":
+        errors.append("health-contract: restore gate must require effective pass")
 
     aggregate = document.get("deployment_aggregate", {})
+    if aggregate.get("member_reports_immutable") is not True:
+        errors.append("health-contract: aggregate member reports must be immutable")
     if aggregate.get("preserve_per_subject_outcome") is not True:
         errors.append("health-contract: deployment aggregate must preserve subject outcomes")
     if aggregate.get("top_level_outcome_forbidden") is not True:
@@ -401,6 +588,8 @@ def validate_health_contract(document: dict[str, Any]) -> list[str]:
         errors.append("health-contract: aggregate member outcome field drifted")
     if aggregate.get("historical_receipt") is not True:
         errors.append("health-contract: aggregate must remain a historical receipt")
+    if aggregate.get("member_evaluation_requires_canonical_validity") is not True:
+        errors.append("health-contract: aggregate members require canonical validity")
     if document.get("query_failure_outcome") != "unknown":
         errors.append("health-contract: query failure must become unknown")
     if document.get("observation_only") is not True:
@@ -423,6 +612,10 @@ def validate_health_contract(document: dict[str, Any]) -> list[str]:
         "max_entries",
     }:
         errors.append("health-contract: bounded retention fields are incomplete")
+    if not set(document.get("forbidden_durable_keys", [])) >= (
+        REQUIRED_FORBIDDEN_DURABLE_KEYS
+    ):
+        errors.append("health-contract: forbidden durable key baseline is incomplete")
     if not set(document.get("reason_codes", [])) >= {
         "timeout",
         "query-failed",
@@ -432,6 +625,8 @@ def validate_health_contract(document: dict[str, Any]) -> list[str]:
         "generation-epoch-mismatch",
         "profile-revision-mismatch",
         "gate-context-mismatch",
+        "current-evidence-mismatch",
+        "evidence-not-yet-published",
     }:
         errors.append("health-contract: reason-code vocabulary is incomplete")
     return errors
@@ -470,11 +665,9 @@ def validate_health_report(
     ):
         if not non_empty_string(report.get(field)):
             errors.append(f"health report {field} must be non-empty")
-    if not isinstance(report.get("profile_revision"), int) or report.get(
-        "profile_revision", 0
-    ) <= 0:
+    if not positive_integer(report.get("profile_revision")):
         errors.append("health report profile_revision must be a positive integer")
-    if not isinstance(report.get("generation"), int) or report.get("generation", 0) <= 0:
+    if not positive_integer(report.get("generation")):
         errors.append("health report generation must be a positive integer")
     terminal = set(contract.get("terminal_outcomes", []))
     if report.get("outcome") not in terminal:
@@ -656,71 +849,141 @@ def validate_health_report(
     return errors
 
 
-def effective_health_outcome(
-    report: dict[str, Any],
-    now: datetime,
+def health_evidence_identity(report: Any) -> dict[str, Any]:
+    source = report if isinstance(report, dict) else {}
+    return {
+        "producer_ref": source.get("producer_ref"),
+        "subject_ref": source.get("subject_ref"),
+        "profile_ref": source.get("profile_ref"),
+        "profile_revision": source.get("profile_revision"),
+        "generation_epoch": source.get("generation_epoch"),
+        "generation": source.get("generation"),
+        "report_id": source.get("id"),
+        "attempt_id": source.get("attempt_id"),
+    }
+
+
+def evaluate_health_evidence(
+    report: Any,
+    contract: dict[str, Any],
+    profile: dict[str, Any],
+    report_schema: dict[str, Any],
+    evaluated_at: datetime,
     *,
-    minimum_generation: int | None = None,
-    expected_generation_epoch: str | None = None,
-    expected_subject_ref: str | None = None,
-    expected_profile_ref: str | None = None,
-    expected_profile_revision: int | None = None,
-) -> str:
-    if now.tzinfo is None:
-        raise ValueError("now must be timezone-aware")
+    expected_current_identity: dict[str, Any] | None = None,
+) -> HealthEvidenceEvaluation:
+    """Return the one canonical authority evaluation for a health report."""
+
+    if evaluated_at.tzinfo is None:
+        raise ValueError("evaluated_at must be timezone-aware")
+
+    errors: list[str] = []
+    reason_codes: list[str] = []
     try:
-        generation = report["generation"]
-        profile_revision = report["profile_revision"]
-        valid_until = parse_rfc3339(report["valid_until"])
-        outcome = report["outcome"]
-    except (KeyError, TypeError, ValueError):
-        return "unknown"
-    if not isinstance(generation, int) or generation <= 0:
-        return "unknown"
-    if not isinstance(profile_revision, int) or profile_revision <= 0:
-        return "unknown"
-    if minimum_generation is not None and generation < minimum_generation:
-        return "unknown"
-    if expected_generation_epoch is not None and report.get(
-        "generation_epoch"
-    ) != expected_generation_epoch:
-        return "unknown"
-    if expected_subject_ref is not None and report.get("subject_ref") != expected_subject_ref:
-        return "unknown"
-    if expected_profile_ref is not None and report.get("profile_ref") != expected_profile_ref:
-        return "unknown"
-    if expected_profile_revision is not None and profile_revision != expected_profile_revision:
-        return "unknown"
-    if now.astimezone(timezone.utc) > valid_until:
-        return "unknown"
-    if outcome not in {"pass", "fail", "unknown"}:
-        return "unknown"
-    return outcome
+        Draft202012Validator.check_schema(report_schema)
+        schema_errors = sorted(
+            Draft202012Validator(
+                report_schema, format_checker=FormatChecker()
+            ).iter_errors(report),
+            key=lambda item: tuple(str(part) for part in item.absolute_path),
+        )
+    except SchemaError as exc:
+        schema_errors = []
+        errors.append(f"health evidence report schema is invalid: {exc}")
+    for error in schema_errors:
+        location = "/".join(str(part) for part in error.absolute_path)
+        suffix = f" at /{location}" if location else ""
+        errors.append(f"health evidence structural error{suffix}: {error.message}")
+    structurally_valid = not errors
+    if not structurally_valid:
+        reason_codes.append("malformed-evidence")
+
+    semantic_errors = [
+        *validate_health_contract(contract),
+        *validate_health_report(report, contract, profile),
+    ]
+    if semantic_errors:
+        errors.extend(semantic_errors)
+        if "malformed-evidence" not in reason_codes:
+            reason_codes.append("malformed-evidence")
+    semantically_valid = not semantic_errors
+
+    if expected_current_identity is None:
+        current_identity_match = True
+    else:
+        current_identity_match = (
+            isinstance(expected_current_identity, dict)
+            and set(expected_current_identity) == set(REQUIRED_CURRENT_EVIDENCE_FIELDS)
+            and health_evidence_identity(report) == expected_current_identity
+        )
+        if not current_identity_match:
+            reason_codes.append("current-evidence-mismatch")
+            errors.append("health evidence current identity does not exact-match")
+
+    report_object = report if isinstance(report, dict) else {}
+    within_effective_window = False
+    try:
+        published_at = parse_rfc3339(report_object.get("published_at"))
+        valid_until = parse_rfc3339(report_object.get("valid_until"))
+    except (TypeError, ValueError):
+        if "malformed-evidence" not in reason_codes:
+            reason_codes.append("malformed-evidence")
+    else:
+        normalized_evaluation = evaluated_at.astimezone(timezone.utc)
+        if normalized_evaluation < published_at:
+            reason_codes.append("evidence-not-yet-published")
+            errors.append("health evidence is not published at evaluated_at")
+        elif normalized_evaluation > valid_until:
+            reason_codes.append("stale")
+        else:
+            within_effective_window = True
+
+    outcome = report_object.get("outcome")
+    effective_outcome = (
+        outcome
+        if structurally_valid
+        and semantically_valid
+        and current_identity_match
+        and within_effective_window
+        and outcome in {"pass", "fail", "unknown"}
+        else "unknown"
+    )
+    return HealthEvidenceEvaluation(
+        structurally_valid=structurally_valid,
+        semantically_valid=semantically_valid,
+        current_identity_match=current_identity_match,
+        effective_outcome=effective_outcome,
+        reason_codes=tuple(dict.fromkeys(reason_codes)),
+        errors=tuple(errors),
+    )
 
 
 def restore_gate_allows(
-    report: dict[str, Any],
+    report: Any,
+    contract: dict[str, Any],
     profile: dict[str, Any],
-    now: datetime,
+    report_schema: dict[str, Any],
+    evaluated_at: datetime,
     *,
     expected_gate_context: dict[str, str],
-    expected_generation_epoch: str,
+    expected_current_identity: dict[str, Any],
 ) -> bool:
-    if profile.get("kind") != "recovery-preflight":
+    gate = contract.get("recovery_gate", {})
+    if not isinstance(report, dict):
+        return False
+    if profile.get("kind") != gate.get("profile_kind"):
         return False
     if report.get("gate_context") != expected_gate_context:
         return False
-    return (
-        effective_health_outcome(
-            report,
-            now,
-            expected_generation_epoch=expected_generation_epoch,
-            expected_subject_ref=profile.get("subject_ref"),
-            expected_profile_ref=profile.get("id"),
-            expected_profile_revision=profile.get("revision"),
-        )
-        == "pass"
+    evaluation = evaluate_health_evidence(
+        report,
+        contract,
+        profile,
+        report_schema,
+        evaluated_at,
+        expected_current_identity=expected_current_identity,
     )
+    return evaluation.effective_outcome == gate.get("required_effective_outcome")
 
 
 def validate_health_profiles(
@@ -952,8 +1215,10 @@ def validate_reference_traffic(
     traffic: dict[str, Any], deployment: dict[str, Any]
 ) -> list[str]:
     errors: list[str] = []
-    if traffic.get("schema") != "signalbox.reference-traffic-policy/v2":
+    if traffic.get("schema") != "signalbox.reference-traffic-policy/v3":
         errors.append("reference-traffic: unexpected schema")
+    if traffic.get("contract_revision") != 3:
+        errors.append("reference-traffic: unexpected revision")
     if traffic.get("deployment_ref") != "deployment.json":
         errors.append("reference-traffic: deployment reference drifted")
     route_order = traffic.get("route_order", [])
@@ -968,13 +1233,16 @@ def validate_reference_traffic(
                     f"reference-traffic: canonical private ingress must precede {direct_id}"
                 )
     entries = {entry.get("id"): entry for entry in route_order if isinstance(entry, dict)}
-
-    for entry in route_order:
-        if not isinstance(entry, dict) or entry.get("action") != "direct":
-            continue
-        match = entry.get("match")
-        if not isinstance(match, dict) or match.get("kind") != "explicit-allowlist":
-            errors.append(f"reference-traffic: direct action {entry.get('id')} lacks allowlist")
+    for route_id, grammar in REFERENCE_ROUTE_GRAMMAR.items():
+        entry = entries.get(route_id, {})
+        if entry.get("action") != grammar["action"]:
+            errors.append(
+                f"reference-traffic: {route_id} action must be {grammar['action']}"
+            )
+        if set(entry) != grammar["fields"]:
+            errors.append(f"reference-traffic: {route_id} field grammar drifted")
+        if "match" in grammar and entry.get("match") != grammar["match"]:
+            errors.append(f"reference-traffic: {route_id} match grammar drifted")
 
     protected = entries.get("protected-application", {})
     if protected.get("role_binding_ref") != "hearth":
@@ -992,10 +1260,6 @@ def validate_reference_traffic(
             "reference-traffic: protected traffic structurally forbids fallback fields "
             f"{present}"
         )
-    udp = entries.get("protected-udp-policy", {})
-    if udp.get("action") != "reject-until-verified":
-        errors.append("reference-traffic: protected UDP must reject until verified")
-
     default = entries.get("default-proxy-required", {})
     selection = default.get("selection", {})
     if selection.get("mode") != "pinned" or selection.get("role_binding_ref") != "alder":
@@ -1034,12 +1298,17 @@ def validate_reference_health_links(
     traffic: dict[str, Any],
     health_profiles: dict[str, Any],
     deployment: dict[str, Any],
+    health_contract: dict[str, Any],
 ) -> list[str]:
     errors: list[str] = []
-    profiles = {
-        profile.get("id"): profile
+    profile_list = [
+        profile
         for profile in health_profiles.get("profiles", [])
         if isinstance(profile, dict)
+    ]
+    profiles = {
+        profile.get("id"): profile
+        for profile in profile_list
     }
     refs = traffic.get("health_profile_refs", {})
     recovery = profiles.get(refs.get("recovery_preflight"))
@@ -1067,9 +1336,45 @@ def validate_reference_health_links(
             "subject_ref"
         ) != subject_ref:
             errors.append(f"reference-health: {lane_id} profile subject drifted")
-    profile_subjects = {profile.get("subject_ref") for profile in profiles.values()}
-    if profile_subjects != set(deployment.get("health_subjects", {})):
-        errors.append("reference-health: profiles do not cover every health subject")
+    subjects = deployment.get("health_subjects", {})
+    contract_kinds = health_contract.get("profile_kinds", {})
+    counts: dict[tuple[str, str], int] = {}
+    for profile in profile_list:
+        profile_id = profile.get("id")
+        profile_kind = profile.get("kind")
+        subject_ref = profile.get("subject_ref")
+        subject = subjects.get(subject_ref)
+        if not isinstance(subject, dict):
+            errors.append(
+                f"reference-health: profile {profile_id} has orphan subject {subject_ref}"
+            )
+            continue
+        compatible = set(
+            contract_kinds.get(profile_kind, {}).get("compatible_subject_kinds", [])
+        )
+        if subject.get("kind") not in compatible:
+            errors.append(
+                f"reference-health: {profile_kind} profile {profile_id} cannot bind "
+                f"{subject_ref} kind {subject.get('kind')}"
+            )
+        key = (subject_ref, profile_kind)
+        counts[key] = counts.get(key, 0) + 1
+
+    for subject_ref, subject in subjects.items():
+        subject_kind = subject.get("kind") if isinstance(subject, dict) else None
+        for profile_kind, kind_contract in contract_kinds.items():
+            if subject_kind not in set(
+                kind_contract.get("compatible_subject_kinds", [])
+            ):
+                continue
+            if kind_contract.get("cardinality_per_subject") != "exactly-one":
+                continue
+            count = counts.get((subject_ref, profile_kind), 0)
+            if count != 1:
+                errors.append(
+                    f"reference-health: {subject_ref} requires exactly one "
+                    f"{profile_kind} profile, found {count}"
+                )
     return errors
 
 
@@ -1078,6 +1383,8 @@ def validate_health_aggregate(
     aggregate: dict[str, Any],
     deployment: dict[str, Any],
     health_profiles: dict[str, Any],
+    health_contract: dict[str, Any],
+    health_report_schema: dict[str, Any],
 ) -> list[str]:
     errors: list[str] = []
     if aggregate.get("schema") != "signalbox.health-aggregate/v2":
@@ -1109,7 +1416,9 @@ def validate_health_aggregate(
     expected_subjects = set(deployment.get("health_subjects", {}))
     seen_subjects: set[str] = set()
     outcome_counts = {"pass": 0, "fail": 0, "unknown": 0}
-    sample_root = (root / "examples" / "mintie").resolve()
+    sample_root = resolve_repository_path(
+        root, "examples/mintie", expected_kind="directory"
+    )
     for index, member in enumerate(members):
         if not isinstance(member, dict):
             errors.append(f"health-aggregate: member {index} must be an object")
@@ -1120,8 +1429,14 @@ def validate_health_aggregate(
         elif isinstance(subject_ref, str):
             seen_subjects.add(subject_ref)
         report_ref = member.get("report_ref")
-        report_path = (sample_root / report_ref).resolve() if isinstance(report_ref, str) else None
-        if report_path is None or sample_root not in report_path.parents or not report_path.is_file():
+        try:
+            report_path = resolve_repository_path(
+                root,
+                report_ref,
+                base=sample_root,
+                expected_kind="file",
+            )
+        except RepositoryPathError:
             errors.append(f"health-aggregate: member {index} report_ref does not resolve")
             continue
         try:
@@ -1129,26 +1444,46 @@ def validate_health_aggregate(
         except (OSError, json.JSONDecodeError) as exc:
             errors.append(f"health-aggregate: member {index} report load failed: {exc}")
             continue
-        profile = profiles.get(report.get("profile_ref"))
+        report_object = report if isinstance(report, dict) else {}
+        profile = profiles.get(report_object.get("profile_ref"))
         if profile and profile.get("kind") == "recovery-preflight":
             errors.append("health-aggregate: recovery-preflight member is forbidden")
         comparisons = {
-            "subject_ref": report.get("subject_ref"),
-            "report_id": report.get("id"),
-            "profile_ref": report.get("profile_ref"),
-            "profile_revision": report.get("profile_revision"),
-            "producer_ref": report.get("producer_ref"),
-            "generation_epoch": report.get("generation_epoch"),
-            "generation": report.get("generation"),
+            "subject_ref": report_object.get("subject_ref"),
+            "report_id": report_object.get("id"),
+            "profile_ref": report_object.get("profile_ref"),
+            "profile_revision": report_object.get("profile_revision"),
+            "producer_ref": report_object.get("producer_ref"),
+            "generation_epoch": report_object.get("generation_epoch"),
+            "generation": report_object.get("generation"),
         }
         for field, expected_value in comparisons.items():
             if member.get(field) != expected_value:
                 errors.append(f"health-aggregate: member {index} {field} drifted")
-        effective = (
-            effective_health_outcome(report, evaluated_at)
+        evaluation = (
+            evaluate_health_evidence(
+                report,
+                health_contract,
+                profile or {},
+                health_report_schema,
+                evaluated_at,
+            )
             if evaluated_at is not None
-            else "unknown"
+            else None
         )
+        effective = evaluation.effective_outcome if evaluation is not None else "unknown"
+        if evaluation is not None and (
+            not evaluation.structurally_valid or not evaluation.semantically_valid
+        ):
+            errors.append(
+                f"health-aggregate: member {index} report is not canonically valid"
+            )
+        if evaluation is not None and "evidence-not-yet-published" in (
+            evaluation.reason_codes
+        ):
+            errors.append(
+                f"health-aggregate: member {index} report was not published at assembly"
+            )
         if member.get("effective_outcome_at_assembly") != effective:
             errors.append(
                 f"health-aggregate: member {index} assembly-time outcome drifted"
@@ -1165,9 +1500,9 @@ def validate_health_aggregate(
 
 def validate_doc_pairs(root: Path, document: dict[str, Any]) -> list[str]:
     errors: list[str] = []
-    if document.get("schema") != "signalbox.docs-pairs/v2":
+    if document.get("schema") != "signalbox.docs-pairs/v3":
         errors.append("docs-pairs: unexpected schema")
-    if document.get("contract_revision") != 3:
+    if document.get("contract_revision") != 4:
         errors.append("docs-pairs: unexpected revision")
     seen: set[str] = set()
     for pair in document.get("pairs", []):
@@ -1181,9 +1516,12 @@ def validate_doc_pairs(root: Path, document: dict[str, Any]) -> list[str]:
             errors.append(f"docs-pairs: {doc_id} requires semantic section anchors")
         for language in ("zh-CN", "en"):
             relative = pair.get(language)
-            path = root / relative if isinstance(relative, str) else None
-            if path is None or not path.is_file():
-                errors.append(f"docs-pairs: missing {language} file for {doc_id}: {relative}")
+            try:
+                path = resolve_repository_path(
+                    root, relative, expected_kind="file"
+                )
+            except RepositoryPathError as exc:
+                errors.append(f"docs-pairs: {doc_id} {language}: {exc}")
                 continue
             text = path.read_text(encoding="utf-8")
             if f"doc_id: {doc_id}" not in text:
@@ -1260,24 +1598,21 @@ def validate_catalog(root: Path, document: dict[str, Any]) -> list[str]:
 
         for field in ("owner", "schema_path"):
             relative = entry.get(field)
-            if not isinstance(relative, str):
-                errors.append(f"catalog: {schema_id} {field} must be repo-relative")
-                continue
-            relative_path = Path(relative)
-            if relative_path.is_absolute() or ".." in relative_path.parts:
-                errors.append(f"catalog: {schema_id} {field} must be repo-relative")
-            elif not (root / relative_path).exists():
-                errors.append(f"catalog: {schema_id} {field} does not resolve")
+            try:
+                resolve_repository_path(root, relative, expected_kind="file")
+            except RepositoryPathError as exc:
+                errors.append(f"catalog: {schema_id} {field}: {exc}")
 
         dependencies = entry.get("projection_dependencies")
         if not isinstance(dependencies, list):
             errors.append(f"catalog: {schema_id} projection_dependencies must be an array")
         else:
             for relative in dependencies:
-                path = root / relative if isinstance(relative, str) else None
-                if path is None or not path.exists():
+                try:
+                    resolve_repository_path(root, relative, expected_kind="any")
+                except RepositoryPathError as exc:
                     errors.append(
-                        f"catalog: {schema_id} projection dependency does not resolve: {relative}"
+                        f"catalog: {schema_id} projection dependency: {exc}"
                     )
 
         instances = entry.get("instances")
@@ -1293,16 +1628,20 @@ def validate_catalog(root: Path, document: dict[str, Any]) -> list[str]:
                 errors.append(f"catalog: {schema_id} has malformed instance selector")
                 continue
             if "path" in instance:
-                candidate = root / instance["path"]
-                if not candidate.is_file():
+                try:
+                    resolve_repository_path(
+                        root, instance["path"], expected_kind="file"
+                    )
+                except RepositoryPathError as exc:
                     errors.append(
-                        f"catalog: {schema_id} instance does not resolve: {instance['path']}"
+                        f"catalog: {schema_id} instance: {exc}"
                     )
             else:
-                matches = list(root.glob(instance["glob"]))
-                if not matches:
+                try:
+                    resolve_repository_glob(root, instance["glob"])
+                except RepositoryPathError as exc:
                     errors.append(
-                        f"catalog: {schema_id} glob has no instances: {instance['glob']}"
+                        f"catalog: {schema_id} instance glob: {exc}"
                     )
 
     expected_ids = {
@@ -1310,14 +1649,14 @@ def validate_catalog(root: Path, document: dict[str, Any]) -> list[str]:
         "signalbox.claims/v1",
         "signalbox.acceptance-record/v1",
         "signalbox.traffic-policy/v2",
-        "signalbox.health-contract/v3",
+        "signalbox.health-contract/v4",
         "signalbox.health-profile/v2",
         "signalbox.health-profiles/v2",
         "signalbox.health-report/v2",
         "signalbox.health-aggregate/v2",
-        "signalbox.docs-pairs/v2",
+        "signalbox.docs-pairs/v3",
         "signalbox.reference-deployment/v2",
-        "signalbox.reference-traffic-policy/v2",
+        "signalbox.reference-traffic-policy/v3",
         "signalbox.contract-catalog/v1",
     }
     if seen_ids != expected_ids:
@@ -1328,41 +1667,115 @@ def validate_catalog(root: Path, document: dict[str, Any]) -> list[str]:
     return errors
 
 
-def iter_portable_files(paths: Iterable[Path]) -> Iterable[Path]:
-    for path in paths:
-        if path.is_file() and path.suffix in PORTABLE_TEXT_SUFFIXES:
-            yield path
-        elif path.is_dir():
-            for candidate in sorted(path.rglob("*")):
-                if candidate.is_file() and candidate.suffix in PORTABLE_TEXT_SUFFIXES:
-                    yield candidate
+def tracked_repository_files(root: Path) -> list[Path]:
+    result = subprocess.run(
+        ["git", "ls-files", "-z"],
+        cwd=root,
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if result.returncode != 0:
+        detail = result.stderr.decode("utf-8", errors="replace").strip()
+        raise RepositoryPathError(f"git index enumeration failed: {detail}")
+    paths: list[Path] = []
+    for raw_relative in result.stdout.split(b"\0"):
+        if not raw_relative:
+            continue
+        relative = Path(os.fsdecode(raw_relative))
+        if relative.is_absolute() or ".." in relative.parts:
+            raise RepositoryPathError(
+                f"git index returned a non-repository path: {relative}"
+            )
+        paths.append(root / relative)
+    return paths
 
 
-def scan_portable_boundaries(root: Path, paths: Iterable[Path]) -> list[str]:
+def _confirmed_ip_literals(text: str) -> Iterable[str]:
+    for pattern in (IPV4_CANDIDATE, IPV6_CANDIDATE):
+        for match in pattern.finditer(text):
+            literal = match.group(0)
+            try:
+                if "/" in literal:
+                    ipaddress.ip_network(literal, strict=False)
+                else:
+                    ipaddress.ip_address(literal)
+            except ValueError:
+                continue
+            yield literal
+
+
+def _boundary_exception(label: str, rule: str, literal: str) -> bool:
+    return any(
+        exception.get("path") == label
+        and exception.get("rule") == rule
+        and exception.get("exact") == literal
+        and non_empty_string(exception.get("reason"))
+        for exception in PUBLIC_BOUNDARY_EXCEPTIONS
+    )
+
+
+def scan_tracked_source_boundaries(
+    root: Path, tracked_paths: Iterable[Path] | None = None
+) -> list[str]:
     errors: list[str] = []
-    checks = (
+    checks: tuple[tuple[re.Pattern[str], str], ...] = (
         (MACHINE_LOCAL_PATH, "machine-local path"),
-        (IPV4_LITERAL, "IP address literal"),
+        (MAC_LITERAL, "MAC address literal"),
         (SECRET_URI, "credential-bearing URI"),
         (PRIVATE_KEY_BLOCK, "private key material"),
-        (SECRET_VALUE, "credential value"),
+        (CREDENTIAL_ASSIGNMENT, "credential assignment"),
+        (URL_USERINFO, "URL userinfo"),
     )
-    for path in iter_portable_files(paths):
-        text = path.read_text(encoding="utf-8")
+    if tracked_paths is None:
         try:
-            label = path.relative_to(root)
-        except ValueError:
-            label = path
+            tracked = tracked_repository_files(root)
+        except RepositoryPathError as exc:
+            return [f"portable-boundary: {exc}"]
+    else:
+        tracked = list(tracked_paths)
+    root_resolved = root.resolve()
+    for path in tracked:
+        label = path.relative_to(root).as_posix()
+        if path.is_symlink():
+            target = os.readlink(path)
+            resolved_target = (path.parent / target).resolve(strict=False)
+            if (
+                resolved_target != root_resolved
+                and root_resolved not in resolved_target.parents
+            ):
+                errors.append(
+                    f"portable-boundary: {label} symlink escapes repository"
+                )
+            payload = os.fsencode(target)
+        else:
+            try:
+                payload = path.read_bytes()
+            except OSError as exc:
+                errors.append(f"portable-boundary: {label} cannot be read: {exc}")
+                continue
+        if b"\0" in payload:
+            continue
+        text = payload.decode("utf-8", errors="surrogateescape")
+        for literal in _confirmed_ip_literals(text):
+            if not _boundary_exception(label, "IP address literal", literal):
+                errors.append(
+                    f"portable-boundary: {label} contains IP address literal"
+                )
         for pattern, description in checks:
-            if pattern.search(text):
+            for match in pattern.finditer(text):
+                literal = match.group(0)
+                if _boundary_exception(label, description, literal):
+                    continue
                 errors.append(f"portable-boundary: {label} contains {description}")
+                break
     return errors
 
 
 def validate_markdown_links(root: Path, paths: Iterable[Path]) -> list[str]:
     errors: list[str] = []
-    for path in iter_portable_files(paths):
-        if path.suffix != ".md":
+    for path in paths:
+        if not path.is_file() or path.suffix != ".md":
             continue
         text = path.read_text(encoding="utf-8")
         for target in MARKDOWN_LINK.findall(text):
@@ -1372,9 +1785,16 @@ def validate_markdown_links(root: Path, paths: Iterable[Path]) -> list[str]:
             clean = clean.split("#", 1)[0]
             if not clean:
                 continue
-            resolved = (path.parent / clean).resolve()
-            if not resolved.exists():
-                errors.append(f"links: {path.relative_to(root)} points to missing {target}")
+            try:
+                resolve_repository_path(
+                    root,
+                    clean,
+                    base=path.parent,
+                    expected_kind="any",
+                    allow_parent=True,
+                )
+            except RepositoryPathError as exc:
+                errors.append(f"links: {path.relative_to(root)} {exc}")
     return errors
 
 
@@ -1426,6 +1846,7 @@ def validate_repository(root: Path = ROOT) -> list[str]:
         reference_traffic = load_json(root / "examples/mintie/traffic-policy.json")
         health_profiles = load_json(root / "examples/mintie/health-profiles.json")
         health_aggregate = load_json(root / "examples/mintie/health-aggregate.json")
+        health_report_schema = load_json(root / "schemas/health-report.schema.json")
     except (OSError, json.JSONDecodeError) as exc:
         return [f"repository: JSON load failed: {exc}"]
 
@@ -1439,10 +1860,19 @@ def validate_repository(root: Path = ROOT) -> list[str]:
     errors.extend(validate_reference_traffic(reference_traffic, deployment))
     errors.extend(validate_health_profiles(health_profiles, health_contract))
     errors.extend(
-        validate_reference_health_links(reference_traffic, health_profiles, deployment)
+        validate_reference_health_links(
+            reference_traffic, health_profiles, deployment, health_contract
+        )
     )
     errors.extend(
-        validate_health_aggregate(root, health_aggregate, deployment, health_profiles)
+        validate_health_aggregate(
+            root,
+            health_aggregate,
+            deployment,
+            health_profiles,
+            health_contract,
+            health_report_schema,
+        )
     )
 
     profile_by_id = {
@@ -1460,53 +1890,50 @@ def validate_repository(root: Path = ROOT) -> list[str]:
         except (OSError, json.JSONDecodeError) as exc:
             errors.append(f"health fixture {fixture.name}: JSON load failed: {exc}")
             continue
-        profile = profile_by_id.get(report.get("profile_ref"))
+        report_object = report if isinstance(report, dict) else {}
+        profile = profile_by_id.get(report_object.get("profile_ref"))
         if profile is None:
             errors.append(
-                f"health fixture {fixture.name}: unresolved profile {report.get('profile_ref')}"
+                "health fixture "
+                f"{fixture.name}: unresolved profile {report_object.get('profile_ref')}"
             )
             continue
-        for error in validate_health_report(report, health_contract, profile):
+        try:
+            evaluated_at = parse_rfc3339(report.get("published_at"))
+        except (TypeError, ValueError) as exc:
+            errors.append(f"health fixture {fixture.name}: published_at {exc}")
+            continue
+        evaluation = evaluate_health_evidence(
+            report,
+            health_contract,
+            profile,
+            health_report_schema,
+            evaluated_at,
+            expected_current_identity=health_evidence_identity(report),
+        )
+        for error in evaluation.errors:
             errors.append(f"health fixture {fixture.name}: {error}")
 
-    portable_paths = [
-        root / "README.md",
-        root / "README.zh-CN.md",
-        root / "AGENTS.md",
-        root / "SECURITY.md",
-        root / "CONTRIBUTING.md",
-        root / ".github",
-        root / "contracts",
-        root / "docs",
-        root / "examples",
-        root / "schemas",
-    ]
-    errors.extend(scan_portable_boundaries(root, portable_paths))
-    errors.extend(
-        validate_markdown_links(
-            root,
-            [
-                root / "README.md",
-                root / "README.zh-CN.md",
-                root / "AGENTS.md",
-                root / "SECURITY.md",
-                root / "CONTRIBUTING.md",
-                root / "docs",
-                root / "examples",
-                root / "schemas",
-            ],
-        )
-    )
+    try:
+        tracked_paths = tracked_repository_files(root)
+    except RepositoryPathError as exc:
+        errors.append(f"repository: {exc}")
+    else:
+        errors.extend(scan_tracked_source_boundaries(root, tracked_paths))
+        errors.extend(validate_markdown_links(root, tracked_paths))
 
     specification = (root / "docs/specification.md").read_text(encoding="utf-8")
     for contract_id in (
         "SIG-01",
         "IDENT-02",
         "AUTH-03",
+        "AUTH-04",
+        "AUTH-05",
         "CLAIM-03",
         "ROUTE-02",
         "ROUTE-04",
         "ROUTE-06",
+        "ROUTE-07",
         "ENFORCE-01",
         "PRIVATE-01",
         "HEALTH-02",
@@ -1514,6 +1941,8 @@ def validate_repository(root: Path = ROOT) -> list[str]:
         "HEALTH-10",
         "HEALTH-14",
         "HEALTH-15",
+        "HEALTH-16",
+        "HEALTH-17",
         "DOC-05",
         "UPDATE-03",
         "ACCEPT-08",

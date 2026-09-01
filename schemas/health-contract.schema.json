@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:signalbox:schema:health-contract:v3",
+  "$id": "urn:signalbox:schema:health-contract:v4",
   "title": "Signalbox health contract",
   "type": "object",
   "additionalProperties": false,
@@ -15,6 +15,7 @@
     "required_report_fields",
     "required_dimension_fields",
     "required_observation_fields",
+    "evidence_evaluation",
     "generation",
     "freshness",
     "recovery_gate",
@@ -27,8 +28,8 @@
     "reason_codes"
   ],
   "properties": {
-    "schema": {"const": "signalbox.health-contract/v3"},
-    "contract_revision": {"type": "integer", "minimum": 3},
+    "schema": {"const": "signalbox.health-contract/v4"},
+    "contract_revision": {"type": "integer", "minimum": 4},
     "transient_outcomes": {"$ref": "#/$defs/stringSet"},
     "terminal_outcomes": {"$ref": "#/$defs/stringSet"},
     "rollup_precedence": {"$ref": "#/$defs/stringSet"},
@@ -46,6 +47,24 @@
     "required_report_fields": {"$ref": "#/$defs/stringSet"},
     "required_dimension_fields": {"$ref": "#/$defs/stringSet"},
     "required_observation_fields": {"$ref": "#/$defs/stringSet"},
+    "evidence_evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_report_schema",
+        "structural_and_semantic_validity_required",
+        "effective_window",
+        "invalid_effective_outcome",
+        "current_identity_match"
+      ],
+      "properties": {
+        "canonical_report_schema": {"const": "signalbox.health-report/v2"},
+        "structural_and_semantic_validity_required": {"type": "boolean"},
+        "effective_window": {"type": "string", "minLength": 1},
+        "invalid_effective_outcome": {"$ref": "#/$defs/terminal"},
+        "current_identity_match": {"type": "string", "minLength": 1}
+      }
+    },
     "generation": {
       "type": "object",
       "additionalProperties": false,
@@ -95,12 +114,18 @@
         "profile_kind",
         "required_context_fields",
         "exact_context_match_required",
+        "required_current_identity_fields",
+        "exact_current_identity_match_required",
+        "higher_than_expected_generation_action",
         "required_effective_outcome"
       ],
       "properties": {
         "profile_kind": {"type": "string", "minLength": 1},
         "required_context_fields": {"$ref": "#/$defs/stringSet"},
         "exact_context_match_required": {"type": "boolean"},
+        "required_current_identity_fields": {"$ref": "#/$defs/stringSet"},
+        "exact_current_identity_match_required": {"type": "boolean"},
+        "higher_than_expected_generation_action": {"type": "string", "minLength": 1},
         "required_effective_outcome": {"$ref": "#/$defs/terminal"}
       }
     },
@@ -114,7 +139,8 @@
         "recovery_preflight_members_forbidden",
         "evaluated_at_must_equal_assembled_at",
         "member_outcome_field",
-        "historical_receipt"
+        "historical_receipt",
+        "member_evaluation_requires_canonical_validity"
       ],
       "properties": {
         "member_reports_immutable": {"type": "boolean"},
@@ -123,7 +149,8 @@
         "recovery_preflight_members_forbidden": {"type": "boolean"},
         "evaluated_at_must_equal_assembled_at": {"type": "boolean"},
         "member_outcome_field": {"const": "effective_outcome_at_assembly"},
-        "historical_receipt": {"type": "boolean"}
+        "historical_receipt": {"type": "boolean"},
+        "member_evaluation_requires_canonical_validity": {"type": "boolean"}
       }
     },
     "publication": {
@@ -164,12 +191,16 @@
       "required": [
         "required_dimensions",
         "observation_scope",
+        "compatible_subject_kinds",
+        "cardinality_per_subject",
         "may_gate_restore",
         "may_feed_deployment_aggregate"
       ],
       "properties": {
         "required_dimensions": {"$ref": "#/$defs/stringSet"},
         "observation_scope": {"type": "string", "minLength": 1},
+        "compatible_subject_kinds": {"$ref": "#/$defs/stringSet"},
+        "cardinality_per_subject": {"type": "string", "minLength": 1},
         "may_gate_restore": {"type": "boolean"},
         "may_feed_deployment_aggregate": {"type": "boolean"}
       }

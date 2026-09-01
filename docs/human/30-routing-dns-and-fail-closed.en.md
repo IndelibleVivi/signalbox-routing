@@ -3,7 +3,7 @@ doc_id: signalbox.human.routing-dns-fail-closed
 language: en
 status: f1-reader-path
 authority: ../specification.md
-contract_revision: 3
+contract_revision: 4
 ---
 
 **English** · [简体中文](30-routing-dns-and-fail-closed.zh-CN.md)
@@ -55,7 +55,7 @@ proved. Rejection is preferable to a quiet direct escape.
 <a id="route-precedence"></a>
 ## Evaluate specific routes before general routes
 
-`ROUTE-04` `ROUTE-06`
+`ROUTE-04` `ROUTE-06` `ROUTE-07`
 
 The Mintie reference order expresses the portable intent:
 
@@ -65,6 +65,10 @@ The Mintie reference order expresses the portable intent:
 4. match the high-recall protected application set;
 5. evaluate explicit private and ordinary DIRECT allowlists;
 6. send everything else requiring proxy to pinned `general-primary`.
+
+For the Mintie reference projection, those settled route IDs also bind exact
+actions, match forms, and allowed fields. Ordering alone is not enough: an
+action substitution or an undeclared route field is rejected as grammar drift.
 
 The important overlap is private ingress versus DIRECT. A broad private-address
 allowlist must not consume the canonical hostname first, or the packet bypasses
@@ -96,17 +100,22 @@ contract. Those identifiers do not become Signalbox-wide constants.
 <a id="health-and-recovery"></a>
 ## Observe first; mutate under another contract
 
-`HEALTH-07` `HEALTH-15`
+`HEALTH-07` `HEALTH-15` `HEALTH-16`
 
 Health reports observe the control plane and each lane separately. Query
-failure remains `unknown`. A recovery-preflight report may open only the exact
-restore gate bound to its operation, desired state, observed runtime generation,
-and scope. Ordinary operational health never authorizes route mutation.
+failure remains `unknown`. Before any recorded pass can open a restore gate,
+the canonical evaluator validates its structure and semantics, requires
+`published_at <= evaluated_at <= valid_until`, and exact-matches producer,
+subject, profile and revision, epoch, generation, report ID, attempt ID, plus
+operation context. A higher generation is not “new enough”; it aborts the
+decision so the consumer can re-read the current pointer. Ordinary operational
+health never authorizes route mutation.
 
 A deployment aggregate is a historical receipt. Its `evaluated_at` equals
 `assembled_at`, and member values are named
-`effective_outcome_at_assembly`. Do not re-read an old aggregate as current
-health; assemble a new one from fresh member reports.
+`effective_outcome_at_assembly`. Every member passes through the same canonical
+evaluator. Do not re-read an old aggregate as current health; assemble a new
+one from fresh member reports.
 
 Automatic failover, if a deployment later chooses it, needs a separate state
 machine with hysteresis, operation identity, rollback, and receipts. A latency

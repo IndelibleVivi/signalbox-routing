@@ -26,8 +26,9 @@ runtime tags.
 | `docs/agent/*` | Implementation, patch, evidence, and verification reference for agents |
 | `docs/reference/*` | Durable glossary and incident-derived reusable lessons |
 | `examples/mintie/*` | Public-safe reference deployment; never a production binding or credential source |
-| `scripts/validate_schemas.py` | Catalog-driven JSON Schema validation |
-| `scripts/validate.py` and `tests/` | Cross-file semantic and regression checks; not runtime or client acceptance |
+| `scripts/validate_schemas.py` | Fixed-schema catalog bootstrap followed by catalog-driven JSON Schema validation |
+| `scripts/repository_paths.py` | Shared repo-containment resolver for catalog, documentation, and aggregate references |
+| `scripts/validate.py` and `tests/` | Cross-file semantics, Git-index public-boundary scanning, and regression checks; not runtime or client acceptance |
 | `.github/workflows/verify.yml` | Hosted source gate across supported Python versions |
 
 Attached specifications, transcripts, logs, incident notes, and external
@@ -53,11 +54,19 @@ replace the authority map above.
   traffic.
 - Evaluate canonical private-ingress matches before every DIRECT allowlist;
   specific policy precedes general policy even when address sets overlap.
+- Keep the Mintie reference route IDs bound to their exact action, match form,
+  and allowed field set. Order alone is not the route grammar.
 - Health observation never mutates routing by itself. Failover or recovery
   automation requires its own explicit state machine and authorization.
-- Bind every health report to one subject, profile revision, producer, and
-  generation epoch. Deployment aggregation preserves assembly-time member
-  outcomes as a historical receipt and never emits a top-level health verdict.
+- Bind exactly one compatible operational profile to every registered subject
+  and profile kind. A report becomes effective only after structural and
+  semantic validation and inside `published_at <= evaluated_at <= valid_until`.
+- A restore gate exact-matches producer, subject, profile and revision, epoch,
+  generation, report ID, attempt ID, and gate context. A higher or lower
+  generation is a mismatch; abort and re-read the current pointer.
+- Deployment aggregation applies that same canonical evaluator, preserves
+  assembly-time member outcomes as a historical receipt, and never emits a
+  top-level health verdict.
 
 ## Evidence and claim discipline
 
@@ -93,7 +102,11 @@ For a semantic change:
 4. Update human and agent projections that explain the changed contract.
 5. Update the Mintie example only if its portable mapping changes.
 6. Add or revise behavior-focused validation.
-7. Run `make verify`, inspect the diff, and report source, Git, remote, runtime,
+7. Resolve contract, docs-pair, and aggregate authority paths inside the repo;
+   do not accept absolute paths, backslashes, symlink escapes, or parent
+   traversal. Markdown parent links are allowed only after resolution proves
+   that the target remains inside the repo.
+8. Run `make verify`, inspect the diff, and report source, Git, remote, runtime,
    and owner-acceptance states separately.
 
 Use one canonical path. Remove superseded behavior and references in the same
@@ -112,6 +125,10 @@ them.
   incident chronology and private evidence remain outside Git.
 - Keep paired human documents semantically aligned through
   `contracts/docs-pairs.json`; do not let translation become a second contract.
+- The public-boundary detector enumerates paths from the current Git index and
+  scans their current textual worktree content, not a selected extension list.
+  Its bounded patterns are defense in depth, not a Git-history or universal
+  secret audit; exceptions must be exact and publicly justified.
 
 ## Verification and Git closure
 

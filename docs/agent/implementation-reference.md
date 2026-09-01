@@ -6,12 +6,12 @@
 | --- | --- | --- |
 | Project and reference identity | `contracts/roles.json`, `examples/mintie/deployment.json` | `IDENT-01` to `IDENT-03` |
 | Realization and acceptance boundaries | `contracts/claims.json` | `CLAIM-01` to `CLAIM-03` |
-| Traffic actions, precedence, and fallback | `contracts/traffic-policy.json` | `ROUTE-01` to `ROUTE-06` |
+| Traffic actions, precedence, and fallback | `contracts/traffic-policy.json`, `examples/mintie/traffic-policy.json` | `ROUTE-01` to `ROUTE-07` |
 | Enforcement and restore gates | `contracts/traffic-policy.json` | `ENFORCE-01`, `ENFORCE-02` |
 | Private ingress | roles plus traffic policy | `PRIVATE-01` to `PRIVATE-04` |
-| Health profiles, observations, reports, and aggregates | `contracts/health-contract.json` | `HEALTH-01` to `HEALTH-15` |
+| Health profiles, observations, reports, and aggregates | `contracts/health-contract.json` | `HEALTH-01` to `HEALTH-17` |
 | Documentation parity | `contracts/docs-pairs.json` | `DOC-01` to `DOC-05` |
-| Structural schemas and compatibility routing | `contracts/catalog.json`, `schemas/` | `AUTH-03` |
+| Structural schemas and compatibility routing | `contracts/catalog.json`, `schemas/` | `AUTH-03` to `AUTH-05` |
 
 ## Role binding and action rules
 
@@ -42,6 +42,10 @@ DIRECT                -> explicit-allowlist action; never a role or fallback
   fallback mechanism.
 - Default general egress is pinned; a secondary role does not activate itself.
 - Private-ingress gateway capability is distinct from general egress.
+- The Mintie reference projection binds all eight settled route IDs to exact
+  actions, match forms, and field sets. An implementation may translate that
+  grammar into its own engine, but the source projection cannot silently swap
+  an action or retain an extra field.
 - A fresh passing `recovery-preflight` report may open only the exact restore
   gate named by its operation, desired-state digest, runtime generation, and
   restore scope. Operational health cannot open that gate or mutate routing.
@@ -55,6 +59,12 @@ contract depends on them.
 `HealthProfile` is mutable configuration with an explicit revision. It declares
 the purpose, required dimensions, schedule or triggers, freshness, publication,
 privacy, retention, and resource-threshold owner.
+
+Profile topology is total and type-safe: each registered control-plane subject
+has exactly one `recovery-preflight` and one `control-plane-operational`
+profile, and each registered egress or private-ingress lane has exactly one
+`lane-operational` profile. A wrong-kind, missing, duplicate, or orphan binding
+is invalid. `HEALTH-17`
 
 `HealthReport` is an immutable, single-subject observation conforming to
 `signalbox.health-report/v2`:
@@ -117,17 +127,26 @@ Every attempt publishes a terminal report using atomic replacement of the
 current pointer. Failed and unknown attempts advance generation. Generation is
 monotonic only inside `producer_ref + subject_ref + profile_ref +
 generation_epoch`; an epoch changes only through explicit reset or migration.
-After profile-bounded `valid_until`, a same-epoch regression, an unexpected
-epoch, subject/profile mismatch, or profile revision mismatch, effective
-outcome is `unknown` regardless of recorded `outcome`.
+The canonical evidence evaluator first validates the report schema and all
+report/profile semantics, then requires
+`published_at <= evaluated_at <= valid_until`. When a decision expects current
+evidence, it exact-matches `producer_ref`, `subject_ref`, `profile_ref`,
+`profile_revision`, `generation_epoch`, `generation`, report `id`, and
+`attempt_id`. Unpublished or expired evidence, a same-epoch regression, an
+unexpected epoch, any identity mismatch, or any invalid shape or semantic
+rollup yields effective `unknown` regardless of recorded `outcome`. A higher
+generation also mismatches: abort the decision and re-read the current pointer
+instead of interpreting it as “new enough.” `HEALTH-16`
 
 Operational profiles bind the control plane and each lane separately. A
 `signalbox.health-aggregate/v2` receipt references immutable report identity
 and generation for every subject, excludes recovery-preflight, and has no
-top-level `outcome`. Its `evaluated_at` equals `assembled_at`; each member stores
-`effective_outcome_at_assembly`. Treat it as immutable historical evidence.
-Build a new aggregate when a current view is required; never age or rewrite the
-stored member outcomes in place. `HEALTH-15`
+top-level `outcome`. Every member passes through the canonical evidence
+evaluator at `assembled_at`, while aggregate validation exact-checks its
+recorded member identity fields. Its `evaluated_at` equals `assembled_at`, and
+each member stores `effective_outcome_at_assembly`. Treat it as immutable
+historical evidence. Build a new aggregate when a current view is required;
+never age or rewrite the stored member outcomes in place. `HEALTH-15`
 
 ## Recovery-readiness semantics
 
@@ -140,8 +159,15 @@ reconcile the state it intends to restore. It includes:
 - a named recovery outcome when postconditions cannot be established.
 
 Its `gate_context` binds `operation_ref`, `desired_state_digest`,
-`observed_runtime_generation`, and `restore_scope_ref`. A fresh pass for one
-context cannot authorize a different restore.
+`observed_runtime_generation`, and `restore_scope_ref`. The gate also
+exact-matches the full expected current report identity listed above. Only a
+canonically valid, published, fresh pass for that one context and identity may
+open the gate. A newer report forces an abort and current-pointer re-read; it
+does not inherit authorization from an older expectation.
+
+This repository implements the source decision contract, not the runtime
+current-pointer CAS/lock protocol. A deployment must still make its read and
+mutation state machine race-safe and emit its own receipt.
 
 Platform-specific table warm-up, module loading, or listener initialization
 may satisfy the contract, but those mechanisms do not become portable

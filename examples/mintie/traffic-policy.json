@@ -1,6 +1,6 @@
 {
-  "schema": "signalbox.reference-traffic-policy/v2",
-  "contract_revision": 2,
+  "schema": "signalbox.reference-traffic-policy/v3",
+  "contract_revision": 3,
   "deployment_ref": "deployment.json",
   "protected_scope": "sample-main-network",
   "health_profile_refs": {

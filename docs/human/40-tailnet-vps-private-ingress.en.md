@@ -3,7 +3,7 @@ doc_id: signalbox.human.tailnet-vps-private-ingress
 language: en
 status: f1-reader-path
 authority: ../specification.md
-contract_revision: 3
+contract_revision: 4
 ---
 
 **English** · [简体中文](40-tailnet-vps-private-ingress.zh-CN.md)

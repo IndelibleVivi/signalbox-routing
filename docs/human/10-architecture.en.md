@@ -3,7 +3,7 @@ doc_id: signalbox.human.architecture
 language: en
 status: foundation-explanatory
 authority: ../specification.md
-contract_revision: 3
+contract_revision: 4
 ---
 
 **English** · [简体中文](10-architecture.zh-CN.md)
@@ -38,6 +38,11 @@ flowchart TD
 service, firewall, or multiple upstreams. It forbids multiple control planes
 from competing for DNS, default routes, packet marks, or interception
 ownership without an explicit compatibility design.
+
+The Mintie executable projection also locks each settled route ID to one exact
+action, match form, and allowed field set. Route order remains necessary, but
+an action swap or an extra field is contract drift rather than an equivalent
+implementation. `ROUTE-07`
 
 <a id="protected-lane"></a>
 ## Protected lane

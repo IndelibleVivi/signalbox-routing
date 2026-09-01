@@ -86,8 +86,8 @@
       ]
     },
     {
-      "schema_id": "signalbox.health-contract/v3",
-      "revision": 3,
+      "schema_id": "signalbox.health-contract/v4",
+      "revision": 4,
       "owner": "contracts/health-contract.json",
       "schema_path": "schemas/health-contract.schema.json",
       "compatibility": {
@@ -191,8 +191,8 @@
       ]
     },
     {
-      "schema_id": "signalbox.docs-pairs/v2",
-      "revision": 3,
+      "schema_id": "signalbox.docs-pairs/v3",
+      "revision": 4,
       "owner": "contracts/docs-pairs.json",
       "schema_path": "schemas/docs-pairs.schema.json",
       "compatibility": {
@@ -233,8 +233,8 @@
       ]
     },
     {
-      "schema_id": "signalbox.reference-traffic-policy/v2",
-      "revision": 2,
+      "schema_id": "signalbox.reference-traffic-policy/v3",
+      "revision": 3,
       "owner": "examples/mintie/traffic-policy.json",
       "schema_path": "schemas/reference-traffic-policy.schema.json",
       "compatibility": {

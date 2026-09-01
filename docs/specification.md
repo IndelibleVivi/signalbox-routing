@@ -1,7 +1,7 @@
 # Signalbox Product and Architecture Specification
 
 Status: canonical working specification
-Revision: 3
+Revision: 4
 Authority: current Faye/Cove task decisions, with earlier Mintie materials used
 as evidence rather than executable instructions
 
@@ -60,6 +60,19 @@ dependent projections. JSON Schema owns portable structural validation;
 `scripts/validate.py` owns cross-document semantic invariants that shape alone
 cannot prove.
 
+`AUTH-04` — The fixed canonical catalog schema validates
+`contracts/catalog.json` before any catalog-controlled path is consumed.
+Catalog, documentation-pair, aggregate-report, and internal-link resolution
+must normalize inside the repository and reject an escaped authority path or
+symlink target.
+
+`AUTH-05` — The public-source boundary gate enumerates paths from the current
+Git index rather than a maintained directory or suffix allowlist. It scans
+their current textual worktree bytes with bounded detectors and binary/symlink
+safety. A pass means only that the current tracked tree passed those declared
+detectors; it is not a Git-history secret audit or proof that every
+configuration value is understood semantically.
+
 `IDENT-01` — Signalbox is the generalized project. Mintie is a reference
 deployment.
 
@@ -110,6 +123,10 @@ protocol-specific bypasses such as direct QUIC are rejected rather than leaked.
 `ROUTE-06` — Route precedence is specific before general. Canonical private
 ingress is evaluated before any general private-address or approved-DIRECT
 allowlist, so overlap cannot shadow the dedicated gateway action.
+
+`ROUTE-07` — The Mintie reference projection binds each settled route ID to
+its exact action, match form, required fields, and forbidden foreign fields.
+Preserving route order alone is insufficient when a route action can drift.
 
 `ENFORCE-01` — Fail-closed enforcement is independent of the routing process
 where the platform permits it. Failure to establish a safe runtime retains the
@@ -216,6 +233,20 @@ assembly. Its `evaluated_at` equals `assembled_at`, and every member records
 outcome against wall-clock time; they assemble a new aggregate from current
 member reports when they need a current view.
 
+`HEALTH-16` — Effective health has one canonical evaluation boundary. It first
+requires JSON Schema validity and profile-bound semantic validity, then applies
+the window `published_at <= evaluated_at <= valid_until`. Restore additionally
+requires exact equality for producer, subject, profile, profile revision,
+generation epoch, current generation, report ID, attempt ID, and gate context.
+A report above or below the caller's current identity is `unknown`; the caller
+must re-read the current pointer rather than infer recency from a larger number.
+
+`HEALTH-17` — Profile kind is bound to deployment subject kind and cardinality.
+Every control-plane subject has exactly one `recovery-preflight` and one
+`control-plane-operational` profile. Every egress or private-ingress lane has
+exactly one `lane-operational` profile. Wrong-kind, duplicate, orphan, and
+uncovered bindings are invalid.
+
 ## 9. Incident-derived portable lessons
 
 `INCIDENT-01` — Cold-boot query failure showed that a logically empty policy
@@ -285,9 +316,11 @@ Signalbox v1 source is complete when:
   resource-pressure, common-probe, and failover-semantic failures;
 - `ACCEPT-06` — local and hosted validation reject broken references, unsafe
   route precedence, forbidden fallback, invalid observation/report rollups,
-  generation or gate-context misuse, overlong freshness, unbounded retention,
-  bilingual drift, unresolved structured identities, and machine-local paths
-  without embedding private live-value denylists;
+  non-current or unpublished restore evidence, wrong profile/subject binding,
+  route-action drift, generation or gate-context misuse, overlong freshness,
+  unbounded retention, bilingual drift, escaped repository paths, unresolved
+  structured identities, and bounded public-source detector violations without
+  embedding private live-value denylists;
 - `ACCEPT-07` — README, AGENTS, current state, examples, and contracts do not
   contradict one another;
 - `ACCEPT-08` — repository license, remote, release, runtime, and owner

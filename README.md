@@ -1,5 +1,5 @@
-<!-- doc_id: signalbox.readme; language: en; contract_revision: 3 -->
-<!-- contracts: SIG-01 SIG-02 IDENT-01 CLAIM-01 DOC-02 ACCEPT-08 -->
+<!-- doc_id: signalbox.readme; language: en; contract_revision: 4 -->
+<!-- contracts: SIG-01 SIG-02 IDENT-01 CLAIM-01 DOC-02 AUTH-05 ACCEPT-08 -->
 
 **English** · [简体中文](README.zh-CN.md)
 
@@ -98,10 +98,15 @@ python3 -m venv .venv
 make verify PYTHON=.venv/bin/python
 ```
 
-The gate validates Draft 2020-12 JSON Schemas, cross-file policy semantics,
-health/report/aggregate behavior, bilingual document pairs, public-safe sample
-boundaries, links, and regression fixtures. Hosted CI repeats it on Python
-3.11, 3.12, and 3.13. It proves the tracked source contract only.
+The gate bootstraps the contract catalog from a fixed Draft 2020-12 schema,
+validates cross-file policy and health semantics, checks bilingual document
+pairs and contained links, and scans the current worktree bytes for every
+textual path listed in the Git index against a bounded set of public-boundary
+violations. Binary blobs are skipped without being followed or decoded;
+symlink targets are inspected without being followed. This detector is not a
+Git-history audit or a universal secret scanner. Hosted CI repeats the source
+gate on Python 3.11, 3.12, and 3.13.
+`AUTH-05`
 
 For agents, continue with the [Agent Surface](docs/agent/README.md). For incident
 mechanisms, see the [failure catalog](docs/reference/failure-catalog.md). For
@@ -110,8 +115,9 @@ the exact published boundary, see [current state](docs/current-state.md).
 <a id="status-and-permission"></a>
 ## Status and permission
 
-Foundation 0.2.1 and the F1 Human Surface are source-verified and published at
-the exact commit and hosted gate recorded in [current
+Foundation 0.2.1 and the F1 Human Surface remain source-verified and published.
+F0.2.2 executable-authority closure is a local source-verified candidate until
+the exact commit and hosted gate are recorded in [current
 state](docs/current-state.md). Full Signalbox v1 remains incomplete; no
 installed payload, live-router integration, private-ingress deployment, path
 evidence, or owner acceptance is implied. `ACCEPT-08`

@@ -1,6 +1,6 @@
 {
-  "schema": "signalbox.health-contract/v3",
-  "contract_revision": 3,
+  "schema": "signalbox.health-contract/v4",
+  "contract_revision": 4,
   "transient_outcomes": [
     "checking"
   ],
@@ -24,6 +24,10 @@
         "recovery-readiness"
       ],
       "observation_scope": "single-control-plane",
+      "compatible_subject_kinds": [
+        "control-plane"
+      ],
+      "cardinality_per_subject": "exactly-one",
       "may_gate_restore": true,
       "may_feed_deployment_aggregate": false
     },
@@ -36,6 +40,10 @@
         "recovery-readiness"
       ],
       "observation_scope": "single-control-plane",
+      "compatible_subject_kinds": [
+        "control-plane"
+      ],
+      "cardinality_per_subject": "exactly-one",
       "may_gate_restore": false,
       "may_feed_deployment_aggregate": true
     },
@@ -46,6 +54,11 @@
         "dns"
       ],
       "observation_scope": "single-lane",
+      "compatible_subject_kinds": [
+        "egress-lane",
+        "private-ingress-lane"
+      ],
+      "cardinality_per_subject": "exactly-one",
       "may_gate_restore": false,
       "may_feed_deployment_aggregate": true
     }
@@ -92,6 +105,13 @@
     "state",
     "observed_at"
   ],
+  "evidence_evaluation": {
+    "canonical_report_schema": "signalbox.health-report/v2",
+    "structural_and_semantic_validity_required": true,
+    "effective_window": "published_at <= evaluated_at <= valid_until",
+    "invalid_effective_outcome": "unknown",
+    "current_identity_match": "exact"
+  },
   "generation": {
     "scope_fields": [
       "producer_ref",
@@ -123,6 +143,18 @@
       "restore_scope_ref"
     ],
     "exact_context_match_required": true,
+    "required_current_identity_fields": [
+      "producer_ref",
+      "subject_ref",
+      "profile_ref",
+      "profile_revision",
+      "generation_epoch",
+      "generation",
+      "report_id",
+      "attempt_id"
+    ],
+    "exact_current_identity_match_required": true,
+    "higher_than_expected_generation_action": "abort-and-reread-current-pointer",
     "required_effective_outcome": "pass"
   },
   "deployment_aggregate": {
@@ -132,7 +164,8 @@
     "recovery_preflight_members_forbidden": true,
     "evaluated_at_must_equal_assembled_at": true,
     "member_outcome_field": "effective_outcome_at_assembly",
-    "historical_receipt": true
+    "historical_receipt": true,
+    "member_evaluation_requires_canonical_validity": true
   },
   "publication": {
     "terminal_report_required_for_every_attempt": true,
@@ -176,6 +209,8 @@
     "generation-regressed",
     "generation-epoch-mismatch",
     "profile-revision-mismatch",
-    "gate-context-mismatch"
+    "gate-context-mismatch",
+    "current-evidence-mismatch",
+    "evidence-not-yet-published"
   ]
 }

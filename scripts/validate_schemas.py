@@ -11,6 +11,19 @@ from typing import Any
 from jsonschema import Draft202012Validator, FormatChecker
 from jsonschema.exceptions import SchemaError
 
+if __package__:
+    from .repository_paths import (
+        RepositoryPathError,
+        resolve_repository_glob,
+        resolve_repository_path,
+    )
+else:
+    from repository_paths import (  # type: ignore[no-redef]
+        RepositoryPathError,
+        resolve_repository_glob,
+        resolve_repository_path,
+    )
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -47,12 +60,10 @@ def resolve_pointer(document: Any, pointer: str) -> list[Any]:
 
 def iter_instances(root: Path, selector: dict[str, str]) -> list[tuple[str, Any]]:
     if "glob" in selector:
-        paths = sorted(root.glob(selector["glob"]))
-        if not paths:
-            raise ValueError(f"glob has no instances: {selector['glob']}")
+        paths = resolve_repository_glob(root, selector["glob"])
         return [(str(path.relative_to(root)), load_json(path)) for path in paths]
 
-    path = root / selector["path"]
+    path = resolve_repository_path(root, selector["path"], expected_kind="file")
     document = load_json(path)
     pointer = selector.get("pointer")
     if pointer is None:
@@ -70,26 +81,68 @@ def validate_cataloged_instances(root: Path = ROOT) -> tuple[list[str], int]:
     errors: list[str] = []
     validated = 0
     try:
-        catalog = load_json(root / "contracts/catalog.json")
-    except (OSError, json.JSONDecodeError) as exc:
+        catalog_schema_path = resolve_repository_path(
+            root, "schemas/catalog.schema.json", expected_kind="file"
+        )
+        catalog_path = resolve_repository_path(
+            root, "contracts/catalog.json", expected_kind="file"
+        )
+        catalog_schema = load_json(catalog_schema_path)
+        Draft202012Validator.check_schema(catalog_schema)
+        catalog = load_json(catalog_path)
+    except (OSError, json.JSONDecodeError, RepositoryPathError, SchemaError) as exc:
         return [f"schema validation: catalog load failed: {exc}"], 0
+
+    catalog_validator = Draft202012Validator(
+        catalog_schema, format_checker=FormatChecker()
+    )
+    catalog_errors = sorted(
+        catalog_validator.iter_errors(catalog),
+        key=lambda item: tuple(str(part) for part in item.absolute_path),
+    )
+    if catalog_errors:
+        return [
+            "schema validation: catalog"
+            + (
+                " at /" + "/".join(str(part) for part in error.absolute_path)
+                if error.absolute_path
+                else ""
+            )
+            + f": {error.message}"
+            for error in catalog_errors
+        ], 0
 
     for entry in catalog.get("entries", []):
         schema_id = entry.get("schema_id", "<missing-schema-id>")
         try:
-            schema = load_json(root / entry["schema_path"])
+            schema_path = resolve_repository_path(
+                root, entry["schema_path"], expected_kind="file"
+            )
+            schema = load_json(schema_path)
             Draft202012Validator.check_schema(schema)
             validator = Draft202012Validator(
                 schema, format_checker=FormatChecker()
             )
-        except (KeyError, OSError, json.JSONDecodeError, SchemaError) as exc:
+        except (
+            KeyError,
+            OSError,
+            json.JSONDecodeError,
+            RepositoryPathError,
+            SchemaError,
+        ) as exc:
             errors.append(f"schema validation: {schema_id} schema invalid: {exc}")
             continue
 
         for selector in entry.get("instances", []):
             try:
                 instances = iter_instances(root, selector)
-            except (KeyError, OSError, json.JSONDecodeError, ValueError) as exc:
+            except (
+                KeyError,
+                OSError,
+                json.JSONDecodeError,
+                RepositoryPathError,
+                ValueError,
+            ) as exc:
                 errors.append(f"schema validation: {schema_id} selector failed: {exc}")
                 continue
             for label, instance in instances:
