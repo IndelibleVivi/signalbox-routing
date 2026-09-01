@@ -201,8 +201,29 @@ MAC_LITERAL = re.compile(r"(?i)(?<![0-9a-f])(?:[0-9a-f]{2}:){5}[0-9a-f]{2}(?![0-
 SECRET_URI = re.compile(r"\b(?:trojan|hysteria2?|ss)://", re.IGNORECASE)
 PRIVATE_KEY_BLOCK = re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")
 CREDENTIAL_ASSIGNMENT = re.compile(
-    r'''\b(?:api[_-]?key|client[_-]?secret|authorization|cookie|password|private[_-]?key)\b\s*["']?\s*(?:[:]|(?<![=!<>])=(?!=))\s*["']?[^\s"'$<][^\s"']*''',
-    re.IGNORECASE,
+    r'''\b(?:
+        (?:
+            api[_-]?(?:key|token)
+            |access[_-]?token
+            |refresh[_-]?token
+            |client[_-]?secret
+            |authorization
+            |cookie
+            |password
+            |private[_-]?key
+        )\b
+        \s*["']?\s*
+        (?:[:]|(?<![=!<>])=(?!=))
+        \s*["']?[^\s"'$<][^\s"']*
+        |
+        (?:token|secret)\b
+        \s*["']?\s*
+        (?:[:]|(?<![=!<>])=(?!=))
+        \s*(?P<generic_quote>["'])
+        [^\s"'$<\r\n][^\r\n]*?
+        (?P=generic_quote)
+    )''',
+    re.IGNORECASE | re.VERBOSE,
 )
 URL_USERINFO = re.compile(r"\b[a-z][a-z0-9+.-]*://[^\s/@:]+:[^\s/@]+@", re.IGNORECASE)
 MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\(([^)]+)\)")

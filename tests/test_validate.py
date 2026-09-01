@@ -754,6 +754,43 @@ class SignalboxValidationTests(unittest.TestCase):
             errors,
         )
 
+    def test_repository_entrypoint_rejects_tracked_python_token_assignment(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            copy_tracked_tree(root)
+            relative = "scripts/tracked-token-probe.py"
+            probe = root / relative
+            probe.write_text("to" + 'ken = "real-value"\n', encoding="utf-8")
+            subprocess.run(["git", "add", relative], cwd=root, check=True)
+            errors = validator.validate_repository(root)
+        self.assertTrue(
+            any(
+                relative in error and "credential assignment" in error
+                for error in errors
+            ),
+            errors,
+        )
+
+    def test_repository_entrypoint_rejects_tracked_json_secret_assignment(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            copy_tracked_tree(root)
+            relative = "examples/tracked-secret-probe.json"
+            probe = root / relative
+            probe.write_text(
+                json.dumps({"se" + "cret": "real-value"}),
+                encoding="utf-8",
+            )
+            subprocess.run(["git", "add", relative], cwd=root, check=True)
+            errors = validator.validate_repository(root)
+        self.assertTrue(
+            any(
+                relative in error and "credential assignment" in error
+                for error in errors
+            ),
+            errors,
+        )
+
     def test_tracked_source_scanner_covers_network_identity_and_secret_literals(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -763,6 +800,9 @@ class SignalboxValidationTests(unittest.TestCase):
                 "ipv6.txt": "fd00:" + ":42\n",
                 "mac.txt": "aa" + ":bb:cc:dd:ee:ff\n",
                 "secret.ini": "client_" + "secret = exposed-value\n",
+                "api-token.ini": "api_" + "token = exposed-value\n",
+                "access-token.ini": "access_" + "token = exposed-value\n",
+                "refresh-token.ini": "refresh_" + "token = exposed-value\n",
                 "userinfo.txt": "https://" + "sample:password@example.com/\n",
                 "windows.txt": "C:" + "\\Users\\example\\private.txt\n",
                 "unix-root.txt": "/" + "root/private.txt\n",
@@ -783,6 +823,20 @@ class SignalboxValidationTests(unittest.TestCase):
         ):
             with self.subTest(rule=rule):
                 self.assertTrue(any(rule in error for error in errors), errors)
+        for relative in (
+            "secret.ini",
+            "api-token.ini",
+            "access-token.ini",
+            "refresh-token.ini",
+        ):
+            with self.subTest(relative=relative):
+                self.assertTrue(
+                    any(
+                        relative in error and "credential assignment" in error
+                        for error in errors
+                    ),
+                    errors,
+                )
         self.assertFalse(any("binary.bin" in error for error in errors), errors)
 
     def test_tracked_source_scanner_rejects_symlink_escape_without_following_it(self):
