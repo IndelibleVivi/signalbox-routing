@@ -22,7 +22,14 @@
   "properties": {
     "id": {"type": "string", "minLength": 1},
     "revision": {"type": "integer", "minimum": 1},
-    "kind": {"enum": ["recovery-preflight", "control-plane-operational", "lane-operational"]},
+    "kind": {
+      "enum": [
+        "recovery-preflight",
+        "control-plane-operational",
+        "lane-operational",
+        "underlay-operational"
+      ]
+    },
     "subject_ref": {"type": "string", "minLength": 1},
     "observation_only": {"const": true},
     "triggers": {"$ref": "#/$defs/stringSet"},
@@ -81,7 +88,8 @@
     },
     "gate_context_required": {"type": "boolean"},
     "resource_observations": {"$ref": "#/$defs/stringSet"},
-    "resource_threshold_owner": {"type": "string", "minLength": 1}
+    "resource_threshold_owner": {"type": "string", "minLength": 1},
+    "responsiveness_envelope_owner": {"type": "string", "minLength": 1}
   },
   "$defs": {
     "stringSet": {

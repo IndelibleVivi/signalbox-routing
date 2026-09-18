@@ -38,6 +38,9 @@ activated to path evidence, or old path evidence to current path evidence.
 - forbidden durable keys are absent;
 - operational reports stay per-subject; aggregates preserve every member and
   have no top-level outcome;
+- a `network-underlay` subject is observed through its own `underlay-operational`
+  profile, never folded into a lane, the control plane, or one deployment-wide
+  verdict, and its evidence never infers shaping activation or mutates routing;
 - recovery-preflight and operational profiles are not substituted for one
   another, and a restore gate exact-matches operation, desired-state digest,
   runtime generation, scope, and epoch;

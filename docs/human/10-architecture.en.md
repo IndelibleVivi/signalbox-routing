@@ -3,7 +3,7 @@ doc_id: signalbox.human.architecture
 language: en
 status: foundation-explanatory
 authority: ../specification.md
-contract_revision: 4
+contract_revision: 5
 ---
 
 **English** · [简体中文](10-architecture.zh-CN.md)
@@ -88,7 +88,7 @@ gateway path.
 <a id="recovery-readiness"></a>
 ## Recovery readiness is health
 
-`HEALTH-07` `HEALTH-10` `HEALTH-15`
+`HEALTH-07` `HEALTH-10` `HEALTH-15` `HEALTH-18`
 
 Recovery requires more than starting a service. The system must query and prove
 prior kernel state, apply the intended state, verify postconditions, and retain
@@ -97,8 +97,12 @@ yet instantiated and cannot be queried is recovery-unready. Its result remains
 `unknown` until a platform-specific mechanism establishes queryability.
 
 A `HealthReport` observes one subject only. Operational reports are maintained
-for the control plane and each lane; the deployment aggregate preserves every
-member outcome and has no top-level outcome. Automated failover or repair
-belongs to a separate mutation state machine with hysteresis, operation
-identity, rollback, and its own receipt. The aggregate is itself a historical
-receipt evaluated at assembly; consumers create a new one for current truth.
+for the control plane, each lane, and each registered network underlay. The
+underlay is not a lane: an `underlay-operational` profile observes the DIRECT
+path itself: resolver behavior, loaded responsiveness, and recent availability
+or flapping. A green proxy lane therefore cannot hide a degraded household or
+WAN path. The deployment aggregate preserves every member outcome and has no
+top-level outcome. Automated failover or repair belongs to a separate mutation
+state machine with hysteresis, operation identity, rollback, and its own
+receipt. The aggregate is itself a historical receipt evaluated at assembly;
+consumers create a new one for current truth.

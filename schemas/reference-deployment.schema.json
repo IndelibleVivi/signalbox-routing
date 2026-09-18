@@ -99,7 +99,14 @@
         "additionalProperties": false,
         "required": ["kind", "binding_ref"],
         "properties": {
-          "kind": {"enum": ["control-plane", "egress-lane", "private-ingress-lane"]},
+          "kind": {
+            "enum": [
+              "control-plane",
+              "egress-lane",
+              "private-ingress-lane",
+              "network-underlay"
+            ]
+          },
           "binding_ref": {"type": "string", "minLength": 1}
         }
       }

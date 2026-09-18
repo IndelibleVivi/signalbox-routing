@@ -16,6 +16,7 @@ escape cannot redirect authority outside the repository.
 JSON Schema validation is deliberately only one proof layer. Cross-file role
 resolution, exact reference-route grammar, health rollups, canonical report
 evaluation, freshness, exact current identity, restore-gate context, aggregate
-membership, and bilingual semantic anchors are validated by
+membership, network-underlay subject/profile binding, and bilingual semantic
+anchors are validated by
 [`scripts/validate.py`](../scripts/validate.py). Neither gate is runtime or path
 evidence.

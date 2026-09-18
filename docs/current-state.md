@@ -1,10 +1,17 @@
 # Current State
 
-Last updated: 2026-09-01
+Last updated: 2026-09-19
 
+- F0.3 underlay observability is source-candidate work on branch
+  `feat/f0.3-underlay-observability`, based on `main` commit
+  `aa392263d29c12e9518d95feb308f15a264e67a6`; it has not merged into canonical
+  `main` or entered a release
+- F0.3 implementation commit: `65a364babb5283f912692c528f6ca924987155b3`
+- F0.3 review surface: [pull request #1](https://github.com/IndelibleVivi/signalbox-routing/pull/1)
 - Project: Signalbox
-- Programme tranche: F0.2.2 executable-authority closure completed at the
-  source-and-remote boundary; the prior F0.2.1/F1 boundary remains published
+- Programme tranche: F0.3 underlay observability is a source candidate on
+  `feat/f0.3-underlay-observability`; F0.2.2 executable-authority closure
+  remains the most recently completed and published boundary
 - Canonical branch: `main`
 - Remote visibility: public GitHub repository at
   `https://github.com/IndelibleVivi/signalbox-routing`
@@ -65,7 +72,41 @@ window, and exact current identity. Profile kind/cardinality, exact route
 grammar, safety-field mutation regressions, catalog bootstrap, and contained
 path resolution are part of the same published source boundary.
 
+F0.3 adds a `network-underlay` deployment subject kind and an
+`underlay-operational` profile kind so a degraded household or WAN underlay
+stays observable while the control plane and proxy lanes are healthy. Its
+required dimensions are `transport`, `dns`, `responsiveness`, and
+`availability`; the new portable reason codes are `latency-envelope-breach`,
+`recent-link-flap`, and `shaping-unverified`. PR #1's candidate includes a
+review repair that closes two validation defects: the health contract declares
+each underlay dimension's allowed evidence classes and rejects any
+out-of-domain observation (`dns` requires `resolver-path`, so a substituted
+qdisc or kernel readback is invalid rather than rolled up), the three
+domain-specific reason codes are context-bound at dimension and observation
+level while generic codes stay unconstrained, and generic profile validation
+accepts zero, one, or many registered network underlays with exactly one
+`underlay-operational` profile per subject, leaving Mintie's reference
+topology pinned by its deployment. The underlay is observation-only, never an
+egress lane, and never a proxy-failure fallback route. The Mintie
+example gains a public-safe underlay subject, profile, report, and aggregate
+member; its seven-member aggregate keeps the control plane and every egress and
+private-ingress lane at `pass` while only `underlay/mintie-wan` reports `fail`,
+and `FAIL-010` records the reusable mechanism. Because the health
+contract gains a required profile kind, it advances to
+`signalbox.health-contract/v5`, and documentation pairs advance to revision 5
+under the unchanged `signalbox.docs-pairs/v3` schema; the Mintie route
+projection is unchanged. F0.3 is source-candidate work on
+`feat/f0.3-underlay-observability`; it has not merged into canonical `main` or
+entered a release and is not activated, deployed, or owner-accepted here.
+
+Local F0.3 candidate evidence on this branch, separate from the published
+F0.2.2 receipt above: JSON Schema validation passes 30 cataloged instances;
+semantic validation passes ten public reference reports and one staleness
+fixture; the regression suite holds 73 tests. These counts are candidate
+evidence for this branch, not a published `main` receipt.
+
 Full v1 remains tracked in [`docs/programme-plan.md`](programme-plan.md). The
-next planned source tranche is F2, but it is not started by this receipt.
-Installation, activation, runtime, release, license, and acceptance gates
+F0.3 underlay-observability tranche is the current source candidate and is
+inserted before F2, which remains the next planned tranche and is not started
+here. Installation, activation, runtime, release, license, and acceptance gates
 remain separate.

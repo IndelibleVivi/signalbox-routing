@@ -1,10 +1,11 @@
 # Signalbox Programme Plan
 
 Status: active
-Current execution tranche: none
+Current execution tranche: F0.3 underlay observability (source candidate on
+this branch; not merged into canonical `main`, released, or activated)
 Most recently completed tranche: F0.2.2 executable-authority closure
 Next planned tranche: F2 complete Agent Surface
-Canonical specification: `docs/specification.md`, revision 4
+Canonical specification: `docs/specification.md`, revision 5
 Normative companions: `contracts/*.json`, `schemas/*.schema.json`
 Repository baseline: public canonical repository on `main`
 
@@ -16,6 +17,10 @@ authority settings for the already-public repository. F0.2.1 closes aggregate
 time semantics, and F1 adds the complete bilingual reader surface. F0.2.2 makes
 the settled safety semantics executable at one canonical evaluation boundary
 and broadens the public-source gate to every path in the current Git index.
+After F1 and before F2, the F0.3 underlay-observability tranche adds a
+`network-underlay` subject kind and `underlay-operational` profile kind so a
+degraded DIRECT underlay stays observable while control-plane and proxy-lane
+reports are healthy.
 None of these tranches authorizes a license, release, live-router access,
 installation, activation, or deployment.
 
@@ -62,7 +67,7 @@ different phases. This plan ends at verified Signalbox source.
 | `ACCEPT-03` | Agent Surface defines implementation and evidence behavior | F2 agent reference | F0 contracts | required-ID and link validation | Tailnet reference added; full F2 pending |
 | `ACCEPT-04` | Mintie is a portable, public-safe reference deployment | F0.2/F0.2.2/F3 Mintie example | F0 roles/routing/health | example validation and Git-index boundary scan | exact reference route grammar and broader source scan are published; full F3 pending |
 | `ACCEPT-05` | Reusable failure mechanisms are retained | F4 failure depth | F0 health/evidence | failure-ID coverage | F0.2 mechanisms added; F4 pending |
-| `ACCEPT-06` | Validation rejects meaningful contract drift | F0.2.2 validator and F5 hardening | F0 contracts | positive and negative tests plus hosted gate | 54 regressions and the hosted implementation gate pass; F5 pending |
+| `ACCEPT-06` | Validation rejects meaningful contract drift | F0.2.2 validator and F5 hardening | F0 contracts | positive and negative tests plus the hosted implementation gate | exact published receipts are owned by `docs/current-state.md`; F5 pending |
 | `ACCEPT-07` | Repository surfaces agree | F0.2.2/F1/F6 reconciliation | Current slice | `make verify`, links, diff review | F0.2.2 projections are reconciled and published; F6 pending |
 | `ACCEPT-08` | External gates remain truthful | Every slice | Explicit owner authorization | current-state and remote readback | F0.2.2 implementation readback complete; later gates remain separate |
 
@@ -138,6 +143,29 @@ a routing/DNS/fail-closed guide, and an advanced Tailnet/VPS canonical
 private-ingress guide. Depth remains in the normative core; the public entrance
 now exposes it progressively. Exact published commit and hosted evidence are
 owned by `docs/current-state.md`.
+
+### F0.3 — Underlay observability (`source-candidate on this branch`)
+
+Make a degraded household or WAN underlay observable even when control-plane
+and proxy-lane reports are healthy. Add the `network-underlay` deployment
+subject kind and `underlay-operational` profile kind with required dimensions
+`transport`, `dns`, `responsiveness`, and `availability`; add the portable
+`latency-envelope-breach`, `recent-link-flap`, and `shaping-unverified` reason
+codes; extend the Mintie reference example with a public-safe underlay subject,
+profile, report, and aggregate member; and add `FAIL-010` for green proxy lanes
+hiding a degraded DIRECT underlay. The underlay is observation-only, never an
+egress lane, and never a proxy-failure fallback route, while SQM/shaping
+activation and live enforcement stay control-plane evidence.
+
+Stopping point: machine contracts, schemas, validator, behavior tests, sample,
+and human/agent/reference projections agree and the local source gate passes.
+Because the owning health contract gains a required profile kind, it advances
+to `signalbox.health-contract/v5`, and the paired documentation contract
+advances to revision 5 under its existing `signalbox.docs-pairs/v3` schema. This
+is source-candidate work on the
+`feat/f0.3-underlay-observability` branch: it has not merged into canonical
+`main` or entered a release, and no live activation, runtime mutation, or
+owner/client acceptance is claimed. F2 remains the next planned tranche.
 
 ### F2 — Complete Agent Surface
 

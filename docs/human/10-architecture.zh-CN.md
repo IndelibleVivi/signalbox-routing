@@ -3,7 +3,7 @@ doc_id: signalbox.human.architecture
 language: zh-CN
 status: foundation-explanatory
 authority: ../specification.md
-contract_revision: 4
+contract_revision: 5
 ---
 
 [English](10-architecture.en.md) · **简体中文**
@@ -81,15 +81,19 @@ canonical private-ingress match 比 DIRECT allowlist 更 specific，必须先求
 <a id="recovery-readiness"></a>
 ## Recovery readiness is health
 
-`HEALTH-07` `HEALTH-10` `HEALTH-15`
+`HEALTH-07` `HEALTH-10` `HEALTH-15` `HEALTH-18`
 
 恢复不仅需要“服务能启动”，还需要能查询并证明 prior kernel state、应用新的
 state、验证 postcondition，并在失败时保留明确 recovery state。cold boot 下某个
 policy table 尚未实例化而 query 失败，就是典型的 recovery-unready；它必须保持
 `unknown`，直到平台特定机制建立可查询状态。
 
-一份 `HealthReport` 只观察一个 subject。日常状态要分别保留 control plane 与
-每条 lane 的 report；deployment aggregate 也必须保留所有 member outcome，且不设
-top-level outcome。自动 failover 或 repair 属于另一套有 hysteresis、operation
-identity、rollback 和 receipt 的 mutation state machine。aggregate 本身也是只在
-assembly 时求值的 historical receipt；要得到 current truth，consumer 应生成新的一份。
+一份 `HealthReport` 只观察一个 subject。日常状态要分别保留 control plane、
+每条 lane，以及每个 registered network underlay 的 report。underlay 不是 lane：
+`underlay-operational` profile 观察的是 DIRECT 路径本身：resolver 行为、loaded
+responsiveness 与 recent availability / flap。因此 proxy lane 全绿并不能掩盖
+degraded 的家庭 / WAN 路径。deployment aggregate 也必须保留所有 member outcome，
+且不设 top-level outcome。自动 failover 或 repair 属于另一套有 hysteresis、
+operation identity、rollback 和 receipt 的 mutation state machine。aggregate 本身
+也是只在 assembly 时求值的 historical receipt；要得到 current truth，consumer 应
+生成新的一份。

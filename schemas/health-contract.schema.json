@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:signalbox:schema:health-contract:v4",
+  "$id": "urn:signalbox:schema:health-contract:v5",
   "title": "Signalbox health contract",
   "type": "object",
   "additionalProperties": false,
@@ -11,6 +11,7 @@
     "terminal_outcomes",
     "rollup_precedence",
     "profile_kinds",
+    "dimension_evidence_classes",
     "required_profile_fields",
     "required_report_fields",
     "required_dimension_fields",
@@ -25,22 +26,38 @@
     "observation_only",
     "retention_policy_required_fields",
     "forbidden_durable_keys",
-    "reason_codes"
+    "reason_codes",
+    "reason_code_contexts"
   ],
   "properties": {
-    "schema": {"const": "signalbox.health-contract/v4"},
-    "contract_revision": {"type": "integer", "minimum": 4},
+    "schema": {"const": "signalbox.health-contract/v5"},
+    "contract_revision": {"type": "integer", "minimum": 5},
     "transient_outcomes": {"$ref": "#/$defs/stringSet"},
     "terminal_outcomes": {"$ref": "#/$defs/stringSet"},
     "rollup_precedence": {"$ref": "#/$defs/stringSet"},
     "profile_kinds": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["recovery-preflight", "control-plane-operational", "lane-operational"],
+      "required": [
+        "recovery-preflight",
+        "control-plane-operational",
+        "lane-operational",
+        "underlay-operational"
+      ],
       "properties": {
         "recovery-preflight": {"$ref": "#/$defs/profileKind"},
         "control-plane-operational": {"$ref": "#/$defs/profileKind"},
-        "lane-operational": {"$ref": "#/$defs/profileKind"}
+        "lane-operational": {"$ref": "#/$defs/profileKind"},
+        "underlay-operational": {"$ref": "#/$defs/profileKind"}
+      }
+    },
+    "dimension_evidence_classes": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "minProperties": 1,
+        "additionalProperties": {"$ref": "#/$defs/stringSet"}
       }
     },
     "required_profile_fields": {"$ref": "#/$defs/stringSet"},
@@ -175,7 +192,16 @@
     "observation_only": {"type": "boolean"},
     "retention_policy_required_fields": {"$ref": "#/$defs/stringSet"},
     "forbidden_durable_keys": {"$ref": "#/$defs/stringSet"},
-    "reason_codes": {"$ref": "#/$defs/stringSet"}
+    "reason_codes": {"$ref": "#/$defs/stringSet"},
+    "reason_code_contexts": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "items": {"$ref": "#/$defs/reasonCodeContext"}
+      }
+    }
   },
   "$defs": {
     "stringSet": {
@@ -203,6 +229,15 @@
         "cardinality_per_subject": {"type": "string", "minLength": 1},
         "may_gate_restore": {"type": "boolean"},
         "may_feed_deployment_aggregate": {"type": "boolean"}
+      }
+    },
+    "reasonCodeContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_kind", "dimension"],
+      "properties": {
+        "profile_kind": {"type": "string", "minLength": 1},
+        "dimension": {"type": "string", "minLength": 1}
       }
     }
   }

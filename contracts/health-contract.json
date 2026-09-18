@@ -1,6 +1,6 @@
 {
-  "schema": "signalbox.health-contract/v4",
-  "contract_revision": 4,
+  "schema": "signalbox.health-contract/v5",
+  "contract_revision": 5,
   "transient_outcomes": [
     "checking"
   ],
@@ -61,6 +61,38 @@
       "cardinality_per_subject": "exactly-one",
       "may_gate_restore": false,
       "may_feed_deployment_aggregate": true
+    },
+    "underlay-operational": {
+      "required_dimensions": [
+        "transport",
+        "dns",
+        "responsiveness",
+        "availability"
+      ],
+      "observation_scope": "single-underlay",
+      "compatible_subject_kinds": [
+        "network-underlay"
+      ],
+      "cardinality_per_subject": "exactly-one",
+      "may_gate_restore": false,
+      "may_feed_deployment_aggregate": true
+    }
+  },
+  "dimension_evidence_classes": {
+    "underlay-operational": {
+      "transport": [
+        "underlay-path",
+        "transport-neutral"
+      ],
+      "dns": [
+        "resolver-path"
+      ],
+      "responsiveness": [
+        "loaded-latency"
+      ],
+      "availability": [
+        "link-stability"
+      ]
     }
   },
   "required_profile_fields": [
@@ -211,6 +243,33 @@
     "profile-revision-mismatch",
     "gate-context-mismatch",
     "current-evidence-mismatch",
-    "evidence-not-yet-published"
-  ]
+    "evidence-not-yet-published",
+    "latency-envelope-breach",
+    "recent-link-flap",
+    "shaping-unverified"
+  ],
+  "reason_code_contexts": {
+    "latency-envelope-breach": [
+      {
+        "profile_kind": "underlay-operational",
+        "dimension": "responsiveness"
+      }
+    ],
+    "recent-link-flap": [
+      {
+        "profile_kind": "underlay-operational",
+        "dimension": "availability"
+      }
+    ],
+    "shaping-unverified": [
+      {
+        "profile_kind": "recovery-preflight",
+        "dimension": "enforcement"
+      },
+      {
+        "profile_kind": "control-plane-operational",
+        "dimension": "enforcement"
+      }
+    ]
+  }
 }

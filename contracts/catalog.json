@@ -86,8 +86,8 @@
       ]
     },
     {
-      "schema_id": "signalbox.health-contract/v4",
-      "revision": 4,
+      "schema_id": "signalbox.health-contract/v5",
+      "revision": 5,
       "owner": "contracts/health-contract.json",
       "schema_path": "schemas/health-contract.schema.json",
       "compatibility": {
@@ -113,7 +113,7 @@
     },
     {
       "schema_id": "signalbox.health-profile/v2",
-      "revision": 2,
+      "revision": 3,
       "owner": "contracts/health-contract.json",
       "schema_path": "schemas/health-profile.schema.json",
       "compatibility": {
@@ -192,7 +192,7 @@
     },
     {
       "schema_id": "signalbox.docs-pairs/v3",
-      "revision": 4,
+      "revision": 5,
       "owner": "contracts/docs-pairs.json",
       "schema_path": "schemas/docs-pairs.schema.json",
       "compatibility": {
@@ -212,7 +212,7 @@
     },
     {
       "schema_id": "signalbox.reference-deployment/v2",
-      "revision": 3,
+      "revision": 4,
       "owner": "examples/mintie/deployment.json",
       "schema_path": "schemas/reference-deployment.schema.json",
       "compatibility": {

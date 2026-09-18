@@ -58,15 +58,26 @@ flowchart LR
   demonstrates protected no-fallback, preserves dedicated gateway identity,
   and binds each settled route ID to its exact action, match form, and fields.
 - `health-profiles.json` defines one recovery profile, one control-plane
-  operational profile, and exactly one operational profile per registered
-  egress or private-ingress lane. Subject kind and profile kind cannot cross.
+  operational profile, exactly one operational profile per registered egress or
+  private-ingress lane, and one `underlay-operational` profile for the
+  registered `network-underlay` subject. Subject kind and profile kind cannot
+  cross, and the underlay is observed separately from every lane.
 - `reports/` contains public-safe immutable examples for each subject plus a
   separate recovery-preflight receipt. Dimensions contain explicit observations
   so evidence-class and dependency-group diversity can be validated.
-- `health-aggregate.json` references all six operational members and preserves
+- `health-aggregate.json` references all seven operational members and preserves
   their individual outcomes as evaluated at assembly. It excludes
   recovery-preflight, deliberately has no top-level outcome, and remains an
   immutable historical receipt rather than silently aging into a current view.
+
+The aggregate demonstrates the separation this tranche exists for: the control
+plane and every egress and private-ingress lane member report `pass`, while
+`underlay/mintie-wan` alone reports `fail` with `latency-envelope-breach` and
+`recent-link-flap`. The summary is seven members, six pass, one fail, zero
+unknown, and there is no top-level outcome, so a degraded household or WAN path
+stays visible instead of collapsing into one deployment-wide verdict. The
+standalone `lane-hearth-fail.json` and `private-rowan-unknown.json` reports
+remain as separate single-subject examples of `fail` and `unknown`.
 
 The sample operational interval is 15 minutes and each operational report
 remains fresh for at most 20 minutes. Recovery-preflight reports remain fresh
