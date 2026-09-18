@@ -538,6 +538,16 @@ def validate_health_contract(document: dict[str, Any]) -> list[str]:
         if set(kinds.get(kind_id, {}).get("required_dimensions", [])) != control_dimensions:
             errors.append(f"health-contract: {kind_id} dimensions drifted")
 
+    if document.get("dimension_evidence_classes") != {
+        "underlay-operational": {
+            "transport": ["underlay-path", "transport-neutral"],
+            "dns": ["resolver-path"],
+            "responsiveness": ["loaded-latency"],
+            "availability": ["link-stability"],
+        }
+    }:
+        errors.append("health-contract: underlay evidence-class domains drifted")
+
     evaluation = document.get("evidence_evaluation", {})
     if evaluation != {
         "canonical_report_schema": "signalbox.health-report/v2",
@@ -670,6 +680,19 @@ def validate_health_contract(document: dict[str, Any]) -> list[str]:
         "shaping-unverified",
     }:
         errors.append("health-contract: reason-code vocabulary is incomplete")
+    if document.get("reason_code_contexts") != {
+        "latency-envelope-breach": [
+            {"profile_kind": "underlay-operational", "dimension": "responsiveness"}
+        ],
+        "recent-link-flap": [
+            {"profile_kind": "underlay-operational", "dimension": "availability"}
+        ],
+        "shaping-unverified": [
+            {"profile_kind": "recovery-preflight", "dimension": "enforcement"},
+            {"profile_kind": "control-plane-operational", "dimension": "enforcement"},
+        ],
+    }:
+        errors.append("health-contract: domain-specific reason-code contexts drifted")
     return errors
 
 
@@ -680,6 +703,22 @@ def expected_health_rollup(states: Iterable[str]) -> str:
     if "unknown" in state_set:
         return "unknown"
     return "pass"
+
+
+def reason_code_context_error(
+    contexts: dict[str, Any], reason_code: Any, profile_kind: Any, dimension: Any
+) -> str | None:
+    """Return the domain-context violation for a declared reason code, if any."""
+
+    allowed = contexts.get(reason_code) if isinstance(reason_code, str) else None
+    if not isinstance(allowed, list):
+        return None
+    if {"profile_kind": profile_kind, "dimension": dimension} in allowed:
+        return None
+    return (
+        f"reason_code {reason_code} is not valid for {profile_kind} "
+        f"dimension {dimension}"
+    )
 
 
 def validate_health_report(
@@ -780,6 +819,9 @@ def validate_health_report(
     required_dimension_fields = set(contract.get("required_dimension_fields", []))
     required_observation_fields = set(contract.get("required_observation_fields", []))
     allowed_reasons = set(contract.get("reason_codes", []))
+    reason_contexts = contract.get("reason_code_contexts", {})
+    evidence_domains = contract.get("dimension_evidence_classes", {})
+    profile_kind = profile.get("kind")
     probe_requirements = profile.get("probe_requirements", {})
     states: list[str] = []
     for dimension in sorted(required_dimensions & actual_dimensions):
@@ -794,10 +836,28 @@ def validate_health_report(
         states.append(state)
         if state not in terminal:
             errors.append(f"health report dimension {dimension} is not terminal")
+        dimension_reason = result.get("reason_code")
+        if dimension_reason is not None:
+            if dimension_reason not in allowed_reasons:
+                errors.append(
+                    f"health report dimension {dimension} reason_code must be "
+                    "an allowed code"
+                )
+            else:
+                context_error = reason_code_context_error(
+                    reason_contexts, dimension_reason, profile_kind, dimension
+                )
+                if context_error:
+                    errors.append(
+                        f"health report dimension {dimension} {context_error}"
+                    )
         observations = result.get("observations")
         if not isinstance(observations, list) or not observations:
             errors.append(f"health report dimension {dimension} needs observations")
             continue
+        allowed_evidence = set(
+            evidence_domains.get(profile_kind, {}).get(dimension, [])
+        )
         observation_states: list[str] = []
         evidence_counts: dict[str, int] = {}
         dependency_groups: set[str] = set()
@@ -819,22 +879,33 @@ def validate_health_report(
                     errors.append(
                         f"health report dimension {dimension} observation {index} lacks {field}"
                     )
+            evidence_class = observation.get("evidence_class")
+            in_domain = not allowed_evidence or evidence_class in allowed_evidence
+            if not in_domain:
+                errors.append(
+                    f"health report dimension {dimension} observation {index} "
+                    f"evidence_class {evidence_class} is outside the "
+                    f"{profile_kind} domain"
+                )
             probe_ref = observation.get("probe_ref")
-            if probe_ref in probe_refs:
-                errors.append(f"health report dimension {dimension} repeats probe_ref {probe_ref}")
-            elif isinstance(probe_ref, str):
-                probe_refs.add(probe_ref)
+            if in_domain:
+                if probe_ref in probe_refs:
+                    errors.append(
+                        f"health report dimension {dimension} repeats probe_ref {probe_ref}"
+                    )
+                elif isinstance(probe_ref, str):
+                    probe_refs.add(probe_ref)
             observation_state = observation.get("state")
-            observation_states.append(observation_state)
+            if in_domain:
+                observation_states.append(observation_state)
             if observation_state not in terminal:
                 errors.append(
                     f"health report dimension {dimension} observation {index} is not terminal"
                 )
-            evidence_class = observation.get("evidence_class")
-            if isinstance(evidence_class, str):
+            if in_domain and isinstance(evidence_class, str):
                 evidence_counts[evidence_class] = evidence_counts.get(evidence_class, 0) + 1
             dependency_group = observation.get("dependency_group")
-            if isinstance(dependency_group, str) and dependency_group:
+            if in_domain and isinstance(dependency_group, str) and dependency_group:
                 dependency_groups.add(dependency_group)
             try:
                 observed_at = parse_rfc3339(observation.get("observed_at"))
@@ -849,11 +920,21 @@ def validate_health_report(
                     f"health report dimension {dimension} observation {index} observed_at: {exc}"
                 )
             reason_code = observation.get("reason_code")
-            if observation_state in {"fail", "unknown"} and reason_code not in allowed_reasons:
-                errors.append(
-                    f"health report dimension {dimension} observation {index} "
-                    "needs an allowed reason_code"
-                )
+            if observation_state in {"fail", "unknown"}:
+                if reason_code not in allowed_reasons:
+                    errors.append(
+                        f"health report dimension {dimension} observation {index} "
+                        "needs an allowed reason_code"
+                    )
+                else:
+                    context_error = reason_code_context_error(
+                        reason_contexts, reason_code, profile_kind, dimension
+                    )
+                    if context_error:
+                        errors.append(
+                            f"health report dimension {dimension} observation "
+                            f"{index} {context_error}"
+                        )
             if observation_state == "pass" and reason_code is not None:
                 errors.append(
                     f"health report dimension {dimension} observation {index} "
@@ -1158,36 +1239,24 @@ def validate_health_profiles(
                     f"health-profiles: {profile_id} one provider cannot be sufficient"
                 )
         if kind == "underlay-operational":
-            transport = profile.get("probe_requirements", {}).get("transport", {})
-            if transport.get("minimum_by_evidence_class") != {
-                "underlay-path": 1,
-                "transport-neutral": 1,
-            }:
-                errors.append(
-                    f"health-profiles: {profile_id} underlay transport diversity drifted"
+            domains = contract.get("dimension_evidence_classes", {}).get(kind, {})
+            requirements = profile.get("probe_requirements")
+            if not isinstance(requirements, dict):
+                requirements = {}
+            for dimension, allowed in domains.items():
+                minima = requirements.get(dimension, {}).get(
+                    "minimum_by_evidence_class"
                 )
+                if set(minima or {}) != set(allowed):
+                    errors.append(
+                        f"health-profiles: {profile_id} {dimension} evidence classes "
+                        f"must be exactly {sorted(allowed)}"
+                    )
+            transport = requirements.get("transport", {})
             if transport.get("minimum_dependency_groups", 0) < 2:
                 errors.append(
                     f"health-profiles: {profile_id} underlay transport needs "
                     "independent dependency groups"
-                )
-            responsiveness = profile.get("probe_requirements", {}).get(
-                "responsiveness", {}
-            )
-            if set(responsiveness.get("minimum_by_evidence_class", {})) != {
-                "loaded-latency"
-            }:
-                errors.append(
-                    f"health-profiles: {profile_id} responsiveness evidence drifted"
-                )
-            availability = profile.get("probe_requirements", {}).get(
-                "availability", {}
-            )
-            if set(availability.get("minimum_by_evidence_class", {})) != {
-                "link-stability"
-            }:
-                errors.append(
-                    f"health-profiles: {profile_id} availability evidence drifted"
                 )
             if not non_empty_string(profile.get("responsiveness_envelope_owner")):
                 errors.append(
@@ -1210,8 +1279,6 @@ def validate_health_profiles(
         errors.append("health-profiles: exactly one control-plane profile is required")
     if kind_counts.get("lane-operational", 0) < 1:
         errors.append("health-profiles: at least one lane profile is required")
-    if kind_counts.get("underlay-operational") != 1:
-        errors.append("health-profiles: exactly one underlay profile is required")
     return errors
 
 

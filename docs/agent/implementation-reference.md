@@ -145,9 +145,21 @@ underlay separately. An `underlay-operational` profile requires `transport`,
 `dns`, `responsiveness`, and `availability`: the intended DIRECT transport
 path, resolver behavior, loaded responsiveness against a declared profile
 envelope (`responsiveness_envelope_owner`), and recent link availability or
-flap evidence. SQM/shaping activation, live qdisc or enforcement state, and
-persistence evidence stay in the control-plane profile, so the underlay never
-infers shaping activation from latency and never mutates a route. `HEALTH-19`
+flap evidence. `contracts/health-contract.json` also declares the exact
+evidence classes each underlay dimension accepts (`underlay-path` plus
+`transport-neutral` for `transport`, `resolver-path` for `dns`,
+`loaded-latency` for `responsiveness`, `link-stability` for `availability`);
+profile minima must cover exactly those classes, and any out-of-domain
+observation makes the report invalid instead of rolling into underlay health.
+SQM/shaping activation, live qdisc or enforcement state, and persistence
+evidence stay in the control-plane profile, so the underlay never infers
+shaping activation from latency and never mutates a route. Domain-specific
+reason codes are validated in context at both the dimension and observation
+level: `latency-envelope-breach` only under underlay `responsiveness`,
+`recent-link-flap` only under underlay `availability`, and
+`shaping-unverified` only under control-plane `enforcement` (including the
+`recovery-preflight` profile). Generic reason codes stay unconstrained.
+`HEALTH-19`
 
 A `signalbox.health-aggregate/v2` receipt references immutable report identity
 and generation for every subject, excludes recovery-preflight, and has no

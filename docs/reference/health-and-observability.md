@@ -64,12 +64,20 @@ independent evidence.
 
 An underlay report covers the intended DIRECT transport path, resolver
 behavior, loaded responsiveness against a declared profile envelope, and recent
-link availability or flap evidence. SQM/shaping activation, live qdisc or
-enforcement state, and persistence evidence stay with the control-plane
-profile: underlay observation reports observed path behavior and never infers
-shaping activation from latency or mutates routes or configuration. Its
-privacy-safe reason codes include `latency-envelope-breach`, `recent-link-flap`,
-and, for the control-plane side of shaping, `shaping-unverified`. `HEALTH-19`
+link availability or flap evidence. The contract declares exactly which
+evidence class each underlay dimension accepts: `transport` = `underlay-path`
+and `transport-neutral`, `dns` = `resolver-path`, `responsiveness` =
+`loaded-latency`, `availability` = `link-stability`. A report that substitutes
+any other class, such as a qdisc or kernel readback standing in for DNS, is
+invalid rather than folded into underlay health. SQM/shaping activation, live
+qdisc or enforcement state, and persistence evidence stay with the
+control-plane profile: underlay observation reports observed path behavior and
+never infers shaping activation from latency or mutates routes or
+configuration. Its privacy-safe reason codes are context-bound:
+`latency-envelope-breach` is valid only for underlay `responsiveness`,
+`recent-link-flap` only for underlay `availability`, and `shaping-unverified`
+only for control-plane `enforcement`, including the `recovery-preflight`
+observation of the same enforcement state. `HEALTH-19`
 
 ## Report identity, sequence, and freshness
 

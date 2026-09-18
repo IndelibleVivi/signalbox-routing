@@ -263,11 +263,21 @@ visible even when control-plane and proxy-lane reports are healthy.
 `HEALTH-19` — `underlay-operational` requires the `transport`, `dns`,
 `responsiveness`, and `availability` dimensions. They cover the intended DIRECT
 transport path, resolver behavior, loaded responsiveness against a declared
-profile envelope, and recent link availability or flap evidence. SQM/shaping
+profile envelope, and recent link availability or flap evidence. The contract
+declares exactly which evidence classes each dimension accepts: `transport`
+covers `underlay-path` and `transport-neutral`, `dns` requires `resolver-path`,
+`responsiveness` requires `loaded-latency`, and `availability` requires
+`link-stability`. An observation outside its dimension's declared classes is
+invalid, so it can neither satisfy a minimum nor enter rollup. SQM/shaping
 activation, live qdisc or enforcement state, and persistence evidence remain
 control-plane evidence: underlay observation reports observed path behavior and
 never infers shaping activation from latency or mutates routes or
-configuration.
+configuration. Domain-specific reason codes are bound to that same evidence:
+`latency-envelope-breach` is valid only for underlay `responsiveness`,
+`recent-link-flap` only for underlay `availability`, and `shaping-unverified`
+only for control-plane `enforcement` observation, including the
+`recovery-preflight` profile that observes the same enforcement state. Generic
+reason codes are unconstrained by profile kind or dimension.
 
 ## 9. Incident-derived portable lessons
 

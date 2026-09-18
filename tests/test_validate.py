@@ -252,6 +252,265 @@ class SignalboxValidationTests(unittest.TestCase):
             [],
         )
 
+    def healthy_underlay_report(self) -> dict:
+        report = copy.deepcopy(
+            load_json("examples/mintie/reports/underlay-wan-fail.json")
+        )
+        report["id"] = "report-underlay-wan-pass-202"
+        report["attempt_id"] = "attempt-underlay-wan-202"
+        report["generation"] = 202
+        report["outcome"] = "pass"
+        for dimension in report["dimensions"].values():
+            dimension["state"] = "pass"
+            dimension.pop("reason_code", None)
+            for observation in dimension["observations"]:
+                observation["state"] = "pass"
+                observation.pop("reason_code", None)
+                observation.pop("metrics", None)
+        return report
+
+    def test_underlay_report_requires_resolver_path_dns_evidence(self):
+        profile = self.profiles["mintie-underlay-wan"]
+        report = self.healthy_underlay_report()
+        report["dimensions"]["dns"] = {
+            "state": "pass",
+            "observations": [
+                {
+                    "probe_ref": "live-qdisc-readback",
+                    "evidence_class": "kernel-query",
+                    "dependency_group": "kernel-enforcement",
+                    "state": "pass",
+                    "observed_at": "2026-08-31T10:00:06Z",
+                }
+            ],
+        }
+        errors = validator.validate_health_report(report, self.health_contract, profile)
+        self.assertTrue(
+            any(
+                "dns" in error and "outside the underlay-operational domain" in error
+                for error in errors
+            ),
+            errors,
+        )
+        self.assertTrue(any("resolver-path" in error for error in errors), errors)
+
+    def test_underlay_profile_dns_minimum_must_be_resolver_path(self):
+        profiles = copy.deepcopy(self.profiles_document)
+        underlay = next(
+            profile
+            for profile in profiles["profiles"]
+            if profile["kind"] == "underlay-operational"
+        )
+        underlay["probe_requirements"]["dns"]["minimum_by_evidence_class"] = {
+            "kernel-query": 1
+        }
+        errors = validator.validate_health_profiles(profiles, self.health_contract)
+        self.assertTrue(
+            any("resolver-path" in error for error in errors), errors
+        )
+
+    def test_underlay_report_rejects_out_of_domain_contamination(self):
+        profile = self.profiles["mintie-underlay-wan"]
+        report = self.healthy_underlay_report()
+        self.assertEqual(
+            validator.validate_health_report(report, self.health_contract, profile), []
+        )
+        # Keep every declared underlay path observation passing, then add the
+        # control-plane shaping observation that HEALTH-19 keeps out of scope.
+        report["dimensions"]["responsiveness"]["observations"].append(
+            {
+                "probe_ref": "shaping-state",
+                "evidence_class": "kernel-query",
+                "dependency_group": "kernel-enforcement",
+                "state": "unknown",
+                "observed_at": "2026-08-31T10:00:07Z",
+                "reason_code": "shaping-unverified",
+            }
+        )
+        errors = validator.validate_health_report(report, self.health_contract, profile)
+        self.assertTrue(
+            any("outside the underlay-operational domain" in error for error in errors),
+            errors,
+        )
+        evaluation = validator.evaluate_health_evidence(
+            report,
+            self.health_contract,
+            profile,
+            self.health_report_schema,
+            datetime(2026, 8, 31, 10, 10, tzinfo=timezone.utc),
+            expected_current_identity=current_identity(report),
+        )
+        self.assertFalse(evaluation.semantically_valid)
+        self.assertEqual(evaluation.effective_outcome, "unknown")
+        self.assertIn("malformed-evidence", evaluation.reason_codes)
+
+    def test_underlay_domain_reason_codes_are_context_bound(self):
+        profile = self.profiles["mintie-underlay-wan"]
+        mismatched = (
+            ("dns", "latency-envelope-breach"),
+            ("responsiveness", "recent-link-flap"),
+            ("availability", "latency-envelope-breach"),
+        )
+        for dimension, reason_code in mismatched:
+            with self.subTest(dimension=dimension, reason_code=reason_code):
+                report = self.healthy_underlay_report()
+                report["outcome"] = "unknown"
+                target = report["dimensions"][dimension]
+                target["state"] = "unknown"
+                target["observations"][0]["state"] = "unknown"
+                target["observations"][0]["reason_code"] = reason_code
+                errors = validator.validate_health_report(
+                    report, self.health_contract, profile
+                )
+                self.assertTrue(
+                    any("not valid for underlay-operational" in error for error in errors),
+                    errors,
+                )
+
+    def test_underlay_dimension_reason_code_is_context_bound(self):
+        profile = self.profiles["mintie-underlay-wan"]
+        report = self.healthy_underlay_report()
+        report["dimensions"]["availability"]["reason_code"] = "latency-envelope-breach"
+        errors = validator.validate_health_report(report, self.health_contract, profile)
+        self.assertTrue(
+            any("not valid for underlay-operational" in error for error in errors),
+            errors,
+        )
+        report["dimensions"]["availability"]["reason_code"] = "recent-link-flap"
+        self.assertEqual(
+            validator.validate_health_report(report, self.health_contract, profile), []
+        )
+
+    def test_valid_underlay_unknown_report_with_generic_reason_code(self):
+        profile = self.profiles["mintie-underlay-wan"]
+        report = self.healthy_underlay_report()
+        report["outcome"] = "unknown"
+        availability = report["dimensions"]["availability"]
+        availability["state"] = "unknown"
+        availability["observations"][0]["state"] = "unknown"
+        availability["observations"][0]["reason_code"] = "unreachable"
+        self.assertEqual(
+            validator.validate_health_report(report, self.health_contract, profile), []
+        )
+
+    def test_recovery_preflight_shaping_unverified_is_allowed(self):
+        report = copy.deepcopy(load_json("examples/mintie/reports/recovery-preflight-pass.json"))
+        report["outcome"] = "unknown"
+        report["dimensions"]["enforcement"] = {
+            "state": "unknown",
+            "observations": [
+                {
+                    "probe_ref": "shaping-state",
+                    "evidence_class": "kernel-query",
+                    "dependency_group": "kernel-enforcement",
+                    "state": "unknown",
+                    "observed_at": "2026-08-31T10:00:03Z",
+                    "reason_code": "shaping-unverified",
+                }
+            ],
+        }
+        self.assertEqual(
+            validator.validate_health_report(
+                report,
+                self.health_contract,
+                self.profiles["mintie-recovery-preflight"],
+            ),
+            [],
+        )
+
+    def test_underlay_profile_cardinality_is_per_subject(self):
+        underlay = self.profiles["mintie-underlay-wan"]
+        for count in (0, 1, 2):
+            with self.subTest(underlay_count=count):
+                profiles = copy.deepcopy(self.profiles_document)
+                profiles["profiles"] = [
+                    profile
+                    for profile in profiles["profiles"]
+                    if profile["kind"] != "underlay-operational"
+                ]
+                deployment = copy.deepcopy(self.deployment)
+                deployment["health_subjects"] = {
+                    ref: subject
+                    for ref, subject in deployment["health_subjects"].items()
+                    if subject["kind"] != "network-underlay"
+                }
+                for index in range(count):
+                    profile = copy.deepcopy(underlay)
+                    profile["id"] = f"review-underlay-{index}"
+                    profile["subject_ref"] = f"underlay/review-wan-{index}"
+                    profiles["profiles"].append(profile)
+                    deployment["health_subjects"][profile["subject_ref"]] = {
+                        "kind": "network-underlay",
+                        "binding_ref": "mintie",
+                    }
+                self.assertEqual(
+                    validator.validate_health_profiles(profiles, self.health_contract),
+                    [],
+                )
+                self.assertEqual(
+                    validator.validate_reference_health_links(
+                        self.reference_traffic,
+                        profiles,
+                        deployment,
+                        self.health_contract,
+                    ),
+                    [],
+                )
+
+    def test_underlay_subject_bindings_reject_duplicate_missing_orphan_and_wrong_kind(self):
+        def reference_errors(profiles, deployment):
+            return validator.validate_reference_health_links(
+                self.reference_traffic, profiles, deployment, self.health_contract
+            )
+
+        duplicate = copy.deepcopy(self.profiles_document)
+        twin = copy.deepcopy(self.profiles["mintie-underlay-wan"])
+        twin["id"] = "mintie-underlay-wan-duplicate"
+        duplicate["profiles"].append(twin)
+        errors = reference_errors(duplicate, self.deployment)
+        self.assertTrue(
+            any(
+                "underlay/mintie-wan" in error and "found 2" in error
+                for error in errors
+            ),
+            errors,
+        )
+
+        missing = copy.deepcopy(self.profiles_document)
+        missing["profiles"] = [
+            profile
+            for profile in missing["profiles"]
+            if profile["id"] != "mintie-underlay-wan"
+        ]
+        errors = reference_errors(missing, self.deployment)
+        self.assertTrue(
+            any(
+                "underlay/mintie-wan" in error and "found 0" in error
+                for error in errors
+            ),
+            errors,
+        )
+
+        orphan = copy.deepcopy(self.profiles_document)
+        next(
+            profile
+            for profile in orphan["profiles"]
+            if profile["id"] == "mintie-underlay-wan"
+        )["subject_ref"] = "underlay/absent-wan"
+        errors = reference_errors(orphan, self.deployment)
+        self.assertTrue(any("orphan subject" in error for error in errors), errors)
+
+        wrong_kind = copy.deepcopy(self.profiles_document)
+        next(
+            profile
+            for profile in wrong_kind["profiles"]
+            if profile["id"] == "mintie-underlay-wan"
+        )["subject_ref"] = "control-plane/mintie"
+        errors = reference_errors(wrong_kind, self.deployment)
+        self.assertTrue(
+            any("cannot bind" in error for error in errors), errors
+        )
+
     def test_stale_pass_has_effective_unknown_outcome(self):
         report = load_json("tests/fixtures/health-stale-pass.json")
         now = datetime(2026, 8, 31, 10, 0, tzinfo=timezone.utc)
@@ -750,6 +1009,7 @@ class SignalboxValidationTests(unittest.TestCase):
             ("terminal_outcomes",),
             ("rollup_precedence",),
             ("profile_kinds",),
+            ("dimension_evidence_classes",),
             ("required_profile_fields",),
             ("required_report_fields",),
             ("required_dimension_fields",),
@@ -765,6 +1025,7 @@ class SignalboxValidationTests(unittest.TestCase):
             ("retention_policy_required_fields",),
             ("forbidden_durable_keys",),
             ("reason_codes",),
+            ("reason_code_contexts",),
         )
 
         def leaf_paths(value, prefix):

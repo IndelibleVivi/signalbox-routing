@@ -110,7 +110,11 @@ or current live-system truth.
 - Portable response: register a distinct `network-underlay` subject with an
   `underlay-operational` profile; observe transport, resolver, responsiveness
   against a declared profile envelope, and recent availability or flap
-  evidence; keep shaping, live enforcement, and persistence evidence in the
-  control-plane profile; preserve the member outcome in the aggregate without a
-  top-level verdict and without inferring any route change.
+  evidence, accepting only the evidence class each dimension declares so a
+  `resolver-path` observation cannot be replaced by a qdisc or kernel readback;
+  keep shaping, live enforcement, and persistence evidence in the control-plane
+  profile; bind `latency-envelope-breach` to underlay responsiveness and
+  `recent-link-flap` to underlay availability; preserve the member outcome in
+  the aggregate without a top-level verdict and without inferring any route
+  change.
 - Protecting contracts: `HEALTH-09`, `HEALTH-10`, `HEALTH-18`, `HEALTH-19`.

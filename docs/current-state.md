@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-09-18
+Last updated: 2026-09-19
 
 - F0.3 underlay observability is source-candidate work on branch
   `feat/f0.3-underlay-observability`, based on `main` commit
@@ -77,8 +77,17 @@ F0.3 adds a `network-underlay` deployment subject kind and an
 stays observable while the control plane and proxy lanes are healthy. Its
 required dimensions are `transport`, `dns`, `responsiveness`, and
 `availability`; the new portable reason codes are `latency-envelope-breach`,
-`recent-link-flap`, and `shaping-unverified`. The underlay is observation-only,
-never an egress lane, and never a proxy-failure fallback route. The Mintie
+`recent-link-flap`, and `shaping-unverified`. PR #1's candidate includes a
+review repair that closes two validation defects: the health contract declares
+each underlay dimension's allowed evidence classes and rejects any
+out-of-domain observation (`dns` requires `resolver-path`, so a substituted
+qdisc or kernel readback is invalid rather than rolled up), the three
+domain-specific reason codes are context-bound at dimension and observation
+level while generic codes stay unconstrained, and generic profile validation
+accepts zero, one, or many registered network underlays with exactly one
+`underlay-operational` profile per subject, leaving Mintie's reference
+topology pinned by its deployment. The underlay is observation-only, never an
+egress lane, and never a proxy-failure fallback route. The Mintie
 example gains a public-safe underlay subject, profile, report, and aggregate
 member; its seven-member aggregate keeps the control plane and every egress and
 private-ingress lane at `pass` while only `underlay/mintie-wan` reports `fail`,
@@ -93,7 +102,7 @@ entered a release and is not activated, deployed, or owner-accepted here.
 Local F0.3 candidate evidence on this branch, separate from the published
 F0.2.2 receipt above: JSON Schema validation passes 30 cataloged instances;
 semantic validation passes ten public reference reports and one staleness
-fixture; the regression suite holds 64 tests. These counts are candidate
+fixture; the regression suite holds 73 tests. These counts are candidate
 evidence for this branch, not a published `main` receipt.
 
 Full v1 remains tracked in [`docs/programme-plan.md`](programme-plan.md). The

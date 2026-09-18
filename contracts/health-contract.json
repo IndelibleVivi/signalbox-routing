@@ -78,6 +78,23 @@
       "may_feed_deployment_aggregate": true
     }
   },
+  "dimension_evidence_classes": {
+    "underlay-operational": {
+      "transport": [
+        "underlay-path",
+        "transport-neutral"
+      ],
+      "dns": [
+        "resolver-path"
+      ],
+      "responsiveness": [
+        "loaded-latency"
+      ],
+      "availability": [
+        "link-stability"
+      ]
+    }
+  },
   "required_profile_fields": [
     "id",
     "revision",
@@ -230,5 +247,29 @@
     "latency-envelope-breach",
     "recent-link-flap",
     "shaping-unverified"
-  ]
+  ],
+  "reason_code_contexts": {
+    "latency-envelope-breach": [
+      {
+        "profile_kind": "underlay-operational",
+        "dimension": "responsiveness"
+      }
+    ],
+    "recent-link-flap": [
+      {
+        "profile_kind": "underlay-operational",
+        "dimension": "availability"
+      }
+    ],
+    "shaping-unverified": [
+      {
+        "profile_kind": "recovery-preflight",
+        "dimension": "enforcement"
+      },
+      {
+        "profile_kind": "control-plane-operational",
+        "dimension": "enforcement"
+      }
+    ]
+  }
 }
