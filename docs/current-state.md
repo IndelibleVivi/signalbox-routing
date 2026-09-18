@@ -6,7 +6,7 @@ Last updated: 2026-09-19
   `feat/f0.3-underlay-observability`, based on `main` commit
   `aa392263d29c12e9518d95feb308f15a264e67a6`; it has not merged into canonical
   `main` or entered a release
-- F0.3 implementation commit: `65a364b8263b30a50ecb084ac0be750297f5963c`
+- F0.3 implementation commit: `65a364babb5283f912692c528f6ca924987155b3`
 - F0.3 review surface: [pull request #1](https://github.com/IndelibleVivi/signalbox-routing/pull/1)
 - Project: Signalbox
 - Programme tranche: F0.3 underlay observability is a source candidate on
