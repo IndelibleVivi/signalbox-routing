@@ -1,0 +1,21 @@
+{
+  "schema": "signalbox.health-report/v2",
+  "id": "report-private-rowan-pass-102",
+  "profile_ref": "mintie-private-rowan",
+  "profile_revision": 2,
+  "producer_ref": "reference/mintie-observer",
+  "subject_ref": "gateway/rowan-private",
+  "generation_epoch": "sample-epoch-alpha",
+  "generation": 102,
+  "attempt_id": "attempt-private-rowan-102",
+  "started_at": "2026-08-31T10:00:00Z",
+  "completed_at": "2026-08-31T10:00:06Z",
+  "published_at": "2026-08-31T10:00:07Z",
+  "valid_until": "2026-08-31T10:20:00Z",
+  "outcome": "pass",
+  "dimensions": {
+    "transport": {"state": "pass", "observations": [{"probe_ref": "neutral-https", "evidence_class": "transport-neutral", "dependency_group": "neutral-connectivity", "state": "pass", "observed_at": "2026-08-31T10:00:01Z"}, {"probe_ref": "rowan-private-lane", "evidence_class": "role-specific", "dependency_group": "rowan-private-policy", "state": "pass", "observed_at": "2026-08-31T10:00:03Z"}]},
+    "exit-identity": {"state": "pass", "observations": [{"probe_ref": "rowan-private-identity", "evidence_class": "role-specific", "dependency_group": "rowan-private-policy", "state": "pass", "observed_at": "2026-08-31T10:00:04Z"}]},
+    "dns": {"state": "pass", "observations": [{"probe_ref": "canonical-origin-resolution", "evidence_class": "resolver-path", "dependency_group": "mintie-resolver", "state": "pass", "observed_at": "2026-08-31T10:00:06Z"}]}
+  }
+}

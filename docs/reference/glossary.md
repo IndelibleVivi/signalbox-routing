@@ -33,5 +33,12 @@
 - **realization stage** — One of source, installed, activated, or path-evidence;
   acceptance remains orthogonal.
 - **sample identity** — A friendly name used inside a reference deployment.
+- **underlay** — The household or wide-area network path that DIRECT traffic
+  depends on, observed as its own `network-underlay` subject with an
+  `underlay-operational` profile; never an egress lane and never a
+  proxy-failure fallback route.
+- **profile envelope** — A deployment-owned threshold band, such as a
+  responsiveness or resource limit, that a profile judges against instead of a
+  universal router constant.
 - **unknown** — Evidence could not establish pass, fail, presence, absence, on,
   or off. Unknown is preserved rather than guessed.

@@ -15,6 +15,7 @@ does not repair the system.
 | `recovery-preflight` | exactly one profile per registered control plane | yes, exact context and current identity only | no |
 | `control-plane-operational` | exactly one profile per registered control plane | no | yes |
 | `lane-operational` | exactly one profile per registered egress or private-ingress lane | no | yes |
+| `underlay-operational` | exactly one profile per registered network underlay | no | yes |
 
 A deployment registers its health subjects explicitly. Every profile binds one
 compatible `subject_ref`; every registered subject must have exactly one profile
@@ -22,18 +23,27 @@ of each compatible kind, and every report must match that profile and subject.
 A recovery pass therefore cannot stand in for operational evidence, and one
 lane cannot stand in for another. `HEALTH-17`
 
+A `network-underlay` subject observes the household or WAN path that DIRECT
+allowlists depend on. It is its own subject kind with an `underlay-operational`
+profile: not an egress lane, not a `direct-lane`, and never a proxy-failure
+fallback route. Its report is an ordinary aggregate member, so proxy lanes can
+stay green while a degraded DIRECT underlay remains visible instead of being
+folded into the control plane or a single deployment-wide verdict. `HEALTH-18`
+
 ## Dimensions and observations
 
 | Dimension | Question |
 | --- | --- |
-| `transport` | Can this exact lane complete the intended transport? |
-| `exit-identity` | Does observed egress satisfy this role policy and differ from forbidden direct egress? |
-| `dns` | Is this lane's resolver path behaving under its declared ownership? |
+| `transport` | Can this subject complete the intended transport on the path it covers? |
+| `exit-identity` | Does observed lane egress satisfy this role policy and differ from forbidden direct egress? |
+| `dns` | Is this subject's resolver path behaving under its declared ownership? |
 | `control-plane` | Is the routing process running with the expected loaded state? |
 | `enforcement` | Are interception, policy rules, and fail-closed enforcement observable? |
 | `resources` | Is memory, swap, storage, load, and OOM evidence inside the deployment envelope? |
 | `persistence` | Are boot, hotplug, scheduling, and durable-state owners present and inspectable? |
 | `recovery-readiness` | Can prior state be queried and reconciled safely after boot or failure? |
+| `responsiveness` | Does the DIRECT underlay stay inside its declared latency envelope under load? |
+| `availability` | Has the DIRECT underlay been continuously available, without recent flaps? |
 
 A dimension contains an `observations` array. Each observation names its probe,
 evidence class, dependency group, terminal state, observation time, and a
@@ -51,6 +61,15 @@ Profile requirements make diversity testable. For example, a lane transport
 pass requires both transport-neutral and role-specific evidence across at
 least two dependency groups. Two labels backed by one provider do not become
 independent evidence.
+
+An underlay report covers the intended DIRECT transport path, resolver
+behavior, loaded responsiveness against a declared profile envelope, and recent
+link availability or flap evidence. SQM/shaping activation, live qdisc or
+enforcement state, and persistence evidence stay with the control-plane
+profile: underlay observation reports observed path behavior and never infers
+shaping activation from latency or mutates routes or configuration. Its
+privacy-safe reason codes include `latency-envelope-breach`, `recent-link-flap`,
+and, for the control-plane side of shaping, `shaping-unverified`. `HEALTH-19`
 
 ## Report identity, sequence, and freshness
 

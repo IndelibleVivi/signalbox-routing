@@ -1,6 +1,6 @@
 {
   "schema": "signalbox.docs-pairs/v3",
-  "contract_revision": 4,
+  "contract_revision": 5,
   "pairs": [
     {
       "doc_id": "signalbox.readme",
@@ -39,7 +39,9 @@
         "HEALTH-14",
         "HEALTH-15",
         "HEALTH-16",
-        "HEALTH-17"
+        "HEALTH-17",
+        "HEALTH-18",
+        "HEALTH-19"
       ],
       "required_sections": [
         "proxy-layer-model",
@@ -62,7 +64,8 @@
         "PRIVATE-01",
         "HEALTH-07",
         "HEALTH-10",
-        "HEALTH-15"
+        "HEALTH-15",
+        "HEALTH-18"
       ],
       "required_sections": [
         "packet-path",
@@ -105,7 +108,9 @@
         "ENFORCE-01",
         "HEALTH-07",
         "HEALTH-15",
-        "HEALTH-16"
+        "HEALTH-16",
+        "HEALTH-18",
+        "HEALTH-19"
       ],
       "required_sections": [
         "routing-owner",

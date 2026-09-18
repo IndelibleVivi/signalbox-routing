@@ -1,6 +1,6 @@
 {
   "schema": "signalbox.reference-deployment/v2",
-  "contract_revision": 3,
+  "contract_revision": 4,
   "deployment_id": "mintie",
   "display_name": "Mintie",
   "sample_only": true,
@@ -61,6 +61,10 @@
   "health_subjects": {
     "control-plane/mintie": {
       "kind": "control-plane",
+      "binding_ref": "mintie"
+    },
+    "underlay/mintie-wan": {
+      "kind": "network-underlay",
       "binding_ref": "mintie"
     },
     "role-binding/alder": {

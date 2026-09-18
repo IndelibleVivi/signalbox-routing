@@ -1,4 +1,4 @@
-<!-- doc_id: signalbox.readme; language: zh-CN; contract_revision: 4 -->
+<!-- doc_id: signalbox.readme; language: zh-CN; contract_revision: 5 -->
 <!-- contracts: SIG-01 SIG-02 IDENT-01 CLAIM-01 DOC-02 AUTH-05 ACCEPT-08 -->
 
 [English](README.md) · **简体中文**
@@ -32,7 +32,7 @@ public-safe example 和验证工具。普通读者不必先啃完所有 contract
 Signalbox 解释 packet 为什么走某条路径，也给 agent 足够明确的 machine contract，
 让它修改 policy 时不会把 source intent、installed payload 与 live truth 混在一起。
 规范核心覆盖 transparent egress、DIRECT allowlist、protected no-fallback lane、
-fail-closed enforcement、private ingress、health 与 recovery。
+fail-closed enforcement、private ingress、underlay observability、health 与 recovery。
 
 它不是 proxy client、one-click installer、production config 镜像，也不是 health
 dashboard。source test 通过不代表路由器、出口、private origin、浏览器或设备此刻
@@ -105,9 +105,12 @@ state](docs/current-state.md)。
 
 F0.2.2 executable-authority closure 与 F1 Human Surface 已在 [current
 state](docs/current-state.md) 记录的 exact implementation commit 和 hosted gate 上
-完成 source verification 与 publication。完整 Signalbox v1 尚未完成；这里不暗示
-installed payload、live-router integration、private-ingress deployment、path evidence
-或 owner acceptance。`ACCEPT-08`
+完成 source verification 与 publication。F0.3 underlay observability 只是本 branch
+上的 source candidate：`network-underlay` subject 与 `underlay-operational` profile
+让 degraded DIRECT underlay 在 proxy lane 全绿时仍然可见；它尚未更新 canonical
+`main` 或任何 release，也没有 activate、deploy 或 owner acceptance。完整 Signalbox
+v1 尚未完成；这里不暗示 installed payload、live-router integration、private-ingress
+deployment、path evidence 或 owner acceptance。`ACCEPT-08`
 
 目前尚未选择 license。能够看到或持有本 repo 不等于获得 reuse rights。在明确
 contribution 与 rights terms 之前，暂不接受外部 code 或 documentation contribution。

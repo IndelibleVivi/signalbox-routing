@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:signalbox:schema:health-contract:v4",
+  "$id": "urn:signalbox:schema:health-contract:v5",
   "title": "Signalbox health contract",
   "type": "object",
   "additionalProperties": false,
@@ -28,19 +28,25 @@
     "reason_codes"
   ],
   "properties": {
-    "schema": {"const": "signalbox.health-contract/v4"},
-    "contract_revision": {"type": "integer", "minimum": 4},
+    "schema": {"const": "signalbox.health-contract/v5"},
+    "contract_revision": {"type": "integer", "minimum": 5},
     "transient_outcomes": {"$ref": "#/$defs/stringSet"},
     "terminal_outcomes": {"$ref": "#/$defs/stringSet"},
     "rollup_precedence": {"$ref": "#/$defs/stringSet"},
     "profile_kinds": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["recovery-preflight", "control-plane-operational", "lane-operational"],
+      "required": [
+        "recovery-preflight",
+        "control-plane-operational",
+        "lane-operational",
+        "underlay-operational"
+      ],
       "properties": {
         "recovery-preflight": {"$ref": "#/$defs/profileKind"},
         "control-plane-operational": {"$ref": "#/$defs/profileKind"},
-        "lane-operational": {"$ref": "#/$defs/profileKind"}
+        "lane-operational": {"$ref": "#/$defs/profileKind"},
+        "underlay-operational": {"$ref": "#/$defs/profileKind"}
       }
     },
     "required_profile_fields": {"$ref": "#/$defs/stringSet"},

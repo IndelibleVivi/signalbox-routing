@@ -97,3 +97,20 @@ or current live-system truth.
 - Portable response: scope generation by producer, subject, profile, and durable
   epoch; bind freshness to the profile; exact-match restore gate context.
 - Protecting contracts: `HEALTH-11`, `HEALTH-12`, `HEALTH-13`.
+
+## `FAIL-010` — Green proxy lanes hide a degraded DIRECT underlay
+
+- First broken boundary: underlay observation scope.
+- Pattern: the control plane and every egress or private-ingress lane report
+  pass while the DIRECT transport path those allowlists depend on shows loaded
+  latency over its declared envelope, repeated link flaps, or both.
+- Unsafe interpretation: green lanes mean the household or WAN underlay is
+  healthy, so the underlay is folded into a lane, the control plane, or a
+  single deployment-wide status.
+- Portable response: register a distinct `network-underlay` subject with an
+  `underlay-operational` profile; observe transport, resolver, responsiveness
+  against a declared profile envelope, and recent availability or flap
+  evidence; keep shaping, live enforcement, and persistence evidence in the
+  control-plane profile; preserve the member outcome in the aggregate without a
+  top-level verdict and without inferring any route change.
+- Protecting contracts: `HEALTH-09`, `HEALTH-10`, `HEALTH-18`, `HEALTH-19`.

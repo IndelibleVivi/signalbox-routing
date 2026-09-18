@@ -1,4 +1,4 @@
-<!-- doc_id: signalbox.readme; language: en; contract_revision: 4 -->
+<!-- doc_id: signalbox.readme; language: en; contract_revision: 5 -->
 <!-- contracts: SIG-01 SIG-02 IDENT-01 CLAIM-01 DOC-02 AUTH-05 ACCEPT-08 -->
 
 **English** · [简体中文](README.zh-CN.md)
@@ -37,8 +37,8 @@ orientation.
 Signalbox explains why a packet takes a path and gives an agent enough machine
 contract to change that policy without confusing intended source with installed
 or live truth. Its normative core covers transparent egress, DIRECT allowlists,
-protected no-fallback lanes, fail-closed enforcement, private ingress, health,
-and recovery.
+protected no-fallback lanes, fail-closed enforcement, private ingress, underlay
+observability, health, and recovery.
 
 It is not a proxy client, one-click installer, production-config mirror, or
 health dashboard. It never treats passing source tests as evidence that a
@@ -117,9 +117,13 @@ the exact published boundary, see [current state](docs/current-state.md).
 
 F0.2.2 executable-authority closure and the F1 Human Surface are source-verified
 and published at the exact implementation commit and hosted gate recorded in
-[current state](docs/current-state.md). Full Signalbox v1 remains incomplete; no
-installed payload, live-router integration, private-ingress deployment, path
-evidence, or owner acceptance is implied. `ACCEPT-08`
+[current state](docs/current-state.md). F0.3 underlay observability is
+source-candidate work on this branch only: a `network-underlay` subject and
+`underlay-operational` profile keep a degraded DIRECT underlay visible while
+proxy lanes are green. It does not update canonical `main` or any release and
+is not activated, deployed, or owner-accepted. Full Signalbox v1 remains
+incomplete; no installed payload, live-router integration, private-ingress
+deployment, path evidence, or owner acceptance is implied. `ACCEPT-08`
 
 No license has been selected. Possession of or visibility into this repository
 does not grant reuse rights. External code and documentation contributions are

@@ -3,7 +3,7 @@ doc_id: signalbox.human.start-here
 language: en
 status: foundation-explanatory
 authority: ../specification.md
-contract_revision: 4
+contract_revision: 5
 ---
 
 **English** · [简体中文](00-start-here.zh-CN.md)
@@ -81,14 +81,18 @@ diagnostic actor must not depend exclusively on the path it is repairing.
 <a id="health-model"></a>
 ## Health is more than opening a page
 
-`HEALTH-01` `HEALTH-10` `HEALTH-14` `HEALTH-15` `HEALTH-16` `HEALTH-17`
+`HEALTH-01` `HEALTH-10` `HEALTH-14` `HEALTH-15` `HEALTH-16` `HEALTH-17` `HEALTH-18` `HEALTH-19`
 
 Signalbox separates transport, exit identity, DNS, control plane, enforcement,
 resources, persistence, and recovery readiness. A `HealthProfile` says what to
 observe; every attempt publishes an immutable `HealthReport`. Each registered
 control plane has exactly one recovery-preflight and one control-plane
 operational profile, while each registered egress or private-ingress lane has
-exactly one lane-operational profile. Profile kind cannot cross subject kind.
+exactly one lane-operational profile. Profile kind cannot cross subject kind. A
+registered network underlay is its own subject kind with its own
+underlay-operational profile kind; each registered network underlay has exactly
+one such profile, and a deployment that registers none simply has no underlay
+member. The underlay is never an egress lane and never a DIRECT fallback.
 
 A report has no effective outcome until the canonical evaluator proves its v2
 structure and semantics, checks `published_at <= evaluated_at <= valid_until`,
@@ -98,9 +102,14 @@ regressed, superseded, or mismatched recorded pass is therefore `unknown`.
 
 A `recovery-preflight` profile asks only whether state can be queried,
 reconciled, and restored safely for one exact operation and desired-state
-digest. Operational health is split into one control-plane report and one
-report per egress or private-ingress lane. An aggregate preserves those member
-outcomes; it never flattens them into a single green network status.
+digest. Operational health is split into one control-plane report, one report
+per egress or private-ingress lane, and one report per registered network
+underlay. An underlay report observes actual path behavior: transport, resolver,
+loaded responsiveness, and recent link availability. A degraded household or
+WAN path therefore stays visible while the control plane and proxy lanes look
+green. It cannot infer shaping activation and cannot authorize any route change.
+An aggregate preserves those member outcomes; it never flattens them into a
+single green network status.
 
 Each dimension is rolled up from explicit observations. A lane transport pass
 needs both a transport-neutral probe and a role-specific probe from independent

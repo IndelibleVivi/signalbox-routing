@@ -9,7 +9,7 @@
 | Traffic actions, precedence, and fallback | `contracts/traffic-policy.json`, `examples/mintie/traffic-policy.json` | `ROUTE-01` to `ROUTE-07` |
 | Enforcement and restore gates | `contracts/traffic-policy.json` | `ENFORCE-01`, `ENFORCE-02` |
 | Private ingress | roles plus traffic policy | `PRIVATE-01` to `PRIVATE-04` |
-| Health profiles, observations, reports, and aggregates | `contracts/health-contract.json` | `HEALTH-01` to `HEALTH-17` |
+| Health profiles, observations, reports, and aggregates | `contracts/health-contract.json` | `HEALTH-01` to `HEALTH-19` |
 | Documentation parity | `contracts/docs-pairs.json` | `DOC-01` to `DOC-05` |
 | Structural schemas and compatibility routing | `contracts/catalog.json`, `schemas/` | `AUTH-03` to `AUTH-05` |
 
@@ -64,7 +64,9 @@ Profile topology is total and type-safe: each registered control-plane subject
 has exactly one `recovery-preflight` and one `control-plane-operational`
 profile, and each registered egress or private-ingress lane has exactly one
 `lane-operational` profile. A wrong-kind, missing, duplicate, or orphan binding
-is invalid. `HEALTH-17`
+is invalid. A registered `network-underlay` subject has exactly one
+`underlay-operational` profile; the underlay is not a lane and never a
+proxy-failure fallback route. `HEALTH-17` `HEALTH-18`
 
 `HealthReport` is an immutable, single-subject observation conforming to
 `signalbox.health-report/v2`:
@@ -138,8 +140,16 @@ rollup yields effective `unknown` regardless of recorded `outcome`. A higher
 generation also mismatches: abort the decision and re-read the current pointer
 instead of interpreting it as “new enough.” `HEALTH-16`
 
-Operational profiles bind the control plane and each lane separately. A
-`signalbox.health-aggregate/v2` receipt references immutable report identity
+Operational profiles bind the control plane, each lane, and the network
+underlay separately. An `underlay-operational` profile requires `transport`,
+`dns`, `responsiveness`, and `availability`: the intended DIRECT transport
+path, resolver behavior, loaded responsiveness against a declared profile
+envelope (`responsiveness_envelope_owner`), and recent link availability or
+flap evidence. SQM/shaping activation, live qdisc or enforcement state, and
+persistence evidence stay in the control-plane profile, so the underlay never
+infers shaping activation from latency and never mutates a route. `HEALTH-19`
+
+A `signalbox.health-aggregate/v2` receipt references immutable report identity
 and generation for every subject, excludes recovery-preflight, and has no
 top-level `outcome`. Every member passes through the canonical evidence
 evaluator at `assembled_at`, while aggregate validation exact-checks its

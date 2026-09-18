@@ -51,6 +51,28 @@
       "resource_threshold_owner": "deployment-envelope"
     },
     {
+      "id": "mintie-underlay-wan",
+      "revision": 1,
+      "kind": "underlay-operational",
+      "subject_ref": "underlay/mintie-wan",
+      "observation_only": true,
+      "triggers": ["periodic", "post-network-change"],
+      "run_interval_seconds": 900,
+      "required_dimensions": ["transport", "dns", "responsiveness", "availability"],
+      "probe_requirements": {
+        "transport": {"minimum_observations": 2, "minimum_by_evidence_class": {"underlay-path": 1, "transport-neutral": 1}, "minimum_dependency_groups": 2},
+        "dns": {"minimum_observations": 1, "minimum_by_evidence_class": {"resolver-path": 1}, "minimum_dependency_groups": 1},
+        "responsiveness": {"minimum_observations": 1, "minimum_by_evidence_class": {"loaded-latency": 1}, "minimum_dependency_groups": 1},
+        "availability": {"minimum_observations": 1, "minimum_by_evidence_class": {"link-stability": 1}, "minimum_dependency_groups": 1}
+      },
+      "aggregation": {"pass_when": "all-required-pass", "fail_when": "any-required-fail", "unknown_when": "otherwise"},
+      "freshness": {"max_report_age_seconds": 1200},
+      "publication": {"current_write": "atomic-replace", "completed_attempt_must_publish": true},
+      "retention": {"max_file_bytes": 262144, "archive_count": 2, "max_entries": 288},
+      "privacy": {"result_detail": "reason-code-only", "raw_diagnostics": "forbidden"},
+      "responsiveness_envelope_owner": "deployment-envelope"
+    },
+    {
       "id": "mintie-egress-alder",
       "revision": 2,
       "kind": "lane-operational",

@@ -443,9 +443,9 @@ def validate_traffic_policy(
 
 def validate_health_contract(document: dict[str, Any]) -> list[str]:
     errors: list[str] = []
-    if document.get("schema") != "signalbox.health-contract/v4":
+    if document.get("schema") != "signalbox.health-contract/v5":
         errors.append("health-contract: unexpected schema")
-    if document.get("contract_revision") != 4:
+    if document.get("contract_revision") != 5:
         errors.append("health-contract: unexpected revision")
     if set(document.get("terminal_outcomes", [])) != {"pass", "fail", "unknown"}:
         errors.append("health-contract: terminal outcomes must be pass, fail, and unknown")
@@ -467,6 +467,7 @@ def validate_health_contract(document: dict[str, Any]) -> list[str]:
         "recovery-preflight",
         "control-plane-operational",
         "lane-operational",
+        "underlay-operational",
     }
     if set(kinds) != expected_kinds:
         errors.append("health-contract: required profile kinds drifted")
@@ -481,7 +482,11 @@ def validate_health_contract(document: dict[str, Any]) -> list[str]:
         errors.append("health-contract: recovery-preflight must be allowed to gate restore")
     if recovery.get("may_feed_deployment_aggregate") is not False:
         errors.append("health-contract: recovery reports cannot feed the deployment aggregate")
-    for kind_id in ("control-plane-operational", "lane-operational"):
+    for kind_id in (
+        "control-plane-operational",
+        "lane-operational",
+        "underlay-operational",
+    ):
         kind = kinds.get(kind_id, {})
         if kind.get("may_gate_restore") is not False:
             errors.append(f"health-contract: {kind_id} cannot gate restore")
@@ -510,6 +515,18 @@ def validate_health_contract(document: dict[str, Any]) -> list[str]:
         "dns",
     }:
         errors.append("health-contract: lane dimensions drifted")
+    underlay = kinds.get("underlay-operational", {})
+    if underlay.get("observation_scope") != "single-underlay":
+        errors.append("health-contract: underlay observation scope drifted")
+    if set(underlay.get("compatible_subject_kinds", [])) != {"network-underlay"}:
+        errors.append("health-contract: underlay subject kinds drifted")
+    if set(underlay.get("required_dimensions", [])) != {
+        "transport",
+        "dns",
+        "responsiveness",
+        "availability",
+    }:
+        errors.append("health-contract: underlay dimensions drifted")
     control_dimensions = {
         "control-plane",
         "enforcement",
@@ -648,6 +665,9 @@ def validate_health_contract(document: dict[str, Any]) -> list[str]:
         "gate-context-mismatch",
         "current-evidence-mismatch",
         "evidence-not-yet-published",
+        "latency-envelope-breach",
+        "recent-link-flap",
+        "shaping-unverified",
     }:
         errors.append("health-contract: reason-code vocabulary is incomplete")
     return errors
@@ -1114,7 +1134,11 @@ def validate_health_profiles(
         ):
             errors.append(f"health-profiles: {profile_id} lacks resource threshold owner")
 
-        if kind in {"control-plane-operational", "lane-operational"}:
+        if kind in {
+            "control-plane-operational",
+            "lane-operational",
+            "underlay-operational",
+        }:
             interval = profile.get("run_interval_seconds")
             if not isinstance(interval, int) or interval <= 0:
                 errors.append("health-profiles: operational interval must be positive")
@@ -1133,6 +1157,42 @@ def validate_health_profiles(
                 errors.append(
                     f"health-profiles: {profile_id} one provider cannot be sufficient"
                 )
+        if kind == "underlay-operational":
+            transport = profile.get("probe_requirements", {}).get("transport", {})
+            if transport.get("minimum_by_evidence_class") != {
+                "underlay-path": 1,
+                "transport-neutral": 1,
+            }:
+                errors.append(
+                    f"health-profiles: {profile_id} underlay transport diversity drifted"
+                )
+            if transport.get("minimum_dependency_groups", 0) < 2:
+                errors.append(
+                    f"health-profiles: {profile_id} underlay transport needs "
+                    "independent dependency groups"
+                )
+            responsiveness = profile.get("probe_requirements", {}).get(
+                "responsiveness", {}
+            )
+            if set(responsiveness.get("minimum_by_evidence_class", {})) != {
+                "loaded-latency"
+            }:
+                errors.append(
+                    f"health-profiles: {profile_id} responsiveness evidence drifted"
+                )
+            availability = profile.get("probe_requirements", {}).get(
+                "availability", {}
+            )
+            if set(availability.get("minimum_by_evidence_class", {})) != {
+                "link-stability"
+            }:
+                errors.append(
+                    f"health-profiles: {profile_id} availability evidence drifted"
+                )
+            if not non_empty_string(profile.get("responsiveness_envelope_owner")):
+                errors.append(
+                    f"health-profiles: {profile_id} lacks a responsiveness envelope owner"
+                )
         if kind == "control-plane-operational":
             if set(profile.get("resource_observations", [])) != REQUIRED_RESOURCE_OBSERVATIONS:
                 errors.append("health-profiles: operational resource observations are incomplete")
@@ -1140,12 +1200,18 @@ def validate_health_profiles(
             errors.append("health-profiles: recovery-preflight must require gate context")
         if kind != "recovery-preflight" and "gate_context_required" in profile:
             errors.append(f"health-profiles: {profile_id} cannot require gate context")
+        if kind != "underlay-operational" and "responsiveness_envelope_owner" in profile:
+            errors.append(
+                f"health-profiles: {profile_id} cannot declare a responsiveness envelope"
+            )
     if kind_counts.get("recovery-preflight") != 1:
         errors.append("health-profiles: exactly one recovery-preflight profile is required")
     if kind_counts.get("control-plane-operational") != 1:
         errors.append("health-profiles: exactly one control-plane profile is required")
     if kind_counts.get("lane-operational", 0) < 1:
         errors.append("health-profiles: at least one lane profile is required")
+    if kind_counts.get("underlay-operational") != 1:
+        errors.append("health-profiles: exactly one underlay profile is required")
     return errors
 
 
@@ -1155,7 +1221,7 @@ def validate_deployment(
     errors: list[str] = []
     if deployment.get("schema") != "signalbox.reference-deployment/v2":
         errors.append("deployment: unexpected schema")
-    if deployment.get("contract_revision") != 3:
+    if deployment.get("contract_revision") != 4:
         errors.append("deployment: unexpected revision")
     if deployment.get("deployment_id") != "mintie":
         errors.append("deployment: reference deployment must be mintie")
@@ -1216,6 +1282,7 @@ def validate_deployment(
         errors.append("deployment: canonical origins must use absent deployment-owned bindings")
     expected_subjects = {
         "control-plane/mintie": ("control-plane", "mintie"),
+        "underlay/mintie-wan": ("network-underlay", "mintie"),
         "role-binding/alder": ("egress-lane", "alder"),
         "role-binding/rowan": ("egress-lane", "rowan"),
         "role-binding/hearth": ("egress-lane", "hearth"),
@@ -1229,6 +1296,32 @@ def validate_deployment(
         subject = subjects.get(subject_ref, {})
         if subject.get("kind") != kind or subject.get("binding_ref") != binding_ref:
             errors.append(f"deployment: health subject {subject_ref} binding drifted")
+    return errors
+
+
+def validate_reference_deployment_registration(
+    deployment: dict[str, Any], catalog: dict[str, Any]
+) -> list[str]:
+    """Require the catalog revision to match the registered instance revision."""
+
+    errors: list[str] = []
+    entries = {
+        entry.get("schema_id"): entry
+        for entry in catalog.get("entries", [])
+        if isinstance(entry, dict)
+    }
+    entry = entries.get("signalbox.reference-deployment/v2")
+    if not isinstance(entry, dict):
+        errors.append(
+            "reference-deployment: catalog has no "
+            "signalbox.reference-deployment/v2 entry"
+        )
+        return errors
+    if entry.get("revision") != deployment.get("contract_revision"):
+        errors.append(
+            "reference-deployment: catalog revision must equal the deployment "
+            "contract_revision"
+        )
     return errors
 
 
@@ -1523,7 +1616,7 @@ def validate_doc_pairs(root: Path, document: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     if document.get("schema") != "signalbox.docs-pairs/v3":
         errors.append("docs-pairs: unexpected schema")
-    if document.get("contract_revision") != 4:
+    if document.get("contract_revision") != 5:
         errors.append("docs-pairs: unexpected revision")
     seen: set[str] = set()
     for pair in document.get("pairs", []):
@@ -1670,7 +1763,7 @@ def validate_catalog(root: Path, document: dict[str, Any]) -> list[str]:
         "signalbox.claims/v1",
         "signalbox.acceptance-record/v1",
         "signalbox.traffic-policy/v2",
-        "signalbox.health-contract/v4",
+        "signalbox.health-contract/v5",
         "signalbox.health-profile/v2",
         "signalbox.health-profiles/v2",
         "signalbox.health-report/v2",
@@ -1843,10 +1936,13 @@ def validate_repository(root: Path = ROOT) -> list[str]:
         "examples/mintie/health-profiles.json",
         "examples/mintie/health-aggregate.json",
         "examples/mintie/reports/control-plane-pass.json",
+        "examples/mintie/reports/underlay-wan-fail.json",
         "examples/mintie/reports/lane-alder-pass.json",
         "examples/mintie/reports/lane-rowan-pass.json",
+        "examples/mintie/reports/lane-hearth-pass.json",
         "examples/mintie/reports/lane-hearth-fail.json",
         "examples/mintie/reports/private-alder-pass.json",
+        "examples/mintie/reports/private-rowan-pass.json",
         "examples/mintie/reports/private-rowan-unknown.json",
         "examples/mintie/reports/recovery-preflight-pass.json",
     ]
@@ -1878,6 +1974,7 @@ def validate_repository(root: Path = ROOT) -> list[str]:
     errors.extend(validate_catalog(root, catalog))
     errors.extend(validate_doc_pairs(root, docs_pairs))
     errors.extend(validate_deployment(deployment, roles))
+    errors.extend(validate_reference_deployment_registration(deployment, catalog))
     errors.extend(validate_reference_traffic(reference_traffic, deployment))
     errors.extend(validate_health_profiles(health_profiles, health_contract))
     errors.extend(
@@ -1964,6 +2061,8 @@ def validate_repository(root: Path = ROOT) -> list[str]:
         "HEALTH-15",
         "HEALTH-16",
         "HEALTH-17",
+        "HEALTH-18",
+        "HEALTH-19",
         "DOC-05",
         "UPDATE-03",
         "ACCEPT-08",
@@ -1984,6 +2083,7 @@ def validate_repository(root: Path = ROOT) -> list[str]:
         "FAIL-007",
         "FAIL-008",
         "FAIL-009",
+        "FAIL-010",
     ):
         if failure_id not in failure_catalog:
             errors.append(f"failure-catalog: missing {failure_id}")

@@ -3,7 +3,7 @@ doc_id: signalbox.human.routing-dns-fail-closed
 language: zh-CN
 status: f1-reader-path
 authority: ../specification.md
-contract_revision: 4
+contract_revision: 5
 ---
 
 [English](30-routing-dns-and-fail-closed.en.md) · **简体中文**
@@ -96,7 +96,7 @@ forbidden public DIRECT。二者都要分别验证：
 <a id="health-and-recovery"></a>
 ## 先 observe；mutation 由另一份 contract 管
 
-`HEALTH-07` `HEALTH-15` `HEALTH-16`
+`HEALTH-07` `HEALTH-15` `HEALTH-16` `HEALTH-18` `HEALTH-19`
 
 Health reports 分别观察 control plane 与每条 lane；query failure 保持 `unknown`。
 任何 recorded pass 在打开 restore gate 前，都必须经过 canonical evaluator：先验证
@@ -114,6 +114,15 @@ Deployment aggregate 是 historical receipt。它的 `evaluated_at` 等于
 如果 deployment 以后选择 automatic failover，也要另设带 hysteresis、operation
 identity、rollback 与 receipt 的 state machine。latency selector 不是 strict
 primary/secondary policy。
+
+allowlist client 所依赖的 DIRECT 流量跑在家庭 / WAN underlay 上。如果 deployment
+注册了 `network-underlay` subject，用搭配的 `underlay-operational` profile 就可以把
+这条路径与每条 lane 分开观察：transport、resolver、相对 declared envelope 的 loaded
+responsiveness，以及 recent availability / flap evidence。underlay 不是 lane，也永远
+不是 proxy 失败后的回落，因此 proxy lanes 全绿的同时可以存在 degraded DIRECT
+underlay，aggregate 会把两者都保留下来。shaping、live enforcement 与 persistence
+仍属于 control-plane 证据；underlay observation 不会从 latency 推断 shaping 是否
+激活，也不会修改任何 route。
 
 只有确实需要 canonical private access 时，才继续读 [Tailnet 与 VPS private
 ingress](40-tailnet-vps-private-ingress.zh-CN.md)。

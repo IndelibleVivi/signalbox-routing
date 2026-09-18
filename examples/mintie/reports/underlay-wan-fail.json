@@ -1,0 +1,22 @@
+{
+  "schema": "signalbox.health-report/v2",
+  "id": "report-underlay-wan-fail-101",
+  "profile_ref": "mintie-underlay-wan",
+  "profile_revision": 1,
+  "producer_ref": "reference/mintie-observer",
+  "subject_ref": "underlay/mintie-wan",
+  "generation_epoch": "sample-epoch-alpha",
+  "generation": 101,
+  "attempt_id": "attempt-underlay-wan-101",
+  "started_at": "2026-08-31T10:00:00Z",
+  "completed_at": "2026-08-31T10:00:08Z",
+  "published_at": "2026-08-31T10:00:09Z",
+  "valid_until": "2026-08-31T10:20:00Z",
+  "outcome": "fail",
+  "dimensions": {
+    "transport": {"state": "pass", "observations": [{"probe_ref": "underlay-path", "evidence_class": "underlay-path", "dependency_group": "wan-uplink", "state": "pass", "observed_at": "2026-08-31T10:00:02Z"}, {"probe_ref": "neutral-https", "evidence_class": "transport-neutral", "dependency_group": "neutral-connectivity", "state": "pass", "observed_at": "2026-08-31T10:00:01Z"}]},
+    "dns": {"state": "pass", "observations": [{"probe_ref": "underlay-resolver", "evidence_class": "resolver-path", "dependency_group": "mintie-resolver", "state": "pass", "observed_at": "2026-08-31T10:00:06Z"}]},
+    "responsiveness": {"state": "fail", "observations": [{"probe_ref": "loaded-latency", "evidence_class": "loaded-latency", "dependency_group": "wan-uplink", "state": "fail", "observed_at": "2026-08-31T10:00:07Z", "reason_code": "latency-envelope-breach", "metrics": {"loaded_latency_band": "over-envelope"}}]},
+    "availability": {"state": "fail", "observations": [{"probe_ref": "link-stability", "evidence_class": "link-stability", "dependency_group": "wan-uplink", "state": "fail", "observed_at": "2026-08-31T10:00:08Z", "reason_code": "recent-link-flap", "metrics": {"recent_flap_count": 2}}]}
+  }
+}

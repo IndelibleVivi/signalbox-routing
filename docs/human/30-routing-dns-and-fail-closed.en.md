@@ -3,7 +3,7 @@ doc_id: signalbox.human.routing-dns-fail-closed
 language: en
 status: f1-reader-path
 authority: ../specification.md
-contract_revision: 4
+contract_revision: 5
 ---
 
 **English** · [简体中文](30-routing-dns-and-fail-closed.zh-CN.md)
@@ -100,7 +100,7 @@ contract. Those identifiers do not become Signalbox-wide constants.
 <a id="health-and-recovery"></a>
 ## Observe first; mutate under another contract
 
-`HEALTH-07` `HEALTH-15` `HEALTH-16`
+`HEALTH-07` `HEALTH-15` `HEALTH-16` `HEALTH-18` `HEALTH-19`
 
 Health reports observe the control plane and each lane separately. Query
 failure remains `unknown`. Before any recorded pass can open a restore gate,
@@ -120,6 +120,17 @@ one from fresh member reports.
 Automatic failover, if a deployment later chooses it, needs a separate state
 machine with hysteresis, operation identity, rollback, and receipts. A latency
 selector is not strict primary/secondary policy.
+
+DIRECT traffic that allowlisted clients depend on runs over a household or WAN
+underlay. When a deployment registers a `network-underlay` subject, its
+`underlay-operational` profile observes that path separately from every lane:
+transport, resolver, loaded
+responsiveness against a declared envelope, and recent availability or flap
+evidence. The underlay is not a lane and never a proxy-failure fallback, so
+green proxy lanes can coexist with a degraded DIRECT underlay and the aggregate
+keeps both visible. Shaping, live enforcement, and persistence stay
+control-plane evidence; underlay observation never infers shaping activation
+from latency and never mutates a route.
 
 Continue with [Tailnet and VPS private ingress](40-tailnet-vps-private-ingress.en.md)
 only when the deployment needs canonical private access.

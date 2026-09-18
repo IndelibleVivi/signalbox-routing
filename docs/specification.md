@@ -1,7 +1,7 @@
 # Signalbox Product and Architecture Specification
 
 Status: canonical working specification
-Revision: 4
+Revision: 5
 Authority: current Faye/Cove task decisions, with earlier Mintie materials used
 as evidence rather than executable instructions
 
@@ -161,7 +161,9 @@ browser, PWA, or owner acceptance on the canonical origin.
 - enforcement/kernel state;
 - resource envelope;
 - persistence ownership;
-- recovery readiness.
+- recovery readiness;
+- underlay responsiveness against a declared envelope;
+- recent underlay link availability.
 
 `HEALTH-02` — A `HealthProfile` declares purpose, required dimensions,
 freshness, publication, privacy, and bounded retention. Every attempt publishes
@@ -196,10 +198,12 @@ result is `unknown`; recovery must not infer that the object is absent.
 `HEALTH-08` — A common external probe provider cannot be the sole truth for all
 lanes. Transport-neutral and role-specific evidence remain distinguishable.
 
-`HEALTH-09` — `recovery-preflight`, `control-plane-operational`, and
-`lane-operational` are different profile kinds. Recovery and control-plane
-profiles observe router state; each lane profile observes exactly one egress or
-private-ingress subject. None may silently substitute for another.
+`HEALTH-09` — `recovery-preflight`, `control-plane-operational`,
+`lane-operational`, and `underlay-operational` are different profile kinds.
+Recovery and control-plane profiles observe router state; each lane profile
+observes exactly one egress or private-ingress subject; each underlay profile
+observes exactly one network-underlay subject. None may silently substitute for
+another.
 
 `HEALTH-10` — Every report binds `subject_ref` as well as profile and producer.
 A deployment aggregate references immutable member report identities and
@@ -246,6 +250,24 @@ Every control-plane subject has exactly one `recovery-preflight` and one
 `control-plane-operational` profile. Every egress or private-ingress lane has
 exactly one `lane-operational` profile. Wrong-kind, duplicate, orphan, and
 uncovered bindings are invalid.
+
+`HEALTH-18` — A deployment may register `network-underlay` subjects with an
+`underlay-operational` profile kind. The underlay is the observed household or
+wide-area path that DIRECT traffic depends on; it is not an egress lane, not a
+`direct-lane`, and never a proxy-failure fallback route. Exactly one
+`underlay-operational` profile binds each registered `network-underlay`
+subject. The profile may feed the member-preserving deployment aggregate, never
+gates restore, and remains observation-only, so a degraded underlay stays
+visible even when control-plane and proxy-lane reports are healthy.
+
+`HEALTH-19` — `underlay-operational` requires the `transport`, `dns`,
+`responsiveness`, and `availability` dimensions. They cover the intended DIRECT
+transport path, resolver behavior, loaded responsiveness against a declared
+profile envelope, and recent link availability or flap evidence. SQM/shaping
+activation, live qdisc or enforcement state, and persistence evidence remain
+control-plane evidence: underlay observation reports observed path behavior and
+never infers shaping activation from latency or mutates routes or
+configuration.
 
 ## 9. Incident-derived portable lessons
 

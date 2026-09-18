@@ -3,7 +3,7 @@ doc_id: signalbox.human.start-here
 language: zh-CN
 status: foundation-explanatory
 authority: ../specification.md
-contract_revision: 4
+contract_revision: 5
 ---
 
 [English](00-start-here.en.md) · **简体中文**
@@ -76,14 +76,18 @@ DIRECT 只服务明确批准的 LAN、bootstrap 或直连 allowlist。受保护�
 <a id="health-model"></a>
 ## Health 不只是“网页能打开”
 
-`HEALTH-01` `HEALTH-10` `HEALTH-14` `HEALTH-15` `HEALTH-16` `HEALTH-17`
+`HEALTH-01` `HEALTH-10` `HEALTH-14` `HEALTH-15` `HEALTH-16` `HEALTH-17` `HEALTH-18` `HEALTH-19`
 
 Signalbox 把 health 分为 transport、exit identity、DNS、control plane、
 enforcement、resources、persistence 和 recovery readiness。`HealthProfile`
 规定要测什么；每次 attempt 都发布 immutable `HealthReport`。每个 registered
 control plane 必须恰好绑定一份 recovery-preflight 与一份 control-plane operational
 profile；每条 registered egress / private-ingress lane 也必须恰好绑定一份
-lane-operational profile。profile kind 不能跨 subject kind 使用。
+lane-operational profile。profile kind 不能跨 subject kind 使用。registered
+network underlay 有自己的 subject kind 与对应的 underlay-operational profile kind；
+每个 registered network underlay 恰好绑定一份这样的 profile，而没有注册 underlay 的
+deployment 只是没有对应 member。它既不是 egress lane，也永远不会成为 DIRECT
+回落路径。
 
 一份 report 在 canonical evaluator 证明其 v2 structure 与 semantics、确认
 `published_at <= evaluated_at <= valid_until`，并 exact-match 当前预期的 producer、
@@ -93,8 +97,12 @@ recorded pass 因此都是 `unknown`。
 
 恢复前的 `recovery-preflight` 只为一个 exact operation 与 desired-state digest
 检查能否安全 query、reconcile 和 restore。日常 health 则拆成一份 control-plane
-report，以及每条 egress / private-ingress lane 各自的一份 report；aggregate 必须
-保留所有 member outcome，不能把它们压成一个模糊的“全网绿色”。
+report、每条 egress / private-ingress lane 各自的一份 report，以及每个 registered
+network underlay 的一份 report。underlay report 只观察实际路径行为：transport、resolver、
+loaded responsiveness 与 recent link availability。因此即使 control plane 与 proxy
+lanes 全绿，degraded 的家庭 / WAN 路径也不会被掩盖。它既不能推断 shaping 是否
+激活，也不能授权任何 route 变更。aggregate 必须保留所有 member outcome，不能
+把它们压成一个模糊的“全网绿色”。
 
 每个 dimension 都由 explicit observations roll up。lane transport 要判 `pass`，
 至少要同时有 transport-neutral 与 role-specific probe，而且来自独立 dependency
