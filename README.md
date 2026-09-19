@@ -118,12 +118,14 @@ the exact published boundary, see [current state](docs/current-state.md).
 F0.2.2 executable-authority closure and the F1 Human Surface are source-verified
 and published at the exact implementation commit and hosted gate recorded in
 [current state](docs/current-state.md). F0.3 underlay observability is
-source-candidate work on this branch only: a `network-underlay` subject and
-`underlay-operational` profile keep a degraded DIRECT underlay visible while
-proxy lanes are green. It does not update canonical `main` or any release and
-is not activated, deployed, or owner-accepted. Full Signalbox v1 remains
-incomplete; no installed payload, live-router integration, private-ingress
-deployment, path evidence, or owner acceptance is implied. `ACCEPT-08`
+source-verified and source-integrated into canonical `main` by the PR #1
+merge commit `5ca593db7c4ce101ee9afcc2aaf5ce1bbde9b3a2`: a `network-underlay`
+subject and `underlay-operational` profile keep a degraded DIRECT underlay
+visible while proxy lanes are green. That source integration claims no release
+or tag, no installed payload, no activation or live-router mutation, no live
+path evidence, and no owner or client acceptance. Full Signalbox v1 remains
+incomplete; installation, activation, private-ingress deployment, and
+acceptance remain separate gates. `ACCEPT-08`
 
 No license has been selected. Possession of or visibility into this repository
 does not grant reuse rights. External code and documentation contributions are
