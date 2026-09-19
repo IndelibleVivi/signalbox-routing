@@ -2,16 +2,26 @@
 
 Last updated: 2026-09-19
 
-- F0.3 underlay observability is source-candidate work on branch
-  `feat/f0.3-underlay-observability`, based on `main` commit
-  `aa392263d29c12e9518d95feb308f15a264e67a6`; it has not merged into canonical
-  `main` or entered a release
-- F0.3 implementation commit: `65a364babb5283f912692c528f6ca924987155b3`
+<!-- signalbox:f0.3-source-integration merged-into-canonical-main -->
+
+- F0.3 underlay observability source implementation is integrated into
+  canonical `main` by the PR #1 merge commit
+  `5ca593db7c4ce101ee9afcc2aaf5ce1bbde9b3a2`; the final pre-merge head was
+  `0338d4f28b5a83a78ebc8a19f77845f2dd9097d6`
+- F0.3 source integration claims no release or tag, no installed payload, no
+  activation or live-router mutation, no live path evidence, and no owner or
+  client acceptance
+- Post-merge canonical-main hosted gate: [run 35388875151](https://github.com/IndelibleVivi/signalbox-routing/actions/runs/35388875151)
+  succeeded for the merge commit on Python 3.11, 3.12, and 3.13 plus the
+  required `signalbox-verify` context
 - F0.3 review surface: [pull request #1](https://github.com/IndelibleVivi/signalbox-routing/pull/1)
+  (merged; squash merge policy deletes the source branch)
 - Project: Signalbox
-- Programme tranche: F0.3 underlay observability is a source candidate on
-  `feat/f0.3-underlay-observability`; F0.2.2 executable-authority closure
-  remains the most recently completed and published boundary
+- Programme tranche: F0.3 underlay observability is the current canonical
+  source boundary, complete at source and integrated into canonical `main`;
+  F0.2.2 executable-authority closure is the previous source boundary, and its
+  exact receipt above remains preserved as historical record; F2 remains the
+  next planned tranche and is not started
 - Canonical branch: `main`
 - Remote visibility: public GitHub repository at
   `https://github.com/IndelibleVivi/signalbox-routing`
@@ -77,7 +87,7 @@ F0.3 adds a `network-underlay` deployment subject kind and an
 stays observable while the control plane and proxy lanes are healthy. Its
 required dimensions are `transport`, `dns`, `responsiveness`, and
 `availability`; the new portable reason codes are `latency-envelope-breach`,
-`recent-link-flap`, and `shaping-unverified`. PR #1's candidate includes a
+`recent-link-flap`, and `shaping-unverified`. PR #1 includes a
 review repair that closes two validation defects: the health contract declares
 each underlay dimension's allowed evidence classes and rejects any
 out-of-domain observation (`dns` requires `resolver-path`, so a substituted
@@ -95,18 +105,20 @@ and `FAIL-010` records the reusable mechanism. Because the health
 contract gains a required profile kind, it advances to
 `signalbox.health-contract/v5`, and documentation pairs advance to revision 5
 under the unchanged `signalbox.docs-pairs/v3` schema; the Mintie route
-projection is unchanged. F0.3 is source-candidate work on
-`feat/f0.3-underlay-observability`; it has not merged into canonical `main` or
-entered a release and is not activated, deployed, or owner-accepted here.
+projection is unchanged. F0.3 is source-integrated into canonical `main`
+through the PR #1 merge commit above; it has entered no release or tag and is
+not installed, activated, deployed, or owner-accepted here. No active F0.3
+feature branch remains.
 
-Local F0.3 candidate evidence on this branch, separate from the published
-F0.2.2 receipt above: JSON Schema validation passes 30 cataloged instances;
-semantic validation passes ten public reference reports and one staleness
-fixture; the regression suite holds 73 tests. These counts are candidate
-evidence for this branch, not a published `main` receipt.
+Merged F0.3 source evidence, kept distinct from the preserved F0.2.2 receipt
+above: the merged gate validates 30 cataloged instances, ten public reference
+reports, and one staleness fixture, and the regression suite passes. Hosted run
+35388875151 repeated that source gate on canonical `main` at Python 3.11, 3.12,
+and 3.13 plus the required `signalbox-verify` context. These counts describe
+the merged source boundary only; they are not install, activation, live-path,
+or acceptance evidence.
 
 Full v1 remains tracked in [`docs/programme-plan.md`](programme-plan.md). The
-F0.3 underlay-observability tranche is the current source candidate and is
-inserted before F2, which remains the next planned tranche and is not started
-here. Installation, activation, runtime, release, license, and acceptance gates
-remain separate.
+F0.3 underlay-observability tranche is complete at the source boundary and F2
+remains the next planned tranche and is not started. Installation, activation,
+runtime, release, license, and acceptance gates remain separate.

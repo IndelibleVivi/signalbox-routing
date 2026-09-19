@@ -228,6 +228,37 @@ CREDENTIAL_ASSIGNMENT = re.compile(
 URL_USERINFO = re.compile(r"\b[a-z][a-z0-9+.-]*://[^\s/@:]+:[^\s/@]+@", re.IGNORECASE)
 MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 
+# F0.3 source-integration boundary. `docs/current-state.md` is the single
+# authoritative home for the marker; the README pair and the programme plan
+# project the same boundary. While the marker is present, no status surface may
+# keep the pre-merge wording that called F0.3 a branch candidate.
+SOURCE_INTEGRATION_MARKER = (
+    "<!-- signalbox:f0.3-source-integration merged-into-canonical-main -->"
+)
+SOURCE_INTEGRATION_MARKER_HOME = "docs/current-state.md"
+SOURCE_INTEGRATION_SURFACES = (
+    "README.md",
+    "README.zh-CN.md",
+    "docs/current-state.md",
+    "docs/programme-plan.md",
+)
+SOURCE_INTEGRATION_TRANCHE = "F0.3"
+STALE_SOURCE_INTEGRATION_CLAIM = re.compile(
+    r"(?i)("
+    r"not\s+merged\s+into\s+canonical"
+    r"|branch[\s-]only"
+    r"|source[\s-]candidate"
+    r"|candidate\s+work\s+on"
+    r"|on\s+this\s+branch"
+    r"|本\s*branch"
+    r"|尚未合并"
+    r"|尚未更新\s*canonical"
+    r")"
+)
+STATUS_PARAGRAPH_SPLIT = re.compile(r"\n\s*\n")
+STATUS_SENTENCE_SPLIT = re.compile(r"(?<=[。；])|(?<=[.;])(?=\s)")
+STATUS_TRANCHE_REFERENCE = re.compile(r"\bF\d+(?:\.\d+)*\b", re.IGNORECASE)
+
 # Any future exception must name one exact tracked path, rule, literal, and reason.
 PUBLIC_BOUNDARY_EXCEPTIONS: tuple[dict[str, str], ...] = ()
 
@@ -1979,6 +2010,55 @@ def validate_markdown_links(root: Path, paths: Iterable[Path]) -> list[str]:
     return errors
 
 
+def source_integration_claim_units(text: str) -> list[str]:
+    """Return sentence units whose current paragraph context is the F0.3 tranche."""
+    units: list[str] = []
+    for paragraph in STATUS_PARAGRAPH_SPLIT.split(text):
+        f03_context = False
+        for unit in STATUS_SENTENCE_SPLIT.split(paragraph):
+            collapsed = " ".join(unit.split())
+            if not collapsed:
+                continue
+            tranche_references = set(STATUS_TRANCHE_REFERENCE.findall(collapsed))
+            if SOURCE_INTEGRATION_TRANCHE in tranche_references:
+                f03_context = True
+            elif tranche_references:
+                f03_context = False
+            if f03_context:
+                units.append(collapsed)
+    return units
+
+
+def validate_status_surfaces(root: Path) -> list[str]:
+    """Reject stale F0.3 branch-candidate wording next to the merged marker.
+
+    The guard is active only while `docs/current-state.md` carries the
+    source-integration marker, so ordinary candidate tranches on other branches
+    stay unconstrained and future tranches are free to use candidate language.
+    """
+    errors: list[str] = []
+    home = root / SOURCE_INTEGRATION_MARKER_HOME
+    if not home.is_file():
+        return errors
+    if SOURCE_INTEGRATION_MARKER not in home.read_text(encoding="utf-8"):
+        return errors
+    for relative in SOURCE_INTEGRATION_SURFACES:
+        path = root / relative
+        if not path.is_file():
+            errors.append(f"status-surfaces: missing {relative}")
+            continue
+        for unit in source_integration_claim_units(path.read_text(encoding="utf-8")):
+            if STALE_SOURCE_INTEGRATION_CLAIM.search(unit):
+                errors.append(
+                    "status-surfaces: "
+                    f"{relative} keeps a stale {SOURCE_INTEGRATION_TRANCHE} "
+                    "candidate/not-merged claim while "
+                    f"{SOURCE_INTEGRATION_MARKER_HOME} records source "
+                    f"integration: {unit!r}"
+                )
+    return errors
+
+
 def validate_repository(root: Path = ROOT) -> list[str]:
     errors: list[str] = []
     required_files = [
@@ -2106,6 +2186,8 @@ def validate_repository(root: Path = ROOT) -> list[str]:
     else:
         errors.extend(scan_tracked_source_boundaries(root, tracked_paths))
         errors.extend(validate_markdown_links(root, tracked_paths))
+
+    errors.extend(validate_status_surfaces(root))
 
     specification = (root / "docs/specification.md").read_text(encoding="utf-8")
     for contract_id in (

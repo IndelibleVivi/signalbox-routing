@@ -1511,6 +1511,128 @@ class SignalboxValidationTests(unittest.TestCase):
             errors,
         )
 
+    def test_status_surfaces_consistency_guard_passes_current_documents(self):
+        self.assertEqual(validator.validate_status_surfaces(ROOT), [])
+        marker_home = ROOT / validator.SOURCE_INTEGRATION_MARKER_HOME
+        self.assertIn(
+            validator.SOURCE_INTEGRATION_MARKER,
+            marker_home.read_text(encoding="utf-8"),
+            "current-state.md must keep the F0.3 source-integration marker",
+        )
+
+    def test_status_surfaces_reject_stale_f03_candidate_wording(self):
+        marker = validator.SOURCE_INTEGRATION_MARKER
+        integrated = "F0.3 is source-integrated into canonical `main`.\n"
+        stale_claims = {
+            "README.md": (
+                "F0.3 underlay observability is source-candidate work on this branch "
+                "only."
+            ),
+            "README.zh-CN.md": (
+                "F0.3 underlay observability 只是本 branch 上的 source candidate。"
+            ),
+            "docs/current-state.md": "F0.3 has not merged into canonical `main`.",
+            "docs/programme-plan.md": (
+                "Current execution tranche: F0.3 (source candidate on this branch)."
+            ),
+        }
+        for stale_surface, stale_claim in stale_claims.items():
+            with self.subTest(surface=stale_surface):
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    root = Path(temp_dir)
+                    for surface in validator.SOURCE_INTEGRATION_SURFACES:
+                        path = root / surface
+                        path.parent.mkdir(parents=True, exist_ok=True)
+                        body = (
+                            f"{marker}\n{integrated}"
+                            if surface == validator.SOURCE_INTEGRATION_MARKER_HOME
+                            else integrated
+                        )
+                        if surface == stale_surface:
+                            body = f"{body}{stale_claim}\n"
+                        path.write_text(body, encoding="utf-8")
+                    errors = validator.validate_status_surfaces(root)
+                self.assertTrue(
+                    any(stale_surface in error for error in errors),
+                    f"{stale_surface} must be rejected: {errors}",
+                )
+
+    def test_status_surfaces_allow_candidate_wording_for_other_tranches(self):
+        marker = validator.SOURCE_INTEGRATION_MARKER
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            for surface in validator.SOURCE_INTEGRATION_SURFACES:
+                path = root / surface
+                path.parent.mkdir(parents=True, exist_ok=True)
+                prefix = marker + "\n" if surface == (
+                    validator.SOURCE_INTEGRATION_MARKER_HOME
+                ) else ""
+                path.write_text(
+                    prefix
+                    + "F0.3 is source-integrated into canonical `main`.\n"
+                    + "F3 remains a source candidate on this branch and is not "
+                    + "merged.\n",
+                    encoding="utf-8",
+                )
+            errors = validator.validate_status_surfaces(root)
+        self.assertEqual(errors, [])
+
+    def test_status_surfaces_retain_f03_context_across_sentences(self):
+        marker = validator.SOURCE_INTEGRATION_MARKER
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            for surface in validator.SOURCE_INTEGRATION_SURFACES:
+                path = root / surface
+                path.parent.mkdir(parents=True, exist_ok=True)
+                prefix = marker + "\n" if surface == (
+                    validator.SOURCE_INTEGRATION_MARKER_HOME
+                ) else ""
+                path.write_text(
+                    prefix + "F0.3 is source-integrated into canonical `main`.\n",
+                    encoding="utf-8",
+                )
+            readme = root / "README.md"
+            readme.write_text(
+                readme.read_text(encoding="utf-8")
+                + "\nF0.3 is still being reviewed. It has not merged into "
+                + "canonical `main`.\n",
+                encoding="utf-8",
+            )
+            errors = validator.validate_status_surfaces(root)
+        self.assertTrue(
+            any("README.md" in error and "not merged" in error for error in errors),
+            errors,
+        )
+
+    def test_status_surfaces_guard_is_inactive_without_the_marker(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            for surface in validator.SOURCE_INTEGRATION_SURFACES:
+                path = root / surface
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(
+                    "F0.3 is source-candidate work on this branch only.\n",
+                    encoding="utf-8",
+                )
+            self.assertEqual(validator.validate_status_surfaces(root), [])
+
+    def test_repository_gate_rejects_stale_f03_wording(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            copy_tracked_tree(root)
+            readme = root / "README.md"
+            readme.write_text(
+                readme.read_text(encoding="utf-8")
+                + "\nF0.3 underlay observability is source-candidate work on this "
+                "branch only.\n",
+                encoding="utf-8",
+            )
+            errors = validator.validate_repository(root)
+        self.assertTrue(
+            any("status-surfaces" in error and "README.md" in error for error in errors),
+            errors,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,9 +1,14 @@
 # Signalbox Programme Plan
 
 Status: active
-Current execution tranche: F0.3 underlay observability (source candidate on
-this branch; not merged into canonical `main`, released, or activated)
-Most recently completed tranche: F0.2.2 executable-authority closure
+Current execution tranche: none; F0.3 underlay observability reached its source
+boundary and is source-integrated into canonical `main` by the PR #1 merge
+commit `5ca593db7c4ce101ee9afcc2aaf5ce1bbde9b3a2`; F2 remains planned but
+unstarted
+Most recently completed tranche: F0.3 underlay observability (source-integrated
+into canonical `main`; not released, installed, activated, or owner-accepted)
+Previous source boundary (historical receipt): F0.2.2 executable-authority
+closure; its exact published receipt is preserved in `docs/current-state.md`
 Next planned tranche: F2 complete Agent Surface
 Canonical specification: `docs/specification.md`, revision 5
 Normative companions: `contracts/*.json`, `schemas/*.schema.json`
@@ -144,7 +149,7 @@ private-ingress guide. Depth remains in the normative core; the public entrance
 now exposes it progressively. Exact published commit and hosted evidence are
 owned by `docs/current-state.md`.
 
-### F0.3 — Underlay observability (`source-candidate on this branch`)
+### F0.3 — Underlay observability (`completed-at-source-boundary`)
 
 Make a degraded household or WAN underlay observable even when control-plane
 and proxy-lane reports are healthy. Add the `network-underlay` deployment
@@ -157,15 +162,16 @@ hiding a degraded DIRECT underlay. The underlay is observation-only, never an
 egress lane, and never a proxy-failure fallback route, while SQM/shaping
 activation and live enforcement stay control-plane evidence.
 
-Stopping point: machine contracts, schemas, validator, behavior tests, sample,
-and human/agent/reference projections agree and the local source gate passes.
-Because the owning health contract gains a required profile kind, it advances
-to `signalbox.health-contract/v5`, and the paired documentation contract
-advances to revision 5 under its existing `signalbox.docs-pairs/v3` schema. This
-is source-candidate work on the
-`feat/f0.3-underlay-observability` branch: it has not merged into canonical
-`main` or entered a release, and no live activation, runtime mutation, or
-owner/client acceptance is claimed. F2 remains the next planned tranche.
+Stopping point reached: machine contracts, schemas, validator, behavior tests,
+sample, and human/agent/reference projections agree and the local source gate
+passed. Because the owning health contract gains a required profile kind, it
+advances to `signalbox.health-contract/v5`, and the paired documentation
+contract advances to revision 5 under its existing `signalbox.docs-pairs/v3`
+schema. The tranche is source-integrated into canonical `main` by the PR #1
+merge commit `5ca593db7c4ce101ee9afcc2aaf5ce1bbde9b3a2`, which passed the
+post-merge hosted gate in run `35388875151`. No release or tag, installation,
+activation, runtime mutation, or owner/client acceptance is claimed, and no
+active F0.3 feature branch remains. F2 remains the next planned tranche.
 
 ### F2 — Complete Agent Surface
 

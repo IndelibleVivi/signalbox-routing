@@ -105,12 +105,15 @@ state](docs/current-state.md)。
 
 F0.2.2 executable-authority closure 与 F1 Human Surface 已在 [current
 state](docs/current-state.md) 记录的 exact implementation commit 和 hosted gate 上
-完成 source verification 与 publication。F0.3 underlay observability 只是本 branch
-上的 source candidate：`network-underlay` subject 与 `underlay-operational` profile
-让 degraded DIRECT underlay 在 proxy lane 全绿时仍然可见；它尚未更新 canonical
-`main` 或任何 release，也没有 activate、deploy 或 owner acceptance。完整 Signalbox
-v1 尚未完成；这里不暗示 installed payload、live-router integration、private-ingress
-deployment、path evidence 或 owner acceptance。`ACCEPT-08`
+完成 source verification 与 publication。F0.3 underlay observability 已完成
+source verification，并通过 PR #1 merge commit
+`5ca593db7c4ce101ee9afcc2aaf5ce1bbde9b3a2` 集成进 canonical `main`：
+`network-underlay` subject 与 `underlay-operational` profile 让 degraded DIRECT
+underlay 在 proxy lane 全绿时仍然可见。这次 source integration 不声称任何 release
+或 tag、installed payload、activation 或 live-router mutation、live path evidence，
+也不声称 owner 或 client acceptance。完整 Signalbox v1 尚未完成；installation、
+activation、private-ingress deployment 与 acceptance 仍是彼此独立的 gate。
+`ACCEPT-08`
 
 目前尚未选择 license。能够看到或持有本 repo 不等于获得 reuse rights。在明确
 contribution 与 rights terms 之前，暂不接受外部 code 或 documentation contribution。
