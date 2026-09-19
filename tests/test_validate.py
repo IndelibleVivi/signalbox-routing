@@ -1577,6 +1577,33 @@ class SignalboxValidationTests(unittest.TestCase):
             errors = validator.validate_status_surfaces(root)
         self.assertEqual(errors, [])
 
+    def test_status_surfaces_retain_f03_context_across_sentences(self):
+        marker = validator.SOURCE_INTEGRATION_MARKER
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            for surface in validator.SOURCE_INTEGRATION_SURFACES:
+                path = root / surface
+                path.parent.mkdir(parents=True, exist_ok=True)
+                prefix = marker + "\n" if surface == (
+                    validator.SOURCE_INTEGRATION_MARKER_HOME
+                ) else ""
+                path.write_text(
+                    prefix + "F0.3 is source-integrated into canonical `main`.\n",
+                    encoding="utf-8",
+                )
+            readme = root / "README.md"
+            readme.write_text(
+                readme.read_text(encoding="utf-8")
+                + "\nF0.3 is still being reviewed. It has not merged into "
+                + "canonical `main`.\n",
+                encoding="utf-8",
+            )
+            errors = validator.validate_status_surfaces(root)
+        self.assertTrue(
+            any("README.md" in error and "not merged" in error for error in errors),
+            errors,
+        )
+
     def test_status_surfaces_guard_is_inactive_without_the_marker(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

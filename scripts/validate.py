@@ -255,7 +255,9 @@ STALE_SOURCE_INTEGRATION_CLAIM = re.compile(
     r"|尚未更新\s*canonical"
     r")"
 )
-STATUS_CLAIM_SPLIT = re.compile(r"\n\s*\n|(?<=[。；])|(?<=[.;])(?=\s)")
+STATUS_PARAGRAPH_SPLIT = re.compile(r"\n\s*\n")
+STATUS_SENTENCE_SPLIT = re.compile(r"(?<=[。；])|(?<=[.;])(?=\s)")
+STATUS_TRANCHE_REFERENCE = re.compile(r"\bF\d+(?:\.\d+)*\b", re.IGNORECASE)
 
 # Any future exception must name one exact tracked path, rule, literal, and reason.
 PUBLIC_BOUNDARY_EXCEPTIONS: tuple[dict[str, str], ...] = ()
@@ -2009,12 +2011,21 @@ def validate_markdown_links(root: Path, paths: Iterable[Path]) -> list[str]:
 
 
 def source_integration_claim_units(text: str) -> list[str]:
-    """Return sentence-level units that mention the F0.3 tranche."""
+    """Return sentence units whose current paragraph context is the F0.3 tranche."""
     units: list[str] = []
-    for unit in STATUS_CLAIM_SPLIT.split(text):
-        collapsed = " ".join(unit.split())
-        if collapsed and SOURCE_INTEGRATION_TRANCHE in collapsed:
-            units.append(collapsed)
+    for paragraph in STATUS_PARAGRAPH_SPLIT.split(text):
+        f03_context = False
+        for unit in STATUS_SENTENCE_SPLIT.split(paragraph):
+            collapsed = " ".join(unit.split())
+            if not collapsed:
+                continue
+            tranche_references = set(STATUS_TRANCHE_REFERENCE.findall(collapsed))
+            if SOURCE_INTEGRATION_TRANCHE in tranche_references:
+                f03_context = True
+            elif tranche_references:
+                f03_context = False
+            if f03_context:
+                units.append(collapsed)
     return units
 
 
