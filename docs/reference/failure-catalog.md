@@ -118,3 +118,44 @@ or current live-system truth.
   the aggregate without a top-level verdict and without inferring any route
   change.
 - Protecting contracts: `HEALTH-09`, `HEALTH-10`, `HEALTH-18`, `HEALTH-19`.
+
+## `FAIL-011` — Awake-client health masks a sleep-path radio failure
+
+- First broken boundary: client-path evidence and failing-boundary localization.
+- Pattern: an access point's power-management or buffered-delivery path
+  degrades. Always-awake clients keep clean same-radio latency while
+  aggressively power-saving clients accumulate retransmissions and
+  second-scale latency spikes at the same moment on the same radio. Every
+  control-plane, egress-lane, and underlay probe stays green, and station
+  signal strength and link rate look excellent.
+- Unsafe interpretation: one healthy awake client, or a green deployment
+  aggregate, proves the access network is healthy, so the fault is assigned
+  to the affected client, its OS, or its account — or unrelated WAN, route,
+  and radio knobs are mutated one after another.
+- Portable response: treat client sleep behavior as a first-class observation
+  variable; collect per-client, same-radio, same-moment path evidence such as
+  AP-to-client latency against an AP-to-upstream control; bind owner
+  acceptance to the affected client class rather than to a convenient one;
+  run orthogonal single-variable trials with exact rollback, and when the
+  knob space is exhausted without owner acceptance, escalate to a
+  physical-layer bypass on a different radio chipset instead of further
+  iteration.
+- Protecting contracts: `CLAIM-02`, `CLAIM-03`, `HEALTH-06`, `HEALTH-10`.
+
+## `FAIL-012` — Sudden onset blamed on frozen infrastructure
+
+- First broken boundary: attribution and change detection.
+- Pattern: a previously healthy client class degrades abruptly while the
+  infrastructure side is provably frozen — firmware install timestamps,
+  config hashes, and uptime all predate the first symptom. The actual change
+  sits on the client side, such as an OS update that alters Wi-Fi sleep
+  timing, corroborated by new randomized client identities appearing in AP
+  association logs at the same time.
+- Unsafe interpretation: the loudest recent infrastructure work, or the
+  oldest standing suspicion about the ISP or router, is treated as the cause,
+  and remediation trials mutate the side that did not change.
+- Portable response: before any remediation trial, establish the change
+  frontier with fresh read-back — install and flash dates, config hashes, and
+  uptime on the frozen side against release timelines and identity churn on
+  the client side — and suspect the side that changed first.
+- Protecting contracts: `CLAIM-02`, `HEALTH-06`.
