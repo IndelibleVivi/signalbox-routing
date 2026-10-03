@@ -107,7 +107,8 @@ stage's evidence or cite observations from the future. Acceptance identifies
 actor class and actor, scope, claims, evidence and decision time; it remains a
 historical decision. A current path claim requires a registered compatible
 profile, the canonical health evaluator and a trusted exact current identity;
-its scope equals the report subject. Historical acceptance cannot renew stale
+its scope equals the report subject and its cited evidence includes the evaluated
+report artifact. Historical acceptance cannot renew stale
 path evidence. Public handoffs remain explicitly synthetic reference objects.
 
 ## 6. Routing and enforcement
@@ -309,7 +310,8 @@ completed attempt retains its immutable terminal report; a late completion of
 an earlier attempt cannot replace the latest started attempt's current state.
 Compare expected identity, evaluate exact context and perform any separately
 authorized effect inside one serialized boundary. Ordinary restart preserves
-epoch and sequence only from established durable continuity. Unknown continuity
+epoch and sequence only from established durable continuity in the same
+producer/subject/profile scope. Unknown continuity
 retains `unknown` and the guard; a larger generation is no substitute. The source
 reference uses an in-memory lock and trusted synthetic snapshot and emits only
 decisions, never a deployed restore effect or durability proof.

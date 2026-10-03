@@ -143,6 +143,35 @@ class AgentSurfaceTests(unittest.TestCase):
             health_contract=load("contracts/health-contract.json"))
         self.assertEqual(result["action"], "retain-guard")
 
+    def test_unsupported_coverage_states_never_count_as_pass(self):
+        for state in ("checking", "pas", None, [], {}, True):
+            with self.subTest(state=state):
+                self.assertEqual(assess_coverage(["admission"], {"admission": state})["effective_outcome"], "unknown")
+        self.assertEqual(assess_coverage(["a", "b"], {"a": "checking", "b": "fail"})["effective_outcome"], "fail")
+
+    def test_path_claim_must_cite_the_report_actually_evaluated(self):
+        bundle = load("examples/mintie/path-handoff.json")
+        at = parse_rfc3339(bundle["claims"][-1]["observed_at"])
+        bundle["evidence"][-1]["artifact_ref"] = "contracts/traffic-policy.json"
+        result = evaluate_handoff(ROOT, bundle, at)
+        self.assertFalse(result["valid"], result)
+        self.assertIn("uncited-health-report", [d["code"] for d in result["diagnostics"]])
+
+    def test_resume_cannot_change_generation_scope(self):
+        candidate = self.begin_report("A")
+        self.publisher.publish(candidate, self.now)
+        snapshot = self.publisher.snapshot()
+        for field in ("producer", "subject", "profile"):
+            with self.subTest(field=field):
+                profile = copy.deepcopy(self.profile)
+                producer = candidate["producer_ref"]
+                if field == "producer":
+                    producer = "reference/other-producer"
+                else:
+                    profile["subject_ref" if field == "subject" else "id"] = "other-scope"
+                with self.assertRaises(ValueError):
+                    ReferencePublisher.resume(self.contract, profile, self.schema, producer, snapshot, continuity_confirmed=True)
+
     def test_new_attempt_blocks_old_pass_while_checking(self):
         first = self.begin_report("A")
         self.publisher.publish(first, self.now)

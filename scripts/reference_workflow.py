@@ -111,6 +111,8 @@ class ReferencePublisher:
     def snapshot(self) -> dict[str, Any]:
         with self._lock:
             return deepcopy({"generation": self.generation, "generation_epoch": self.generation_epoch,
+                             "producer_ref": self.producer_ref, "subject_ref": self.profile["subject_ref"],
+                             "profile_ref": self.profile["id"],
                              "reservations": self._reservations, "reports": self._reports,
                              "latest_attempt": self._latest_attempt, "current_id": self._current_id})
 
@@ -118,6 +120,10 @@ class ReferencePublisher:
     def resume(cls, contract: dict, profile: dict, report_schema: dict, producer_ref: str,
                snapshot: dict, *, continuity_confirmed: bool) -> ReferencePublisher:
         """Trusted snapshot recovery is explicit; a bigger number is no proof."""
+        expected_scope = {"producer_ref": producer_ref, "subject_ref": profile["subject_ref"],
+                          "profile_ref": profile["id"]}
+        if any(snapshot.get(key) != value for key, value in expected_scope.items()):
+            raise ValueError("Snapshot generation scope differs; explicit reset/migration is required.")
         instance = cls(contract, profile, report_schema, producer_ref, snapshot["generation_epoch"], snapshot["generation"])
         instance._reservations = deepcopy(snapshot["reservations"])
         instance._reports = deepcopy(snapshot["reports"])

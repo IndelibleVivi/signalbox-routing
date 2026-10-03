@@ -502,10 +502,10 @@ def validate_claims(document: dict[str, Any]) -> list[str]:
     if acceptance.get("is_current_path_proof") is not False:
         errors.append("claims: acceptance cannot serve as current path proof")
     required_fields = acceptance.get("required_fields")
-    if not isinstance(required_fields, list) or not set(required_fields) >= (
+    if not isinstance(required_fields, list) or set(required_fields) != (
         REQUIRED_ACCEPTANCE_FIELDS
     ):
-        errors.append("claims: acceptance required fields are incomplete")
+        errors.append("claims: acceptance required fields must exact-match the record schema")
     if "client-acceptance" in ids:
         errors.append("claims: acceptance must remain separate from realization stages")
     return errors

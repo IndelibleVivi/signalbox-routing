@@ -17,3 +17,8 @@ The ordinary `make verify` includes replay and behavior tests.
 
 Read the [worked cases](../../docs/human/50-worked-cases.en.md) and
 [agent workflow](../../docs/agent/workflow.md) for conclusions and boundaries.
+
+Coverage consumes terminal `pass`/`fail`/`unknown` states. Unsupported labels or
+wrongly typed values become `unknown`; they cannot contribute a passing judgment.
+Snapshot resume preserves its producer/subject/profile scope; another owner must
+use an explicit reset/migration rather than inherit the old current report.

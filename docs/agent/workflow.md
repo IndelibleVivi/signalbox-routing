@@ -36,6 +36,8 @@ stage-specific reference 精确绑定 `source_ref`、`installed_ref + runtime_ge
 `activated_ref + health_report_ref + current_health_identity`。前置 claim stage 与 scope
 必须相符，时间不能倒置；reference 不存在、跨 scope、用 source evidence 声称 installed
 都会拒绝。bundle ID 与 repo-contained artifact path 是两个不同 namespace。
+path claim 的 evidence references 必须包含被求值的 report artifact；另一个 contained file
+不能为这份 report 提供 evidence 或 acceptance 依据。
 
 [acceptance-record/v2](../../schemas/acceptance-record.schema.json) 定义实际记录，替代旧的
 descriptor-only v1 schema：`record_id`、`actor_class`、`actor_ref`、`decision`、`scope_ref`、
@@ -102,7 +104,9 @@ sequenceDiagram
 
 新 attempt 在开始时预留 generation，并让旧 terminal PASS 失去 current 资格。
 新 attempt checking 时仍保留 guard；终态 PASS/FAIL/UNKNOWN 都占据自己的 sequence position。
-完成顺序不会重新分配 generation。普通 restart 可从可信 snapshot 恢复原 epoch/sequence；
+完成顺序不会重新分配 generation。snapshot 保存 producer、subject 和 profile scope；
+resume 必须 exact-match 这些字段，不能把原 producer 的 current PASS 接到另一个 owner。
+普通 restart 可从可信 snapshot 恢复原 epoch/sequence；
 continuity 无法确认时，较大的 generation 数字也不能补足证据，必须走明确 reset/migration。
 
 部署者必须把 reservation/current state 持久化，把 compare、context/readback、授权的 effect

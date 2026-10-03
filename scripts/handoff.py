@@ -91,6 +91,7 @@ def evaluate_handoff(
         if observed > evaluated_at:
             reject("claim-not-yet-available", path + "/observed_at", "Claim is later than evaluation.")
         states = []
+        cited_report_paths: set[Path] = set()
         for ref in claim["evidence_refs"]:
             item = evidence.get(ref)
             if item is None:
@@ -101,6 +102,11 @@ def evaluate_handoff(
             available(item, observed, path + "/evidence_refs")
             if stage == "path-evidence":
                 available(item, evaluated_at, path + "/evidence_refs")
+                if item["stage"] == "path-evidence":
+                    try:
+                        cited_report_paths.add(resolve_repository_path(root, item["artifact_ref"], expected_kind="file"))
+                    except RepositoryPathError:
+                        pass  # The artifact diagnostic above already rejects this reference.
             states.append(item["outcome"])
         expected_fields = set(requirements[stage])
         if stage == "activated":
@@ -122,6 +128,8 @@ def evaluate_handoff(
         if stage == "path-evidence" and "health_report_ref" in claim:
             try:
                 report_path = resolve_repository_path(root, claim["health_report_ref"], expected_kind="file")
+                if report_path not in cited_report_paths:
+                    reject("uncited-health-report", path + "/health_report_ref", "The evaluated report must be cited by path-evidence references.")
                 report = json.loads(report_path.read_text())
             except (RepositoryPathError, OSError, json.JSONDecodeError) as exc:
                 reject("unresolved-health-report", path + "/health_report_ref", str(exc))

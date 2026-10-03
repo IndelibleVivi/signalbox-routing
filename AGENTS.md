@@ -74,7 +74,8 @@ replace the authority map above.
   subject; acceptance records cannot upgrade stages or renew evidence.
 - The reference publisher reserves generation at start, archives late terminal
   reports without replacing newer attempts, and serializes compare/decision
-  under an in-memory lock. A deployment must implement durable sequencing and
+  under an in-memory lock. Resume exact-matches snapshot producer/subject/profile
+  scope. A deployment must implement durable sequencing and
   its authorized effect within the same transaction; source tests prove neither.
 - Deployment aggregation applies that same canonical evaluator, preserves
   assembly-time member outcomes as a historical receipt, and never emits a

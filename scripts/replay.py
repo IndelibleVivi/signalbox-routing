@@ -34,9 +34,13 @@ def select_route(traffic: dict, deployment: dict, matched_route_ids: list[str], 
     return {"route_id": None, "action": "retain-guard"}
 
 
-def assess_coverage(required: list[str], observations: dict[str, str]) -> dict:
+def assess_coverage(required: list[str], observations: dict[str, object]) -> dict:
     missing = [boundary for boundary in required if boundary not in observations]
-    return {"effective_outcome": expected_health_rollup(observations.get(boundary, "unknown") for boundary in required),
+    states = []
+    for boundary in required:
+        state = observations.get(boundary)
+        states.append(state if isinstance(state, str) and state in {"pass", "fail", "unknown"} else "unknown")
+    return {"effective_outcome": expected_health_rollup(states),
             "unobserved_boundaries": missing}
 
 

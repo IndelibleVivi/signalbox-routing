@@ -637,6 +637,11 @@ class SemanticClosureTests(unittest.TestCase):
             contract["sequencing"][field] = wrong
             self.assertTrue(any("sequencing" in e for e in validator.validate_health_contract(contract)))
 
+    def test_acceptance_required_fields_must_exact_match(self):
+        claims = load_json("contracts/claims.json")
+        claims["acceptance_record"]["required_fields"].append("unexpected-required-field")
+        self.assertTrue(any("acceptance required fields" in e for e in validator.validate_claims(claims)))
+
     # ------------------------------------------------------------------
     # Repository gate still closes
     # ------------------------------------------------------------------
