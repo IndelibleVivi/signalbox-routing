@@ -2,7 +2,7 @@
   "schema": "signalbox.health-report/v2",
   "id": "report-underlay-wan-fail-101",
   "profile_ref": "mintie-underlay-wan",
-  "profile_revision": 1,
+  "profile_revision": 2,
   "producer_ref": "reference/mintie-observer",
   "subject_ref": "underlay/mintie-wan",
   "generation_epoch": "sample-epoch-alpha",

@@ -3,7 +3,7 @@ doc_id: signalbox.human.routing-dns-fail-closed
 language: en
 status: f1-reader-path
 authority: ../specification.md
-contract_revision: 5
+contract_revision: 6
 ---
 
 **English** · [简体中文](30-routing-dns-and-fail-closed.zh-CN.md)

@@ -18,12 +18,14 @@ from jsonschema import Draft202012Validator, FormatChecker
 from jsonschema.exceptions import SchemaError
 
 if __package__:
+    from .validate_schemas import iter_instances
     from .repository_paths import (
         RepositoryPathError,
         resolve_repository_glob,
         resolve_repository_path,
     )
 else:
+    from validate_schemas import iter_instances  # type: ignore[no-redef]
     from repository_paths import (  # type: ignore[no-redef]
         RepositoryPathError,
         resolve_repository_glob,
@@ -41,12 +43,72 @@ REQUIRED_ROLES = {
     "private-ingress-primary",
     "private-ingress-secondary",
 }
+REQUIRED_ROLE_KINDS = {
+    "routing-control-plane": "control-plane",
+    "general-primary": "general-egress",
+    "general-secondary": "general-egress",
+    "claude-residential": "protected-application-egress",
+    "private-ingress-primary": "private-ingress-gateway",
+    "private-ingress-secondary": "private-ingress-gateway",
+}
+REQUIRED_ROLE_CAPABILITIES = {
+    "routing-control-plane": {
+        "transparent-interception",
+        "policy-routing",
+        "health-reports",
+        "fail-closed-enforcement",
+    },
+    "general-primary": {
+        "transport-health",
+        "exit-policy-observation",
+    },
+    "general-secondary": {
+        "independent-transport-health",
+    },
+    "claude-residential": {
+        "exit-policy-observation",
+        "no-route-degradation",
+    },
+    "private-ingress-primary": {
+        "dedicated-authenticated-identity",
+        "server-side-identity-routing",
+        "exact-private-destination-allow",
+        "ordinary-identity-private-deny",
+        "independent-health",
+    },
+    "private-ingress-secondary": {
+        "dedicated-authenticated-identity",
+        "server-side-identity-routing",
+        "exact-private-destination-allow",
+        "ordinary-identity-private-deny",
+        "independent-health",
+    },
+}
+# The portable private-ingress capability set a gateway role must provide.
+# Routing closure checks set inclusion so legal capability extensions stay valid.
+REQUIRED_PRIVATE_INGRESS_CAPABILITIES = {
+    "dedicated-authenticated-identity",
+    "server-side-identity-routing",
+    "exact-private-destination-allow",
+    "ordinary-identity-private-deny",
+    "independent-health",
+}
 REQUIRED_REALIZATION_STAGES = [
     "source",
     "installed",
     "activated",
     "path-evidence",
 ]
+REQUIRED_ACCEPTANCE_FIELDS = {
+    "record_id",
+    "actor_class",
+    "actor_ref",
+    "decision",
+    "scope_ref",
+    "claim_refs",
+    "evidence_refs",
+    "decided_at",
+}
 REQUIRED_REPORT_FIELDS = {
     "schema",
     "id",
@@ -88,6 +150,11 @@ REQUIRED_OBSERVATION_FIELDS = {
     "dependency_group",
     "state",
     "observed_at",
+}
+REQUIRED_PROFILE_FRESHNESS_FIELDS = {
+    "max_report_age_seconds",
+    "max_observation_age_seconds",
+    "max_attempt_duration_seconds",
 }
 REQUIRED_SAMPLE_ROUTE_ORDER = [
     "protocol-observation",
@@ -267,6 +334,34 @@ def load_json(path: Path) -> Any:
     with path.open(encoding="utf-8") as handle:
         return json.load(handle)
 
+_SCHEMA_CACHE: dict[str, Any] = {}
+
+def _load_schema(relative: str) -> Any:
+    """Load and cache a repository Draft 2020-12 schema by repo-relative path."""
+
+    if relative not in _SCHEMA_CACHE:
+        _SCHEMA_CACHE[relative] = load_json(ROOT / relative)
+    return _SCHEMA_CACHE[relative]
+
+def _structural_schema_errors(instance: Any, schema: Any, label: str) -> list[str]:
+    """Validate ``instance`` against ``schema`` and return structural messages."""
+
+    errors: list[str] = []
+    try:
+        Draft202012Validator.check_schema(schema)
+        schema_errors = sorted(
+            Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(
+                instance
+            ),
+            key=lambda item: tuple(str(part) for part in item.absolute_path),
+        )
+    except SchemaError as exc:
+        return [f"{label} schema is invalid: {exc}"]
+    for error in schema_errors:
+        location = "/".join(str(part) for part in error.absolute_path)
+        suffix = f" at /{location}" if location else ""
+        errors.append(f"{label} structural error{suffix}: {error.message}")
+    return errors
 
 def parse_rfc3339(value: Any) -> datetime:
     if not isinstance(value, str) or not value:
@@ -322,6 +417,29 @@ def validate_roles(document: dict[str, Any]) -> list[str]:
     overlap = sorted(sample_names & set(roles))
     if overlap:
         errors.append(f"roles: sample identities used as portable roles {overlap}")
+    for role_id in sorted(REQUIRED_ROLES & set(roles)):
+        role = roles.get(role_id)
+        if not isinstance(role, dict):
+            errors.append(f"roles: {role_id} must be an object")
+            continue
+        expected_kind = REQUIRED_ROLE_KINDS[role_id]
+        if role.get("kind") != expected_kind:
+            errors.append(f"roles: {role_id} must have portable kind {expected_kind}")
+        capabilities = role.get("required_capabilities")
+        if not isinstance(capabilities, list) or not all(
+            non_empty_string(capability) for capability in capabilities
+        ):
+            errors.append(f"roles: {role_id} required_capabilities must be strings")
+            continue
+        capability_set = set(capabilities)
+        missing_capabilities = sorted(
+            REQUIRED_ROLE_CAPABILITIES[role_id] - capability_set
+        )
+        if missing_capabilities:
+            errors.append(
+                f"roles: {role_id} is missing required capabilities "
+                f"{missing_capabilities}"
+            )
     protected = roles.get("claude-residential", {})
     expected_degradations = {"general-primary", "general-secondary", "direct"}
     actual_degradations = set(protected.get("forbidden_degradations", []))
@@ -337,7 +455,7 @@ def validate_roles(document: dict[str, Any]) -> list[str]:
 
 def validate_claims(document: dict[str, Any]) -> list[str]:
     errors: list[str] = []
-    if document.get("schema") != "signalbox.claims/v1":
+    if document.get("schema") != "signalbox.claims/v2":
         errors.append("claims: unexpected schema")
     if set(document.get("observation_outcomes", [])) != {"pass", "fail", "unknown"}:
         errors.append("claims: outcomes must be pass, fail, and unknown")
@@ -363,7 +481,11 @@ def validate_claims(document: dict[str, Any]) -> list[str]:
     expected_refs = {
         "installed": ["source_ref"],
         "activated": ["installed_ref", "runtime_generation"],
-        "path-evidence": ["activated_ref", "health_report_ref"],
+        "path-evidence": [
+            "activated_ref",
+            "health_report_ref",
+            "current_health_identity",
+        ],
     }
     if document.get("required_realization_references") != expected_refs:
         errors.append("claims: realization reference chain drifted")
@@ -371,7 +493,7 @@ def validate_claims(document: dict[str, Any]) -> list[str]:
     acceptance = document.get("acceptance_record")
     if not isinstance(acceptance, dict):
         return errors + ["claims: acceptance_record must be an object"]
-    if acceptance.get("schema") != "signalbox.acceptance-record/v1":
+    if acceptance.get("schema") != "signalbox.acceptance-record/v2":
         errors.append("claims: acceptance record schema drifted")
     if set(acceptance.get("decisions", [])) != {"accepted", "rejected", "revoked"}:
         errors.append("claims: acceptance decisions are incomplete")
@@ -379,6 +501,11 @@ def validate_claims(document: dict[str, Any]) -> list[str]:
         errors.append("claims: acceptance cannot upgrade technical realization")
     if acceptance.get("is_current_path_proof") is not False:
         errors.append("claims: acceptance cannot serve as current path proof")
+    required_fields = acceptance.get("required_fields")
+    if not isinstance(required_fields, list) or not set(required_fields) >= (
+        REQUIRED_ACCEPTANCE_FIELDS
+    ):
+        errors.append("claims: acceptance required fields are incomplete")
     if "client-acceptance" in ids:
         errors.append("claims: acceptance must remain separate from realization stages")
     return errors
@@ -411,6 +538,49 @@ def validate_traffic_policy(
     for role in sorted(reference for reference in references if reference):
         if role not in roles:
             errors.append(f"traffic-policy: unresolved role reference {role}")
+
+    roles_map = roles_document.get("roles", {})
+    routing_owner = document.get("routing_owner_role")
+    if routing_owner != "routing-control-plane":
+        errors.append(
+            "traffic-policy: routing_owner_role must be routing-control-plane"
+        )
+    routing_owner_role = roles_map.get(routing_owner)
+    if isinstance(routing_owner_role, dict):
+        if routing_owner_role.get("kind") != "control-plane":
+            errors.append(
+                "traffic-policy: routing owner must be a control-plane role"
+            )
+        owner_capabilities = set(routing_owner_role.get("required_capabilities", []))
+        missing_owner_capabilities = sorted(
+            REQUIRED_ROLE_CAPABILITIES["routing-control-plane"] - owner_capabilities
+        )
+        if missing_owner_capabilities:
+            errors.append(
+                "traffic-policy: routing owner is missing required capabilities "
+                f"{missing_owner_capabilities}"
+            )
+    for role_field, role_id in (
+        ("primary_role", private.get("primary_role")),
+        ("secondary_role", private.get("secondary_role")),
+    ):
+        role = roles_map.get(role_id)
+        if not isinstance(role, dict):
+            continue
+        if role.get("kind") != "private-ingress-gateway":
+            errors.append(
+                f"traffic-policy: private ingress {role_field} {role_id} must be a "
+                "private-ingress-gateway role"
+            )
+        private_capabilities = set(role.get("required_capabilities", []))
+        missing_private_capabilities = sorted(
+            REQUIRED_PRIVATE_INGRESS_CAPABILITIES - private_capabilities
+        )
+        if missing_private_capabilities:
+            errors.append(
+                f"traffic-policy: private ingress {role_field} {role_id} is missing "
+                f"required capabilities {missing_private_capabilities}"
+            )
 
     direct = document.get("direct_action", {})
     if direct.get("allowed_match_kind") != "explicit-allowlist":
@@ -472,11 +642,256 @@ def validate_traffic_policy(
     return errors
 
 
+def canonical_private_ingress_diagnostics(
+    traffic: dict[str, Any],
+    deployment: dict[str, Any],
+    roles: dict[str, Any],
+    health_profiles: dict[str, Any],
+    health_contract: dict[str, Any],
+) -> list[dict[str, str]]:
+    """One canonical traversal of the canonical-private-ingress chain.
+
+    Returns precise diagnostics, each with a stable ``code`` and the JSON
+    ``path`` of the offending element, so the validator, the CLI, and the agent
+    surface all share exactly one algorithm.
+    """
+
+    diagnostics: list[dict[str, str]] = []
+
+    def report(code: str, path: str, message: str) -> None:
+        diagnostics.append({"code": code, "path": path, "message": message})
+
+    entries = {
+        entry.get("id"): entry
+        for entry in traffic.get("route_order", [])
+        if isinstance(entry, dict)
+    }
+    route = entries.get("canonical-private-ingress")
+    if not isinstance(route, dict):
+        report(
+            "private-ingress-route-missing",
+            "/route_order",
+            "canonical-private-ingress route is missing",
+        )
+        return diagnostics
+
+    gateways = deployment.get("dedicated_gateway_identities", {})
+    origins = deployment.get("canonical_origins", {})
+    instances = deployment.get("instances", {})
+    subjects = deployment.get("health_subjects", {})
+
+    route_path = f"/route_order/{traffic['route_order'].index(route)}"
+    gateway_ref = route.get("gateway_binding_ref")
+    origin_ref = route.get("canonical_origin_ref")
+    if gateway_ref not in gateways:
+        report(
+            "private-ingress-gateway-unresolved",
+            route_path + "/gateway_binding_ref",
+            f"gateway binding {gateway_ref} is not a dedicated gateway identity",
+        )
+    if origin_ref not in origins:
+        report(
+            "private-ingress-origin-unresolved",
+            route_path + "/canonical_origin_ref",
+            f"canonical origin {origin_ref} does not resolve",
+        )
+
+    origin = origins.get(origin_ref)
+    if isinstance(origin, dict) and origin.get("scheme") != "https":
+        report(
+            "private-ingress-origin-not-https",
+            "/canonical_origins/" + str(origin_ref) + "/scheme",
+            "canonical private-ingress origin must use HTTPS",
+        )
+
+    gateway = gateways.get(gateway_ref)
+    if not isinstance(gateway, dict):
+        return diagnostics
+    host_instance = gateway.get("host_instance")
+    host_path = "/dedicated_gateway_identities/" + str(gateway_ref)
+    if gateway.get("credential_scope") != "dedicated":
+        report(
+            "private-ingress-gateway-not-dedicated",
+            host_path + "/credential_scope",
+            "private-ingress gateway must use a dedicated credential scope",
+        )
+    if gateway.get("general_egress_equivalent") is not False:
+        report(
+            "private-ingress-gateway-equivalent",
+            host_path + "/general_egress_equivalent",
+            "private-ingress gateway cannot equal general egress",
+        )
+    if host_instance not in instances:
+        report(
+            "private-ingress-host-unresolved",
+            host_path + "/host_instance",
+            f"gateway host {host_instance} does not resolve to a deployment instance",
+        )
+
+    role_id = gateway.get("role")
+    role = roles.get("roles", {}).get(role_id)
+    if not isinstance(role, dict):
+        report(
+            "private-ingress-role-unresolved",
+            host_path + "/role",
+            f"gateway role {role_id} does not resolve",
+        )
+    else:
+        if role.get("kind") != "private-ingress-gateway":
+            report(
+                "private-ingress-role-kind",
+                "/roles/" + str(role_id) + "/kind",
+                "private-ingress gateway role must be a private-ingress-gateway",
+            )
+        capabilities = set(role.get("required_capabilities", []))
+        missing = sorted(REQUIRED_PRIVATE_INGRESS_CAPABILITIES - capabilities)
+        if missing:
+            report(
+                "private-ingress-role-capability",
+                "/roles/" + str(role_id) + "/required_capabilities",
+                "private-ingress gateway role is missing required capabilities "
+                f"{missing}",
+            )
+
+    subject_ref = f"gateway/{gateway_ref}"
+    subject_path = "/health_subjects/" + subject_ref.replace("~", "~0").replace("/", "~1")
+    subject = subjects.get(subject_ref)
+    if not isinstance(subject, dict):
+        report(
+            "private-ingress-subject-missing",
+            subject_path,
+            "private-ingress gateway has no health subject",
+        )
+    else:
+        if subject.get("binding_ref") != gateway_ref:
+            report(
+                "private-ingress-subject-binding",
+                subject_path + "/binding_ref",
+                "private-ingress health subject must bind the gateway identity",
+            )
+        if subject.get("kind") != "private-ingress-lane":
+            report(
+                "private-ingress-subject-kind",
+                subject_path + "/kind",
+                "private-ingress subject kind must be private-ingress-lane",
+            )
+        lane_profiles = [
+            (index, profile)
+            for index, profile in enumerate(health_profiles.get("profiles", []))
+            if isinstance(profile, dict)
+            and profile.get("subject_ref") == subject_ref
+            and profile.get("kind") == "lane-operational"
+        ]
+        if len(lane_profiles) != 1:
+            report(
+                "private-ingress-profile-cardinality",
+                "/profiles",
+                "private-ingress gateway must have exactly one lane-operational "
+                f"profile, found {len(lane_profiles)}",
+            )
+        else:
+            index, profile = lane_profiles[0]
+            profile_errors = _structural_schema_errors(
+                profile, _load_schema("schemas/health-profile.schema.json"),
+                "private-ingress profile",
+            )
+            if not profile_errors:
+                profile_errors = _profile_semantic_errors(
+                    profile, health_contract, {}, set(), prefix="private-ingress profile"
+                )
+            for message in profile_errors:
+                report("private-ingress-profile-invalid", f"/profiles/{index}", message)
+    return diagnostics
+
+def explain_private_ingress(
+    traffic: dict[str, Any],
+    deployment: dict[str, Any],
+    roles: dict[str, Any],
+    health_profiles: dict[str, Any],
+    health_contract: dict[str, Any],
+) -> dict[str, Any]:
+    """Explain the canonical-private-ingress chain as structured JSON-safe data.
+
+    The chain diagnostics come from
+    :func:`canonical_private_ingress_diagnostics`, the same canonical traversal
+    the repository validator consumes, so the CLI, agent surface, and gate never
+    maintain contradictory algorithms. Unrelated route failures are reported
+    separately rather than mislabeled as chain failures.
+    """
+
+    diagnostics = canonical_private_ingress_diagnostics(
+        traffic, deployment, roles, health_profiles, health_contract
+    )
+    chain_failure_messages = {item["message"] for item in diagnostics}
+    for message in validate_reference_traffic(
+        traffic, deployment, roles, health_profiles, health_contract
+    ):
+        if message.removeprefix("reference-traffic: ") in chain_failure_messages:
+            continue
+        diagnostics.append(
+            {"code": "reference-traffic", "path": "/route_order", "message": message}
+        )
+
+    entries = {
+        entry.get("id"): entry
+        for entry in traffic.get("route_order", [])
+        if isinstance(entry, dict)
+    }
+    route = entries.get("canonical-private-ingress", {})
+    gateway_ref = route.get("gateway_binding_ref")
+    origin_ref = route.get("canonical_origin_ref")
+    gateway = deployment.get("dedicated_gateway_identities", {}).get(gateway_ref, {})
+    origin = deployment.get("canonical_origins", {}).get(origin_ref, {})
+    host_ref = gateway.get("host_instance")
+    role_id = gateway.get("role")
+    role = roles.get("roles", {}).get(role_id, {})
+    subject_ref = f"gateway/{gateway_ref}"
+    subject = deployment.get("health_subjects", {}).get(subject_ref, {})
+    profiles = [
+        profile
+        for profile in health_profiles.get("profiles", [])
+        if isinstance(profile, dict) and profile.get("subject_ref") == subject_ref
+    ]
+
+    chain = {
+        "origin": {
+            "ref": origin_ref,
+            "scheme": origin.get("scheme"),
+            "canonical_https": origin.get("scheme") == "https",
+        },
+        "gateway": {
+            "ref": gateway_ref,
+            "host_instance": host_ref,
+            "credential_scope": gateway.get("credential_scope"),
+            "general_egress_equivalent": gateway.get("general_egress_equivalent"),
+        },
+        "host": host_ref,
+        "role": {
+            "id": role_id,
+            "kind": role.get("kind"),
+            "required_capabilities": role.get("required_capabilities", []),
+        },
+        "subject": {
+            "ref": subject_ref,
+            "kind": subject.get("kind"),
+            "binding_ref": subject.get("binding_ref"),
+        },
+        "profiles": [
+            {
+                "id": profile.get("id"),
+                "kind": profile.get("kind"),
+                "revision": profile.get("revision"),
+            }
+            for profile in profiles
+        ],
+    }
+    return {"valid": not diagnostics, "chain": chain, "diagnostics": diagnostics}
+
 def validate_health_contract(document: dict[str, Any]) -> list[str]:
     errors: list[str] = []
-    if document.get("schema") != "signalbox.health-contract/v5":
+    if document.get("schema") != "signalbox.health-contract/v6":
         errors.append("health-contract: unexpected schema")
-    if document.get("contract_revision") != 5:
+    if document.get("contract_revision") != 6:
         errors.append("health-contract: unexpected revision")
     if set(document.get("terminal_outcomes", [])) != {"pass", "fail", "unknown"}:
         errors.append("health-contract: terminal outcomes must be pass, fail, and unknown")
@@ -492,6 +907,20 @@ def validate_health_contract(document: dict[str, Any]) -> list[str]:
         errors.append("health-contract: required dimension fields drifted")
     if set(document.get("required_observation_fields", [])) != REQUIRED_OBSERVATION_FIELDS:
         errors.append("health-contract: required observation fields drifted")
+    if set(document.get("profile_freshness_required_fields", [])) != (
+        REQUIRED_PROFILE_FRESHNESS_FIELDS
+    ):
+        errors.append("health-contract: profile freshness fields drifted")
+
+    if document.get("sequencing") != {
+        "generation_allocation": "attempt-start",
+        "new_attempt_invalidates_current": True,
+        "late_completion": "archive-only",
+        "compare_and_decision": "same-serialized-boundary",
+        "restart_continuity": "required",
+        "unconfirmed_continuity_outcome": "unknown",
+    }:
+        errors.append("health-contract: current-pointer sequencing drifted")
 
     kinds = document.get("profile_kinds", {})
     expected_kinds = {
@@ -615,6 +1044,8 @@ def validate_health_contract(document: dict[str, Any]) -> list[str]:
         errors.append("health-contract: freshness must use valid_until")
     for key in (
         "stale_effective_outcome",
+        "stale_observation_effective_outcome",
+        "excessive_attempt_duration_effective_outcome",
         "missing_or_malformed_effective_outcome",
         "profile_revision_mismatch_effective_outcome",
     ):
@@ -624,6 +1055,14 @@ def validate_health_contract(document: dict[str, Any]) -> list[str]:
         "valid_until <= completed_at + profile.max_report_age_seconds"
     ):
         errors.append("health-contract: profile-bound freshness formula drifted")
+    if freshness.get("observation_formula") != (
+        "valid_until <= observation.observed_at + profile.max_observation_age_seconds"
+    ):
+        errors.append("health-contract: observation freshness formula drifted")
+    if freshness.get("attempt_formula") != (
+        "completed_at - started_at <= profile.max_attempt_duration_seconds"
+    ):
+        errors.append("health-contract: attempt-duration formula drifted")
     if freshness.get("published_before_or_at_valid_until") is not True:
         errors.append("health-contract: publication must precede expiry")
 
@@ -781,7 +1220,8 @@ def validate_health_report(
     if not positive_integer(report.get("generation")):
         errors.append("health report generation must be a positive integer")
     terminal = set(contract.get("terminal_outcomes", []))
-    if report.get("outcome") not in terminal:
+    report_outcome = report.get("outcome")
+    if not isinstance(report_outcome, str) or report_outcome not in terminal:
         errors.append("health report outcome must be terminal")
 
     times: dict[str, datetime] = {}
@@ -800,19 +1240,43 @@ def validate_health_report(
 
     if profile is None:
         return errors + ["health report requires its referenced profile for semantics"]
+    if not isinstance(profile, dict):
+        return errors + ["health report referenced profile must be an object"]
     if report.get("profile_ref") != profile.get("id"):
         errors.append("health report profile_ref does not resolve to its profile")
     if report.get("profile_revision") != profile.get("revision"):
         errors.append("health report profile_revision does not match its profile")
     if report.get("subject_ref") != profile.get("subject_ref"):
         errors.append("health report subject_ref does not match its profile")
-    required_dimensions = set(profile.get("required_dimensions", []))
+    required_dimensions_value = profile.get("required_dimensions")
+    if not isinstance(required_dimensions_value, list) or not all(
+        non_empty_string(dimension) for dimension in required_dimensions_value
+    ):
+        return errors + [
+            "health report referenced profile required_dimensions must be strings"
+        ]
+    required_dimensions = set(required_dimensions_value)
     if len(times) == 4:
         max_age = profile.get("freshness", {}).get("max_report_age_seconds")
         if isinstance(max_age, int) and times["valid_until"] > (
             times["completed_at"] + timedelta(seconds=max_age)
         ):
             errors.append("health report valid_until exceeds profile freshness")
+        max_attempt_duration = profile.get("freshness", {}).get(
+            "max_attempt_duration_seconds"
+        )
+        if isinstance(max_attempt_duration, int) and (
+            times["completed_at"] - times["started_at"]
+            > timedelta(seconds=max_attempt_duration)
+        ):
+            errors.append(
+                "health report attempt duration exceeds profile freshness"
+            )
+    max_observation_age = (
+        profile.get("freshness", {}).get("max_observation_age_seconds")
+        if isinstance(profile.get("freshness"), dict)
+        else None
+    )
 
     gate_fields = set(
         contract.get("recovery_gate", {}).get("required_context_fields", [])
@@ -855,6 +1319,7 @@ def validate_health_report(
     profile_kind = profile.get("kind")
     probe_requirements = profile.get("probe_requirements", {})
     states: list[str] = []
+    earliest_observation_expiry: datetime | None = None
     for dimension in sorted(required_dimensions & actual_dimensions):
         result = dimensions[dimension]
         if not isinstance(result, dict):
@@ -864,12 +1329,17 @@ def validate_health_report(
         if missing:
             errors.append(f"health report dimension {dimension} missing {missing}")
         state = result.get("state")
-        states.append(state)
+        if isinstance(state, str):
+            states.append(state)
         if state not in terminal:
             errors.append(f"health report dimension {dimension} is not terminal")
         dimension_reason = result.get("reason_code")
         if dimension_reason is not None:
-            if dimension_reason not in allowed_reasons:
+            if not isinstance(dimension_reason, str):
+                errors.append(
+                    f"health report dimension {dimension} reason_code must be a string"
+                )
+            elif dimension_reason not in allowed_reasons:
                 errors.append(
                     f"health report dimension {dimension} reason_code must be "
                     "an allowed code"
@@ -927,7 +1397,7 @@ def validate_health_report(
                 elif isinstance(probe_ref, str):
                     probe_refs.add(probe_ref)
             observation_state = observation.get("state")
-            if in_domain:
+            if in_domain and isinstance(observation_state, str):
                 observation_states.append(observation_state)
             if observation_state not in terminal:
                 errors.append(
@@ -946,6 +1416,20 @@ def validate_health_report(
                             f"health report dimension {dimension} observation {index} "
                             "is outside the run"
                         )
+                    if isinstance(max_observation_age, int):
+                        expiry = observed_at + timedelta(
+                            seconds=max_observation_age
+                        )
+                        if (
+                            earliest_observation_expiry is None
+                            or expiry < earliest_observation_expiry
+                        ):
+                            earliest_observation_expiry = expiry
+                        if expiry < times["completed_at"]:
+                            errors.append(
+                                f"health report dimension {dimension} observation {index} "
+                                "is stale against profile observation freshness"
+                            )
             except (TypeError, ValueError) as exc:
                 errors.append(
                     f"health report dimension {dimension} observation {index} observed_at: {exc}"
@@ -995,6 +1479,16 @@ def validate_health_report(
     if states and report.get("outcome") != expected_health_rollup(states):
         errors.append("health report rollup does not match dimension states")
 
+    if (
+        len(times) == 4
+        and earliest_observation_expiry is not None
+        and times["valid_until"] > earliest_observation_expiry
+    ):
+        errors.append(
+            "health report valid_until exceeds the earliest observation freshness "
+            "expiry"
+        )
+
     forbidden = set(contract.get("forbidden_durable_keys", []))
     present_forbidden = sorted(forbidden & set(nested_keys(report)))
     for key in present_forbidden:
@@ -1030,6 +1524,18 @@ def evaluate_health_evidence(
     if evaluated_at.tzinfo is None:
         raise ValueError("evaluated_at must be timezone-aware")
 
+    if not isinstance(contract, dict) or not isinstance(profile, dict):
+        return HealthEvidenceEvaluation(
+            structurally_valid=False,
+            semantically_valid=False,
+            current_identity_match=False,
+            effective_outcome="unknown",
+            reason_codes=("malformed-evidence",),
+            errors=(
+                "health evidence requires object contract and profile inputs",
+            ),
+        )
+
     errors: list[str] = []
     reason_codes: list[str] = []
     try:
@@ -1047,12 +1553,57 @@ def evaluate_health_evidence(
         location = "/".join(str(part) for part in error.absolute_path)
         suffix = f" at /{location}" if location else ""
         errors.append(f"health evidence structural error{suffix}: {error.message}")
+
+    # The supplied exact profile and its contract must themselves be valid.
+    # Apply their JSON Schemas first so a bad shape short-circuits before any
+    # type-dependent semantic traversal can crash or pass.
+    errors.extend(
+        _structural_schema_errors(
+            contract,
+            _load_schema("schemas/health-contract.schema.json"),
+            "health evidence contract",
+        )
+    )
+    errors.extend(
+        _structural_schema_errors(
+            profile,
+            _load_schema("schemas/health-profile.schema.json"),
+            "health evidence profile",
+        )
+    )
     structurally_valid = not errors
     if not structurally_valid:
         reason_codes.append("malformed-evidence")
 
+    # A field that fails its schema type may still be a runtime object that
+    # would crash type-dependent semantics. Short-circuit to unknown.
+    if not structurally_valid:
+        return HealthEvidenceEvaluation(
+            structurally_valid=False,
+            semantically_valid=False,
+            current_identity_match=(
+                expected_current_identity is None
+                or (
+                    isinstance(expected_current_identity, dict)
+                    and set(expected_current_identity)
+                    == set(REQUIRED_CURRENT_EVIDENCE_FIELDS)
+                    and health_evidence_identity(report) == expected_current_identity
+                )
+            ),
+            effective_outcome="unknown",
+            reason_codes=tuple(dict.fromkeys(reason_codes)),
+            errors=tuple(errors),
+        )
+
     semantic_errors = [
         *validate_health_contract(contract),
+        *_profile_semantic_errors(
+            profile,
+            contract,
+            {},
+            set(),
+            prefix="health evidence profile",
+        ),
         *validate_health_report(report, contract, profile),
     ]
     if semantic_errors:
@@ -1121,8 +1672,10 @@ def restore_gate_allows(
     expected_gate_context: dict[str, str],
     expected_current_identity: dict[str, Any],
 ) -> bool:
-    gate = contract.get("recovery_gate", {})
-    if not isinstance(report, dict):
+    if not all(isinstance(value, dict) for value in (report, contract, profile)):
+        return False
+    gate = contract.get("recovery_gate")
+    if not isinstance(gate, dict):
         return False
     if profile.get("kind") != gate.get("profile_kind"):
         return False
@@ -1136,8 +1689,191 @@ def restore_gate_allows(
         evaluated_at,
         expected_current_identity=expected_current_identity,
     )
+    if not evaluation.structurally_valid or not evaluation.semantically_valid:
+        return False
     return evaluation.effective_outcome == gate.get("required_effective_outcome")
 
+
+def _profile_semantic_errors(
+    profile: Any,
+    contract: dict[str, Any],
+    kind_counts: dict[str, int],
+    ids: set[str],
+    *,
+    prefix: str,
+) -> list[str]:
+    """Validate one profile against the contract exactly as the registry does."""
+
+    errors: list[str] = []
+    contract_kinds = contract.get("profile_kinds", {})
+    if not isinstance(profile, dict):
+        errors.append(f"{prefix}: every profile must be an object")
+        return errors
+    profile_id = profile.get("id")
+    kind = profile.get("kind")
+    if not non_empty_string(profile_id) or profile_id in ids:
+        errors.append(f"{prefix}: duplicate or missing id {profile_id}")
+    else:
+        ids.add(profile_id)
+    if kind not in contract_kinds:
+        errors.append(f"{prefix}: unknown kind {kind}")
+    else:
+        kind_counts[kind] = kind_counts.get(kind, 0) + 1
+    missing_profile_fields = sorted(
+        set(contract.get("required_profile_fields", [])) - set(profile)
+    )
+    if missing_profile_fields:
+        errors.append(
+            f"{prefix}: {profile_id} missing {missing_profile_fields}"
+        )
+    if not isinstance(profile.get("revision"), int) or profile.get("revision", 0) <= 0:
+        errors.append(f"{prefix}: {profile_id} revision must be positive")
+    if profile.get("observation_only") is not True:
+        errors.append(f"{prefix}: {profile_id} must be observation-only")
+    expected_dimensions = set(contract_kinds.get(kind, {}).get("required_dimensions", []))
+    if set(profile.get("required_dimensions", [])) != expected_dimensions:
+        errors.append(f"{prefix}: {profile_id} dimensions drifted")
+    requirements = profile.get("probe_requirements")
+    if not isinstance(requirements, dict) or set(requirements) != expected_dimensions:
+        errors.append(f"{prefix}: {profile_id} probe requirements drifted")
+    else:
+        for dimension, requirement in requirements.items():
+            if not isinstance(requirement.get("minimum_observations"), int) or requirement.get(
+                "minimum_observations", 0
+            ) <= 0:
+                errors.append(
+                    f"{prefix}: {profile_id} {dimension} minimum observations invalid"
+                )
+            evidence_minimums = requirement.get("minimum_by_evidence_class")
+            if not isinstance(evidence_minimums, dict) or not evidence_minimums:
+                errors.append(
+                    f"{prefix}: {profile_id} {dimension} evidence minimums missing"
+                )
+            elif any(
+                not isinstance(count, int) or count <= 0
+                for count in evidence_minimums.values()
+            ):
+                errors.append(
+                    f"{prefix}: {profile_id} {dimension} evidence minimum invalid"
+                )
+            if not isinstance(requirement.get("minimum_dependency_groups"), int) or requirement.get(
+                "minimum_dependency_groups", 0
+            ) <= 0:
+                errors.append(
+                    f"{prefix}: {profile_id} {dimension} dependency minimum invalid"
+                )
+    aggregation = profile.get("aggregation", {})
+    if aggregation != {
+        "pass_when": "all-required-pass",
+        "fail_when": "any-required-fail",
+        "unknown_when": "otherwise",
+    }:
+        errors.append(f"{prefix}: {profile_id} aggregation drifted")
+    freshness = profile.get("freshness", {})
+    missing_freshness = sorted(
+        REQUIRED_PROFILE_FRESHNESS_FIELDS - set(freshness)
+    ) if isinstance(freshness, dict) else sorted(REQUIRED_PROFILE_FRESHNESS_FIELDS)
+    if missing_freshness:
+        errors.append(
+            f"{prefix}: {profile_id} freshness missing {missing_freshness}"
+        )
+    if isinstance(freshness, dict):
+        for field in sorted(REQUIRED_PROFILE_FRESHNESS_FIELDS):
+            value = freshness.get(field)
+            if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+                errors.append(
+                    f"{prefix}: {profile_id} {field} must be positive"
+                )
+    max_age = freshness.get("max_report_age_seconds") if isinstance(
+        freshness, dict
+    ) else None
+    publication = profile.get("publication", {})
+    if publication.get("current_write") != "atomic-replace":
+        errors.append(f"{prefix}: {profile_id} current write must be atomic")
+    if publication.get("completed_attempt_must_publish") is not True:
+        errors.append(f"{prefix}: {profile_id} must publish every completed attempt")
+    retention = profile.get("retention", {})
+    if not isinstance(retention.get("max_file_bytes"), int) or retention.get(
+        "max_file_bytes", 0
+    ) <= 0:
+        errors.append(f"{prefix}: {profile_id} max_file_bytes must be positive")
+    if not isinstance(retention.get("archive_count"), int) or retention.get(
+        "archive_count", -1
+    ) < 0:
+        errors.append(f"{prefix}: {profile_id} archive_count must be non-negative")
+    if not isinstance(retention.get("max_entries"), int) or retention.get(
+        "max_entries", 0
+    ) <= 0:
+        errors.append(f"{prefix}: {profile_id} max_entries must be positive")
+    privacy = profile.get("privacy", {})
+    if privacy.get("result_detail") != "reason-code-only" or privacy.get(
+        "raw_diagnostics"
+    ) != "forbidden":
+        errors.append(f"{prefix}: {profile_id} privacy boundary drifted")
+    if kind in {"control-plane-operational", "recovery-preflight"} and not non_empty_string(
+        profile.get("resource_threshold_owner")
+    ):
+        errors.append(f"{prefix}: {profile_id} lacks resource threshold owner")
+
+    if kind in {
+        "control-plane-operational",
+        "lane-operational",
+        "underlay-operational",
+    }:
+        interval = profile.get("run_interval_seconds")
+        if not isinstance(interval, int) or interval <= 0:
+            errors.append(f"{prefix}: operational interval must be positive")
+        elif isinstance(max_age, int) and max_age < interval:
+            errors.append(f"{prefix}: operational freshness must cover one interval")
+    if kind == "lane-operational":
+        transport = profile.get("probe_requirements", {}).get("transport", {})
+        if transport.get("minimum_by_evidence_class") != {
+            "transport-neutral": 1,
+            "role-specific": 1,
+        }:
+            errors.append(
+                f"{prefix}: {profile_id} transport diversity drifted"
+            )
+        if transport.get("minimum_dependency_groups", 0) < 2:
+            errors.append(
+                f"{prefix}: {profile_id} one provider cannot be sufficient"
+            )
+    if kind == "underlay-operational":
+        domains = contract.get("dimension_evidence_classes", {}).get(kind, {})
+        requirements = profile.get("probe_requirements")
+        if not isinstance(requirements, dict):
+            requirements = {}
+        for dimension, allowed in domains.items():
+            minima = requirements.get(dimension, {}).get(
+                "minimum_by_evidence_class"
+            )
+            if set(minima or {}) != set(allowed):
+                errors.append(
+                    f"{prefix}: {profile_id} {dimension} evidence classes "
+                    f"must be exactly {sorted(allowed)}"
+                )
+        transport = requirements.get("transport", {})
+        if transport.get("minimum_dependency_groups", 0) < 2:
+            errors.append(
+                f"{prefix}: {profile_id} underlay transport needs "
+                "independent dependency groups"
+            )
+        if not non_empty_string(profile.get("responsiveness_envelope_owner")):
+            errors.append(
+                f"{prefix}: {profile_id} lacks a responsiveness envelope owner"
+            )
+    if kind == "control-plane-operational":
+        if set(profile.get("resource_observations", [])) != REQUIRED_RESOURCE_OBSERVATIONS:
+            errors.append(f"{prefix}: operational resource observations are incomplete")
+    if kind == "recovery-preflight" and profile.get("gate_context_required") is not True:
+        errors.append(f"{prefix}: recovery-preflight must require gate context")
+    if kind != "recovery-preflight" and "gate_context_required" in profile:
+        errors.append(f"{prefix}: {profile_id} cannot require gate context")
+    if kind != "underlay-operational" and "responsiveness_envelope_owner" in profile:
+        errors.append(
+            f"{prefix}: {profile_id} cannot declare a responsiveness envelope"
+        )
+    return errors
 
 def validate_health_profiles(
     document: dict[str, Any], contract: dict[str, Any]
@@ -1155,155 +1891,11 @@ def validate_health_profiles(
         if not isinstance(profile, dict):
             errors.append("health-profiles: every profile must be an object")
             continue
-        profile_id = profile.get("id")
-        kind = profile.get("kind")
-        if not non_empty_string(profile_id) or profile_id in ids:
-            errors.append(f"health-profiles: duplicate or missing id {profile_id}")
-        else:
-            ids.add(profile_id)
-        if kind not in contract_kinds:
-            errors.append(f"health-profiles: unknown kind {kind}")
-        else:
-            kind_counts[kind] = kind_counts.get(kind, 0) + 1
-        missing_profile_fields = sorted(
-            set(contract.get("required_profile_fields", [])) - set(profile)
+        errors.extend(
+            _profile_semantic_errors(
+                profile, contract, kind_counts, ids, prefix="health-profiles"
+            )
         )
-        if missing_profile_fields:
-            errors.append(
-                f"health-profiles: {profile_id} missing {missing_profile_fields}"
-            )
-        if not isinstance(profile.get("revision"), int) or profile.get("revision", 0) <= 0:
-            errors.append(f"health-profiles: {profile_id} revision must be positive")
-        if profile.get("observation_only") is not True:
-            errors.append(f"health-profiles: {profile_id} must be observation-only")
-        expected_dimensions = set(contract_kinds.get(kind, {}).get("required_dimensions", []))
-        if set(profile.get("required_dimensions", [])) != expected_dimensions:
-            errors.append(f"health-profiles: {profile_id} dimensions drifted")
-        requirements = profile.get("probe_requirements")
-        if not isinstance(requirements, dict) or set(requirements) != expected_dimensions:
-            errors.append(f"health-profiles: {profile_id} probe requirements drifted")
-        else:
-            for dimension, requirement in requirements.items():
-                if not isinstance(requirement.get("minimum_observations"), int) or requirement.get(
-                    "minimum_observations", 0
-                ) <= 0:
-                    errors.append(
-                        f"health-profiles: {profile_id} {dimension} minimum observations invalid"
-                    )
-                evidence_minimums = requirement.get("minimum_by_evidence_class")
-                if not isinstance(evidence_minimums, dict) or not evidence_minimums:
-                    errors.append(
-                        f"health-profiles: {profile_id} {dimension} evidence minimums missing"
-                    )
-                elif any(
-                    not isinstance(count, int) or count <= 0
-                    for count in evidence_minimums.values()
-                ):
-                    errors.append(
-                        f"health-profiles: {profile_id} {dimension} evidence minimum invalid"
-                    )
-                if not isinstance(requirement.get("minimum_dependency_groups"), int) or requirement.get(
-                    "minimum_dependency_groups", 0
-                ) <= 0:
-                    errors.append(
-                        f"health-profiles: {profile_id} {dimension} dependency minimum invalid"
-                    )
-        aggregation = profile.get("aggregation", {})
-        if aggregation != {
-            "pass_when": "all-required-pass",
-            "fail_when": "any-required-fail",
-            "unknown_when": "otherwise",
-        }:
-            errors.append(f"health-profiles: {profile_id} aggregation drifted")
-        max_age = profile.get("freshness", {}).get("max_report_age_seconds")
-        if not isinstance(max_age, int) or max_age <= 0:
-            errors.append(f"health-profiles: {profile_id} max report age must be positive")
-        publication = profile.get("publication", {})
-        if publication.get("current_write") != "atomic-replace":
-            errors.append(f"health-profiles: {profile_id} current write must be atomic")
-        if publication.get("completed_attempt_must_publish") is not True:
-            errors.append(f"health-profiles: {profile_id} must publish every completed attempt")
-        retention = profile.get("retention", {})
-        if not isinstance(retention.get("max_file_bytes"), int) or retention.get(
-            "max_file_bytes", 0
-        ) <= 0:
-            errors.append(f"health-profiles: {profile_id} max_file_bytes must be positive")
-        if not isinstance(retention.get("archive_count"), int) or retention.get(
-            "archive_count", -1
-        ) < 0:
-            errors.append(f"health-profiles: {profile_id} archive_count must be non-negative")
-        if not isinstance(retention.get("max_entries"), int) or retention.get(
-            "max_entries", 0
-        ) <= 0:
-            errors.append(f"health-profiles: {profile_id} max_entries must be positive")
-        privacy = profile.get("privacy", {})
-        if privacy.get("result_detail") != "reason-code-only" or privacy.get(
-            "raw_diagnostics"
-        ) != "forbidden":
-            errors.append(f"health-profiles: {profile_id} privacy boundary drifted")
-        if kind in {"control-plane-operational", "recovery-preflight"} and not non_empty_string(
-            profile.get("resource_threshold_owner")
-        ):
-            errors.append(f"health-profiles: {profile_id} lacks resource threshold owner")
-
-        if kind in {
-            "control-plane-operational",
-            "lane-operational",
-            "underlay-operational",
-        }:
-            interval = profile.get("run_interval_seconds")
-            if not isinstance(interval, int) or interval <= 0:
-                errors.append("health-profiles: operational interval must be positive")
-            elif isinstance(max_age, int) and max_age < interval:
-                errors.append("health-profiles: operational freshness must cover one interval")
-        if kind == "lane-operational":
-            transport = profile.get("probe_requirements", {}).get("transport", {})
-            if transport.get("minimum_by_evidence_class") != {
-                "transport-neutral": 1,
-                "role-specific": 1,
-            }:
-                errors.append(
-                    f"health-profiles: {profile_id} transport diversity drifted"
-                )
-            if transport.get("minimum_dependency_groups", 0) < 2:
-                errors.append(
-                    f"health-profiles: {profile_id} one provider cannot be sufficient"
-                )
-        if kind == "underlay-operational":
-            domains = contract.get("dimension_evidence_classes", {}).get(kind, {})
-            requirements = profile.get("probe_requirements")
-            if not isinstance(requirements, dict):
-                requirements = {}
-            for dimension, allowed in domains.items():
-                minima = requirements.get(dimension, {}).get(
-                    "minimum_by_evidence_class"
-                )
-                if set(minima or {}) != set(allowed):
-                    errors.append(
-                        f"health-profiles: {profile_id} {dimension} evidence classes "
-                        f"must be exactly {sorted(allowed)}"
-                    )
-            transport = requirements.get("transport", {})
-            if transport.get("minimum_dependency_groups", 0) < 2:
-                errors.append(
-                    f"health-profiles: {profile_id} underlay transport needs "
-                    "independent dependency groups"
-                )
-            if not non_empty_string(profile.get("responsiveness_envelope_owner")):
-                errors.append(
-                    f"health-profiles: {profile_id} lacks a responsiveness envelope owner"
-                )
-        if kind == "control-plane-operational":
-            if set(profile.get("resource_observations", [])) != REQUIRED_RESOURCE_OBSERVATIONS:
-                errors.append("health-profiles: operational resource observations are incomplete")
-        if kind == "recovery-preflight" and profile.get("gate_context_required") is not True:
-            errors.append("health-profiles: recovery-preflight must require gate context")
-        if kind != "recovery-preflight" and "gate_context_required" in profile:
-            errors.append(f"health-profiles: {profile_id} cannot require gate context")
-        if kind != "underlay-operational" and "responsiveness_envelope_owner" in profile:
-            errors.append(
-                f"health-profiles: {profile_id} cannot declare a responsiveness envelope"
-            )
     if kind_counts.get("recovery-preflight") != 1:
         errors.append("health-profiles: exactly one recovery-preflight profile is required")
     if kind_counts.get("control-plane-operational") != 1:
@@ -1358,6 +1950,57 @@ def validate_deployment(
             if role not in roles:
                 errors.append(f"deployment: {identity} references unknown role {role}")
     gateways = deployment.get("dedicated_gateway_identities", {})
+    roles_map = roles_document.get("roles", {})
+    subjects = deployment.get("health_subjects", {})
+    # Generic closure: validate EVERY registered dedicated gateway, including
+    # unused additions, before checking Mintie's fixed sample mapping below.
+    for gateway_id, gateway in gateways.items():
+        if not isinstance(gateway, dict):
+            errors.append(f"deployment: gateway {gateway_id} must be an object")
+            continue
+        host = gateway.get("host_instance")
+        if host not in instances:
+            errors.append(
+                f"deployment: gateway {gateway_id} host {host} does not resolve"
+            )
+        role_id = gateway.get("role")
+        role = roles_map.get(role_id)
+        if not isinstance(role, dict):
+            errors.append(
+                f"deployment: gateway {gateway_id} references unknown role {role_id}"
+            )
+        else:
+            if role.get("kind") != "private-ingress-gateway":
+                errors.append(
+                    f"deployment: gateway {gateway_id} role {role_id} is not a "
+                    "private-ingress-gateway"
+                )
+            missing = sorted(
+                REQUIRED_PRIVATE_INGRESS_CAPABILITIES
+                - set(role.get("required_capabilities", []))
+            )
+            if missing:
+                errors.append(
+                    f"deployment: gateway {gateway_id} role {role_id} is missing "
+                    f"required capabilities {missing}"
+                )
+        if gateway.get("credential_scope") != "dedicated":
+            errors.append(f"deployment: {gateway_id} must use dedicated credentials")
+        if gateway.get("general_egress_equivalent") is not False:
+            errors.append(f"deployment: {gateway_id} cannot equal general egress")
+        subject = subjects.get(f"gateway/{gateway_id}")
+        if not isinstance(subject, dict):
+            errors.append(f"deployment: gateway {gateway_id} has no health subject")
+        else:
+            if subject.get("kind") != "private-ingress-lane":
+                errors.append(
+                    f"deployment: gateway {gateway_id} health subject kind must be "
+                    "private-ingress-lane"
+                )
+            if subject.get("binding_ref") != gateway_id:
+                errors.append(
+                    f"deployment: gateway {gateway_id} health subject binding drifted"
+                )
     expected_gateways = {
         "alder-private": ("alder", "private-ingress-primary"),
         "rowan-private": ("rowan", "private-ingress-secondary"),
@@ -1366,10 +2009,6 @@ def validate_deployment(
         gateway = gateways.get(identity, {})
         if gateway.get("host_instance") != host or gateway.get("role") != role:
             errors.append(f"deployment: {identity} gateway binding drifted")
-        if gateway.get("credential_scope") != "dedicated":
-            errors.append(f"deployment: {identity} must use dedicated credentials")
-        if gateway.get("general_egress_equivalent") is not False:
-            errors.append(f"deployment: {identity} cannot equal general egress")
         if role not in roles:
             errors.append(f"deployment: {identity} references unknown role {role}")
     origins = deployment.get("canonical_origins", {})
@@ -1387,7 +2026,6 @@ def validate_deployment(
         "gateway/alder-private": ("private-ingress-lane", "alder-private"),
         "gateway/rowan-private": ("private-ingress-lane", "rowan-private"),
     }
-    subjects = deployment.get("health_subjects", {})
     if set(subjects) != set(expected_subjects):
         errors.append("deployment: health subject registry drifted")
     for subject_ref, (kind, binding_ref) in expected_subjects.items():
@@ -1398,9 +2036,11 @@ def validate_deployment(
 
 
 def validate_reference_deployment_registration(
-    deployment: dict[str, Any], catalog: dict[str, Any]
+    deployment: dict[str, Any],
+    catalog: dict[str, Any],
+    reference_traffic: dict[str, Any] | None = None,
 ) -> list[str]:
-    """Require the catalog revision to match the registered instance revision."""
+    """Require catalog revisions to match the registered instance revisions."""
 
     errors: list[str] = []
     entries = {
@@ -1408,23 +2048,35 @@ def validate_reference_deployment_registration(
         for entry in catalog.get("entries", [])
         if isinstance(entry, dict)
     }
-    entry = entries.get("signalbox.reference-deployment/v2")
-    if not isinstance(entry, dict):
-        errors.append(
-            "reference-deployment: catalog has no "
-            "signalbox.reference-deployment/v2 entry"
+    registrations = [
+        ("signalbox.reference-deployment/v2", deployment, "deployment"),
+    ]
+    if reference_traffic is not None:
+        registrations.append(
+            (
+                "signalbox.reference-traffic-policy/v3",
+                reference_traffic,
+                "reference-traffic",
+            )
         )
-        return errors
-    if entry.get("revision") != deployment.get("contract_revision"):
-        errors.append(
-            "reference-deployment: catalog revision must equal the deployment "
-            "contract_revision"
-        )
+    for schema_id, instance, label in registrations:
+        entry = entries.get(schema_id)
+        if not isinstance(entry, dict):
+            errors.append(f"{label}: catalog has no {schema_id} entry")
+            continue
+        if entry.get("revision") != instance.get("contract_revision"):
+            errors.append(
+                f"{label}: catalog revision must equal the {label} contract_revision"
+            )
     return errors
 
 
 def validate_reference_traffic(
-    traffic: dict[str, Any], deployment: dict[str, Any]
+    traffic: dict[str, Any],
+    deployment: dict[str, Any],
+    roles: dict[str, Any],
+    health_profiles: dict[str, Any],
+    health_contract: dict[str, Any],
 ) -> list[str]:
     errors: list[str] = []
     if traffic.get("schema") != "signalbox.reference-traffic-policy/v3":
@@ -1479,14 +2131,11 @@ def validate_reference_traffic(
     if forbidden_fallback_fields & set(default):
         errors.append("reference-traffic: default automatic fallback is not defined")
 
-    private = entries.get("canonical-private-ingress", {})
-    gateways = deployment.get("dedicated_gateway_identities", {})
-    origins = deployment.get("canonical_origins", {})
-    if private.get("gateway_binding_ref") not in gateways:
-        errors.append("reference-traffic: private ingress must use a dedicated identity")
-    if private.get("canonical_origin_ref") not in origins:
-        errors.append("reference-traffic: private ingress canonical origin must resolve")
     instances = deployment.get("instances", {})
+    for diagnostic in canonical_private_ingress_diagnostics(
+        traffic, deployment, roles, health_profiles, health_contract
+    ):
+        errors.append(f"reference-traffic: {diagnostic['message']}")
     for entry in (protected, default):
         binding = entry.get("role_binding_ref") or entry.get("selection", {}).get(
             "role_binding_ref"
@@ -1587,6 +2236,7 @@ def validate_reference_health_links(
                     f"reference-health: {subject_ref} requires exactly one "
                     f"{profile_kind} profile, found {count}"
                 )
+
     return errors
 
 
@@ -1714,7 +2364,7 @@ def validate_doc_pairs(root: Path, document: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     if document.get("schema") != "signalbox.docs-pairs/v3":
         errors.append("docs-pairs: unexpected schema")
-    if document.get("contract_revision") != 5:
+    if document.get("contract_revision") != 6:
         errors.append("docs-pairs: unexpected revision")
     seen: set[str] = set()
     for pair in document.get("pairs", []):
@@ -1831,6 +2481,26 @@ def validate_catalog(root: Path, document: dict[str, Any]) -> list[str]:
         if not isinstance(instances, list):
             errors.append(f"catalog: {schema_id} instances must be an array")
             continue
+        # Compare only documents that own this schema and declare a contract
+        # or catalog revision. Individual profile configuration revisions have
+        # separate authority; no schema-ID exemption list is needed.
+        def check_revision(value: Any, label: str) -> None:
+            if not isinstance(value, dict) or value.get("schema") != schema_id:
+                return
+            for revision_field in ("contract_revision", "catalog_revision"):
+                if revision_field in value and entry.get("revision") != value[revision_field]:
+                    errors.append(
+                        f"catalog: {schema_id} catalog revision must equal the "
+                        f"{label} {revision_field}"
+                    )
+
+        try:
+            owner_path = resolve_repository_path(root, entry.get("owner"), expected_kind="file")
+            check_revision(load_json(owner_path), "owner")
+        except RepositoryPathError:
+            pass  # The path diagnostic above already rejects an invalid owner.
+        except (OSError, json.JSONDecodeError) as exc:
+            errors.append(f"catalog: {schema_id} owner load failed: {exc}")
         for instance in instances:
             if not isinstance(instance, dict) or set(instance) not in (
                 {"path"},
@@ -1855,14 +2525,21 @@ def validate_catalog(root: Path, document: dict[str, Any]) -> list[str]:
                     errors.append(
                         f"catalog: {schema_id} instance glob: {exc}"
                     )
+            try:
+                for label, value in iter_instances(root, instance):
+                    check_revision(value, f"instance {label}")
+            except (OSError, json.JSONDecodeError, RepositoryPathError, ValueError) as exc:
+                errors.append(f"catalog: {schema_id} instance resolution: {exc}")
 
     expected_ids = {
         "signalbox.roles/v1",
-        "signalbox.claims/v1",
-        "signalbox.acceptance-record/v1",
+        "signalbox.claims/v2",
+        "signalbox.acceptance-record/v2",
+        "signalbox.claim-record/v1",
+        "signalbox.handoff/v1",
         "signalbox.traffic-policy/v2",
-        "signalbox.health-contract/v5",
-        "signalbox.health-profile/v2",
+        "signalbox.health-contract/v6",
+        "signalbox.health-profile/v3",
         "signalbox.health-profiles/v2",
         "signalbox.health-report/v2",
         "signalbox.health-aggregate/v2",
@@ -2121,8 +2798,16 @@ def validate_repository(root: Path = ROOT) -> list[str]:
     errors.extend(validate_catalog(root, catalog))
     errors.extend(validate_doc_pairs(root, docs_pairs))
     errors.extend(validate_deployment(deployment, roles))
-    errors.extend(validate_reference_deployment_registration(deployment, catalog))
-    errors.extend(validate_reference_traffic(reference_traffic, deployment))
+    errors.extend(
+        validate_reference_deployment_registration(
+            deployment, catalog, reference_traffic
+        )
+    )
+    errors.extend(
+        validate_reference_traffic(
+            reference_traffic, deployment, roles, health_profiles, health_contract
+        )
+    )
     errors.extend(validate_health_profiles(health_profiles, health_contract))
     errors.extend(
         validate_reference_health_links(

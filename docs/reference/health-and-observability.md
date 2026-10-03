@@ -81,8 +81,9 @@ observation of the same enforcement state. `HEALTH-19`
 
 ## Report identity, sequence, and freshness
 
-Every attempt emits an immutable terminal `HealthReport`. The current pointer
-is atomically replaced, and pass, fail, and unknown attempts all advance the
+Every attempt emits an immutable terminal `HealthReport`. Generation is reserved at attempt start. A newer attempt invalidates the
+older current PASS while checking, and a late older completion is retained only
+as history. The current pointer is atomically replaced, and pass, fail, and unknown attempts all advance the
 sequence so an early failure cannot leave yesterday's PASS as apparent current
 truth.
 
@@ -101,11 +102,18 @@ also starts at publication:
 
 ```text
 valid_until <= completed_at + profile.max_report_age_seconds
+valid_until <= every required observation.observed_at + profile.max_observation_age_seconds
+completed_at - started_at <= profile.max_attempt_duration_seconds
 published_at <= evaluated_at <= valid_until
 ```
 
+The earliest required observation expiry caps the report's whole effective
+window. New completion/publication cannot renew old observations. Current
+profiles use health-profile/v3; changed operational profile revisions must be
+reflected in each report and aggregate member. `HEALTH-20`
+
 Before interpreting the recorded outcome, one canonical evaluator validates
-the report against `signalbox.health-report/v2`, applies all report and profile
+the contract and single profile as well as the report against `signalbox.health-report/v2`, applies all report and profile
 semantics, and exact-matches the expected current identity:
 
 ```text
@@ -155,7 +163,10 @@ exact-match a canonically valid, published, fresh effective `pass`. `unknown`
 cannot open the gate, and a pass for one operation, identity, desired state,
 runtime generation, or scope cannot authorize another. The source evaluator
 enforces this decision boundary; implementing a race-safe runtime pointer read
-still belongs to the deployment's mutation state machine.
+still belongs to the deployment's durable mutation state machine. The
+[synthetic publisher](../agent/workflow.md#recovery-sequencing) demonstrates
+start-order publication, exact compare/decision and uncertain restart behavior
+under an in-memory lock; it performs no restore. `HEALTH-21`
 
 ## Privacy and retention
 

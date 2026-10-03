@@ -1,0 +1,194 @@
+[
+  {
+    "id": "canonical-direct-overlap",
+    "kind": "routing",
+    "input": {
+      "matched_route_ids": [
+        "canonical-private-ingress",
+        "private-direct",
+        "approved-direct"
+      ]
+    },
+    "expected": {
+      "route_id": "canonical-private-ingress",
+      "action": "private-ingress",
+      "gateway_binding_ref": "alder-private"
+    }
+  },
+  {
+    "id": "domain-versus-ip-only",
+    "kind": "routing-pair",
+    "input": {
+      "domain_request": [
+        "approved-direct"
+      ],
+      "ip_only_request": [
+        "default-proxy-required"
+      ]
+    },
+    "expected": {
+      "domain_route": "approved-direct",
+      "ip_route": "default-proxy-required",
+      "same_application_implies_same_route": false
+    }
+  },
+  {
+    "id": "router-probe-versus-lan",
+    "kind": "coverage",
+    "input": {
+      "required_boundaries": [
+        "lan-admission",
+        "interception",
+        "mark-policy-routing",
+        "local-delivery",
+        "egress-transport"
+      ],
+      "observations": {
+        "egress-transport": "pass"
+      }
+    },
+    "expected": {
+      "effective_outcome": "unknown",
+      "unobserved_boundaries": [
+        "lan-admission",
+        "interception",
+        "mark-policy-routing",
+        "local-delivery"
+      ]
+    }
+  },
+  {
+    "id": "awake-versus-sleeping",
+    "kind": "client-comparison",
+    "input": {
+      "required_boundaries": [
+        "ap-client-delivery",
+        "ap-upstream"
+      ],
+      "awake": {
+        "ap-client-delivery": "pass",
+        "ap-upstream": "pass"
+      },
+      "sleeping": {
+        "ap-client-delivery": "fail",
+        "ap-upstream": "pass"
+      }
+    },
+    "expected": {
+      "awake_outcome": "pass",
+      "sleeping_outcome": "fail",
+      "fault_boundary": "client-radio-interaction",
+      "root_cause": "unknown"
+    }
+  },
+  {
+    "id": "new-report-old-observations",
+    "kind": "stale-observations",
+    "input": {
+      "observation_age_seconds": 5270400
+    },
+    "expected": {
+      "effective_outcome": "unknown",
+      "restore_allowed": false
+    }
+  },
+  {
+    "id": "pointer-changes-before-decision",
+    "kind": "sequencing",
+    "input": {
+      "events": [
+        {
+          "op": "begin",
+          "attempt": "A"
+        },
+        {
+          "op": "publish",
+          "attempt": "A"
+        },
+        {
+          "op": "read",
+          "as": "old"
+        },
+        {
+          "op": "begin",
+          "attempt": "B"
+        },
+        {
+          "op": "publish",
+          "attempt": "B"
+        },
+        {
+          "op": "decide",
+          "identity": "old"
+        }
+      ]
+    },
+    "expected": {
+      "allowed": false,
+      "action": "abort-and-reread-current-pointer",
+      "current_generation": 43
+    }
+  },
+  {
+    "id": "older-attempt-finishes-last",
+    "kind": "sequencing",
+    "input": {
+      "events": [
+        {
+          "op": "begin",
+          "attempt": "A"
+        },
+        {
+          "op": "begin",
+          "attempt": "B"
+        },
+        {
+          "op": "publish",
+          "attempt": "B"
+        },
+        {
+          "op": "publish",
+          "attempt": "A"
+        }
+      ]
+    },
+    "expected": {
+      "late_current": false,
+      "current_generation": 43,
+      "archived_reports": 2
+    }
+  },
+  {
+    "id": "restart-continuity-unknown",
+    "kind": "sequencing",
+    "input": {
+      "events": [
+        {
+          "op": "begin",
+          "attempt": "A"
+        },
+        {
+          "op": "publish",
+          "attempt": "A"
+        },
+        {
+          "op": "read",
+          "as": "old"
+        },
+        {
+          "op": "restart",
+          "continuity_confirmed": false
+        },
+        {
+          "op": "decide",
+          "identity": "old"
+        }
+      ]
+    },
+    "expected": {
+      "allowed": false,
+      "action": "retain-guard",
+      "effective_outcome": "unknown"
+    }
+  }
+]

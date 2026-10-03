@@ -22,8 +22,8 @@
       ]
     },
     {
-      "schema_id": "signalbox.claims/v1",
-      "revision": 1,
+      "schema_id": "signalbox.claims/v2",
+      "revision": 2,
       "owner": "contracts/claims.json",
       "schema_path": "schemas/claims.schema.json",
       "compatibility": {
@@ -31,7 +31,10 @@
         "breaking_change": "new-schema-id-required"
       },
       "projection_dependencies": [
-        "docs/agent/acceptance-matrix.md"
+        "docs/agent/acceptance-matrix.md",
+        "docs/agent/workflow.md",
+        "docs/human/50-worked-cases.en.md",
+        "docs/human/50-worked-cases.zh-CN.md"
       ],
       "instances": [
         {
@@ -40,21 +43,78 @@
       ]
     },
     {
-      "schema_id": "signalbox.acceptance-record/v1",
-      "revision": 1,
-      "owner": "contracts/claims.json",
+      "schema_id": "signalbox.acceptance-record/v2",
+      "revision": 2,
+      "owner": "examples/mintie/handoff.json",
       "schema_path": "schemas/acceptance-record.schema.json",
       "compatibility": {
         "same_schema_id": "backward-compatible-only",
         "breaking_change": "new-schema-id-required"
       },
       "projection_dependencies": [
-        "docs/agent/acceptance-matrix.md"
+        "docs/agent/acceptance-matrix.md",
+        "docs/agent/workflow.md",
+        "docs/human/50-worked-cases.en.md",
+        "docs/human/50-worked-cases.zh-CN.md"
       ],
       "instances": [
         {
-          "path": "contracts/claims.json",
-          "pointer": "/acceptance_record"
+          "path": "examples/mintie/handoff.json",
+          "pointer": "/acceptance_records/*"
+        },
+        {
+          "path": "examples/mintie/path-handoff.json",
+          "pointer": "/acceptance_records/*"
+        }
+      ]
+    },
+    {
+      "schema_id": "signalbox.claim-record/v1",
+      "revision": 1,
+      "owner": "examples/mintie/handoff.json",
+      "schema_path": "schemas/claim-record.schema.json",
+      "compatibility": {
+        "same_schema_id": "backward-compatible-only",
+        "breaking_change": "new-schema-id-required"
+      },
+      "projection_dependencies": [
+        "docs/agent/acceptance-matrix.md",
+        "docs/agent/workflow.md",
+        "docs/human/50-worked-cases.en.md",
+        "docs/human/50-worked-cases.zh-CN.md"
+      ],
+      "instances": [
+        {
+          "path": "examples/mintie/handoff.json",
+          "pointer": "/claims/*"
+        },
+        {
+          "path": "examples/mintie/path-handoff.json",
+          "pointer": "/claims/*"
+        }
+      ]
+    },
+    {
+      "schema_id": "signalbox.handoff/v1",
+      "revision": 1,
+      "owner": "examples/mintie/handoff.json",
+      "schema_path": "schemas/handoff.schema.json",
+      "compatibility": {
+        "same_schema_id": "backward-compatible-only",
+        "breaking_change": "new-schema-id-required"
+      },
+      "projection_dependencies": [
+        "docs/agent/acceptance-matrix.md",
+        "docs/agent/workflow.md",
+        "docs/human/50-worked-cases.en.md",
+        "docs/human/50-worked-cases.zh-CN.md"
+      ],
+      "instances": [
+        {
+          "path": "examples/mintie/handoff.json"
+        },
+        {
+          "path": "examples/mintie/path-handoff.json"
         }
       ]
     },
@@ -86,8 +146,8 @@
       ]
     },
     {
-      "schema_id": "signalbox.health-contract/v5",
-      "revision": 5,
+      "schema_id": "signalbox.health-contract/v6",
+      "revision": 6,
       "owner": "contracts/health-contract.json",
       "schema_path": "schemas/health-contract.schema.json",
       "compatibility": {
@@ -103,7 +163,10 @@
         "docs/human/10-architecture.en.md",
         "docs/human/10-architecture.zh-CN.md",
         "docs/human/30-routing-dns-and-fail-closed.en.md",
-        "docs/human/30-routing-dns-and-fail-closed.zh-CN.md"
+        "docs/human/30-routing-dns-and-fail-closed.zh-CN.md",
+        "docs/agent/workflow.md",
+        "docs/human/50-worked-cases.en.md",
+        "docs/human/50-worked-cases.zh-CN.md"
       ],
       "instances": [
         {
@@ -112,8 +175,8 @@
       ]
     },
     {
-      "schema_id": "signalbox.health-profile/v2",
-      "revision": 3,
+      "schema_id": "signalbox.health-profile/v3",
+      "revision": 1,
       "owner": "contracts/health-contract.json",
       "schema_path": "schemas/health-profile.schema.json",
       "compatibility": {
@@ -192,7 +255,7 @@
     },
     {
       "schema_id": "signalbox.docs-pairs/v3",
-      "revision": 5,
+      "revision": 6,
       "owner": "contracts/docs-pairs.json",
       "schema_path": "schemas/docs-pairs.schema.json",
       "compatibility": {
@@ -242,7 +305,10 @@
         "breaking_change": "new-schema-id-required"
       },
       "projection_dependencies": [
-        "examples/mintie/README.md"
+        "examples/mintie/README.md",
+        "docs/agent/workflow.md",
+        "docs/human/50-worked-cases.en.md",
+        "docs/human/50-worked-cases.zh-CN.md"
       ],
       "instances": [
         {

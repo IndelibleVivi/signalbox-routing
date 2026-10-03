@@ -1,16 +1,12 @@
 # Signalbox Programme Plan
 
 Status: active
-Current execution tranche: none; F0.3 underlay observability reached its source
-boundary and is source-integrated into canonical `main` by the PR #1 merge
-commit `5ca593db7c4ce101ee9afcc2aaf5ce1bbde9b3a2`; F2 remains planned but
-unstarted
-Most recently completed tranche: F0.3 underlay observability (source-integrated
-into canonical `main`; not released, installed, activated, or owner-accepted)
-Previous source boundary (historical receipt): F0.2.2 executable-authority
-closure; its exact published receipt is preserved in `docs/current-state.md`
-Next planned tranche: F2 complete Agent Surface
-Canonical specification: `docs/specification.md`, revision 5
+Current execution tranche: F2 Agent Surface source update (implementation and
+local verification complete; candidate, not merged or deployed)
+Most recently integrated tranche: F0.3 underlay observability via PR #1
+Previous source boundary: F0.2.2 executable-authority closure
+Next programme tranche after F2: F3 complete Mintie reference deployment
+Canonical specification: `docs/specification.md`, revision 6
 Normative companions: `contracts/*.json`, `schemas/*.schema.json`
 Repository baseline: public canonical repository on `main`
 
@@ -46,6 +42,13 @@ installation, activation, or deployment.
   same-round authority, binding, route-grammar, and hermeticity gaps. It does
   not authorize runtime pointer mutation, Tailnet/router access, or deployment.
 
+- Faye authorized the 2026-10-03 Chat-review update as source work: close
+  semantic defects, complete the F2 handoff/sequence reference, and introduce
+  five F3/F4 judgment cases with paired reader paths. Additional reversible
+  in-scope improvements are authorized. Standing Git closure applies to the
+  existing source remote; protected-main policy still requires a source branch
+  and PR. No runtime, release or license gate is widened.
+
 ## Dependency order
 
 ```text
@@ -69,7 +72,7 @@ different phases. This plan ends at verified Signalbox source.
 | --- | --- | --- | --- | --- | --- |
 | `ACCEPT-01` | Normative contracts agree | F0/F0.2.1/F0.2.2 contracts | Identity settled | semantic validator, JSON Schema, contract tests | F0.2.2 source and remote boundary complete; full v1 pending |
 | `ACCEPT-02` | Paired Human Surface teaches the complete model | F1 human guide | F0 IDs and diagrams | doc-pair parity plus manual read | F1 source and remote boundary complete; full v1 pending |
-| `ACCEPT-03` | Agent Surface defines implementation and evidence behavior | F2 agent reference | F0 contracts | required-ID and link validation | Tailnet reference added; full F2 pending |
+| `ACCEPT-03` | Agent Surface defines implementation and evidence behavior | F2 agent reference | F0 contracts | structured chain diagnostics, concrete handoffs, sequence/restore replay and behavior tests | F2 source-complete candidate; local gate passed |
 | `ACCEPT-04` | Mintie is a portable, public-safe reference deployment | F0.2/F0.2.2/F3 Mintie example | F0 roles/routing/health | example validation and Git-index boundary scan | exact reference route grammar and broader source scan are published; full F3 pending |
 | `ACCEPT-05` | Reusable failure mechanisms are retained | F4 failure depth | F0 health/evidence | failure-ID coverage | F0.2 mechanisms added; F4 pending |
 | `ACCEPT-06` | Validation rejects meaningful contract drift | F0.2.2 validator and F5 hardening | F0 contracts | positive and negative tests plus the hosted implementation gate | exact published receipts are owned by `docs/current-state.md`; F5 pending |
@@ -171,14 +174,32 @@ schema. The tranche is source-integrated into canonical `main` by the PR #1
 merge commit `5ca593db7c4ce101ee9afcc2aaf5ce1bbde9b3a2`, which passed the
 post-merge hosted gate in run `35388875151`. No release or tag, installation,
 activation, runtime mutation, or owner/client acceptance is claimed, and no
-active F0.3 feature branch remains. F2 remains the next planned tranche.
+active F0.3 feature branch remains. F2 is the current source update; the F0.3
+integration receipt remains historical.
 
-### F2 — Complete Agent Surface
+### F2 — Complete Agent Surface (`source-candidate`)
 
-Finish exact implementation-reference, patch protocol, state/report grammar,
-source map, stop conditions, compatibility handling, and acceptance matrix.
-Specify the deployment-side race-safe current-pointer read/CAS contract and
-report-set sequencing without pretending the source evaluator activates it.
+Deliver one executable task entrance, exact implementation/source map, patch
+protocol, compatibility handling, stop rules, actual claim/acceptance/handoff
+objects, structured private-ingress chain diagnostics, and a synthetic
+start-order current-pointer/CAS reference. The canonical evaluator validates
+standalone profiles and malformed nested reports and rejects observation-age
+or attempt-duration violations. Catalog revisions agree with their applicable
+owners/instances independently of profile configuration revisions.
+
+Source acceptance includes legal capability extensions and broken
+host/role/health links, HTTPS downgrade, malformed report/profile types,
+stale-observation wrapping, exact compare races, late completion, uncertain
+restart, and concrete handoff reference/scope/time failures. Five paired
+judgment cases are pulled forward from F3/F4 to exercise this same boundary.
+The source model emits decisions using an in-memory lock; durable pointer
+storage, cross-process CAS and actual recovery effects belong to separately
+authorized deployments. Full F3 configuration/negative-proof material and F5
+historical compatibility/supply-chain work remain pending.
+
+Status: source-complete candidate; local repository verification and Git
+closure are recorded in `docs/current-state.md`. No release, installation,
+activation, live network mutation or owner acceptance is implied.
 
 ### F3 — Mintie reference deployment
 

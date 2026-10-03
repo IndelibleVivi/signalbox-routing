@@ -3,117 +3,84 @@ doc_id: signalbox.human.start-here
 language: zh-CN
 status: foundation-explanatory
 authority: ../specification.md
-contract_revision: 5
+contract_revision: 6
 ---
 
 [English](00-start-here.en.md) · **简体中文**
 
 <a id="proxy-layer-model"></a>
-# 从这里开始：把代理选择上移到路由器
+# 从这里开始：一个家庭里的三次请求
 
-Signalbox 想解决的不是“某个软件应该填哪个代理端口”，而是代理责任
-应该由哪一层承担。`SIG-01`
+手机和电脑连接到样例路由器 Mintie。Signalbox 帮你看清每次请求的策略，
+以及判断它是否按预期工作需要什么证据。`SIG-01`
 
-```text
-应用显式代理
-  -> 操作系统代理 / PAC
-  -> 本机 TUN
-  -> 路由器透明接管
-  -> 上游出口角色
-```
+| 请求 | Mintie 需要知道什么 | 选择的路径 | 路径无法确认时 |
+| --- | --- | --- | --- |
+| DIRECT allowlist 以外的普通网站 | destination 与 policy match | 固定的 general primary：Alder | 保留 guard，不自动回落 DIRECT |
+| 受保护应用中命中规则的依赖 | protected set 与 transport | residential role：Hearth | fail closed，不降级到普通出口或 DIRECT |
+| canonical HTTPS origin 上的已批准私有服务 | origin、批准范围、dedicated gateway | Alder Private 到 exact private destination | 保留访问限制，不臆造 public fallback |
 
-越靠近网络入口，应用越不需要知道代理存在；但控制面需要承担更多
-DNS、分流、失败语义、观察与恢复责任。路由器透明接管不是“自动更好”，
-而是把原本分散在每台设备上的策略集中到一个可解释、可验证的位置。
+DIRECT allowlist 可以有意接住一条普通请求，但不会自动覆盖同一应用的所有连接。
+缺少可用 domain match 的连接仍可能走默认代理出口。
+[案例 1 和 2](50-worked-cases.zh-CN.md) 展示集合重叠与 IP-only 连接。
+
+这里由路由器统一拥有透明策略。应用显式代理、OS proxy 与本机 TUN 也可以承担
+策略；若它们与路由器争夺接管权，就需要明确的 compatibility design。
 
 <a id="identity-namespaces"></a>
-## 三种名字不要混在一起
+## 让名字有具体的工作
 
 `IDENT-02`
 
-| 类型 | Signalbox 里的例子 | 会不会随部署变化 |
+| 故事中的名字 | Portable role | 工作 |
 | --- | --- | --- |
-| Portable role | `general-primary` | 语义稳定 |
-| Sample identity | `Alder` | 可替换，用于参考部署 |
-| Private live binding | repo 外部的 endpoint / credential / provider | 经常变化，必须 fresh readback |
+| Mintie | `routing-control-plane` | 拥有 interception、DNS policy 与 enforcement |
+| Alder | `general-primary` | 固定的普通 proxy-required 路径 |
+| Rowan | `general-secondary` | 可独立观测的备用，不隐含自动 failover |
+| Hearth | `claude-residential` | 受保护应用出口，不 fallback |
+| Alder Private | `private-ingress-primary` | 独立 gateway identity，即使宿主是 Alder |
 
-Mintie 是 reference deployment，不是 Signalbox 的另一个名字。她让教程有一套
-完整、可跟随的拓扑，同时避免把猫自己的 live network 变成通用常数。
+名字是 sample identity；role 承载策略和 capability 语义。endpoint、账号与 credential
+属于 repo 外的 private deployment binding。同宿主不会给普通出口私有服务权限。
 
 <a id="realization-and-acceptance"></a>
-## 一个绿色灯只证明一层，acceptance 另算
+## Probe 绿了，手机却仍然打不开
 
-`CLAIM-01`
+路由器可以连到 Alder，手机却可能在抵达 interception 以前就失败。
+这次 probe 绕过了手机路径中的一段。先看
+[packet path 与观测位置](10-architecture.zh-CN.md#actual-packet-path)，再走
+[案例 3](50-worked-cases.zh-CN.md#router-probe-versus-lan)。`CLAIM-01`
 
 ```text
 SOURCE -> INSTALLED -> ACTIVATED -> PATH-EVIDENCE
                                       :
-                                      +--> ACCEPTANCE RECORD
+                                      +--> scoped ACCEPTANCE RECORD
 ```
 
-- source test 通过，只证明 repo 表达了预期；
-- 文件存在，只证明 payload 已安装；
-- 进程、loaded config、route table 和 guard 正确，只证明 activated shape；
-- lane probe 通过，只证明那次 path evidence；
-- 真正的浏览器、PWA 或设备操作可以产生 named acceptance record，但它是
-  对某个 scope 的决定，不会把技术证据升级，也不会永久证明 path 仍然健康。
-
-任何一层查不到都应写 `unknown`，不能把 query failure 当成“没有规则”或
-“已经关闭”。
+source check 证明 source；安装 readback 证明文件存在；activation readback 证明
+loaded process 与 kernel state；path probe 证明当时那条具名路径。
+人或 client 可以接受某个 scoped result，但这个决定不能升级证据，也不能让它永久新鲜。
 
 <a id="fail-closed"></a>
-## Fail closed 不是自动断网癖
+## 安全失败是什么体验
 
-`ROUTE-02`
-
-DIRECT 只服务明确批准的 LAN、bootstrap 或直连 allowlist。受保护流量需要
-代理时，如果出口、DNS、routing process 或 kernel state 无法确认，默认结果
-是失败并保留保护，不是偷偷回落到裸 WAN。
-
-这个安全语义也意味着必须保留独立 management / break-glass path；诊断者不应
-只依赖自己正在修的那条代理链。
+受保护请求可能停止工作，management access 仍然可用。要求的路径失败或 unknown 时，
+这是预期的 guard 行为。DIRECT 只用于 allowlist，永远不是 proxy-failure fallback。
+必须保留独立 management / break-glass 路径。`ROUTE-02`
 
 <a id="health-model"></a>
-## Health 不只是“网页能打开”
+## 选择下一条证据
 
-`HEALTH-01` `HEALTH-10` `HEALTH-14` `HEALTH-15` `HEALTH-16` `HEALTH-17` `HEALTH-18` `HEALTH-19`
+health 分开观察 control plane、每条 egress/private lane 与家庭 underlay。
+一个 subject 的 PASS 不会证明另一个 subject；aggregate 保留各自 outcome，
+没有 top-level verdict。`HEALTH-01` `HEALTH-10`
 
-Signalbox 把 health 分为 transport、exit identity、DNS、control plane、
-enforcement、resources、persistence 和 recovery readiness。`HealthProfile`
-规定要测什么；每次 attempt 都发布 immutable `HealthReport`。每个 registered
-control plane 必须恰好绑定一份 recovery-preflight 与一份 control-plane operational
-profile；每条 registered egress / private-ingress lane 也必须恰好绑定一份
-lane-operational profile。profile kind 不能跨 subject kind 使用。registered
-network underlay 有自己的 subject kind 与对应的 underlay-operational profile kind；
-每个 registered network underlay 恰好绑定一份这样的 profile，而没有注册 underlay 的
-deployment 只是没有对应 member。它既不是 egress lane，也永远不会成为 DIRECT
-回落路径。
+- 常醒设备正常，休眠设备卡顿：同 radio、同时间对照；看
+  [案例 4](50-worked-cases.zh-CN.md#awake-versus-sleeping)。
+- report 刚发布，probe 却已经很旧：拒绝它作为当前恢复证据；看
+  [案例 5](50-worked-cases.zh-CN.md#new-report-old-observations)。
+- query 无法确认状态：保留 `unknown`，不能写成 OFF 或 absent。
 
-一份 report 在 canonical evaluator 证明其 v2 structure 与 semantics、确认
-`published_at <= evaluated_at <= valid_until`，并 exact-match 当前预期的 producer、
-subject、profile 与 revision、epoch、generation、report ID 和 attempt ID 以前，没有
-有效 outcome。过期、尚未发布、malformed、regressed、superseded 或 mismatched 的
-recorded pass 因此都是 `unknown`。
-
-恢复前的 `recovery-preflight` 只为一个 exact operation 与 desired-state digest
-检查能否安全 query、reconcile 和 restore。日常 health 则拆成一份 control-plane
-report、每条 egress / private-ingress lane 各自的一份 report，以及每个 registered
-network underlay 的一份 report。underlay report 只观察实际路径行为：transport、resolver、
-loaded responsiveness 与 recent link availability。因此即使 control plane 与 proxy
-lanes 全绿，degraded 的家庭 / WAN 路径也不会被掩盖。它既不能推断 shaping 是否
-激活，也不能授权任何 route 变更。aggregate 必须保留所有 member outcome，不能
-把它们压成一个模糊的“全网绿色”。
-
-每个 dimension 都由 explicit observations roll up。lane transport 要判 `pass`，
-至少要同时有 transport-neutral 与 role-specific probe，而且来自独立 dependency
-groups。profile、report 与 aggregate 都不会自己切 route。
-
-Aggregate 是 historical assembly receipt，不会随着 wall clock 静默改变。member
-outcome 只在 `assembled_at` 经由同一个 canonical evaluator 求值一次；要得到
-current view，必须读取 fresh reports 并生成新的 aggregate。
-
-今天的 cold-boot 事故提供了一个很好的例子：route table 逻辑上可能为空，
-但如果平台无法可靠查询它，恢复就没有证据声称 runtime 已经 `OFF`。因此
-queryability 本身也是 health。
-
-下一步阅读：[Signalbox 架构与 packet path](10-architecture.zh-CN.md)。
+profile cardinality、publication window、observation age 与 current-pointer identity
+的精确规则在 [health and observability](../reference/health-and-observability.md)。
+完整 agent 交接和恢复竞态入口在 [Agent Surface](../agent/README.md)。

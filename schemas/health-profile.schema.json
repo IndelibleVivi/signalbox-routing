@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:signalbox:schema:health-profile:v2",
+  "$id": "urn:signalbox:schema:health-profile:v3",
   "title": "Signalbox health profile",
   "type": "object",
   "additionalProperties": false,
@@ -53,9 +53,15 @@
     "freshness": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["max_report_age_seconds"],
+      "required": [
+        "max_report_age_seconds",
+        "max_observation_age_seconds",
+        "max_attempt_duration_seconds"
+      ],
       "properties": {
-        "max_report_age_seconds": {"type": "integer", "minimum": 1}
+        "max_report_age_seconds": {"type": "integer", "minimum": 1},
+        "max_observation_age_seconds": {"type": "integer", "minimum": 1},
+        "max_attempt_duration_seconds": {"type": "integer", "minimum": 1}
       }
     },
     "publication": {

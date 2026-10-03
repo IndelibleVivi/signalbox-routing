@@ -1,4 +1,4 @@
-<!-- doc_id: signalbox.readme; language: zh-CN; contract_revision: 5 -->
+<!-- doc_id: signalbox.readme; language: zh-CN; contract_revision: 6 -->
 <!-- contracts: SIG-01 SIG-02 IDENT-01 CLAIM-01 DOC-02 AUTH-05 ACCEPT-08 -->
 
 [English](README.md) · **简体中文**
@@ -25,6 +25,11 @@ public-safe example 和验证工具。普通读者不必先啃完所有 contract
 
 如果这些词还很陌生，先读五分钟版的[从这里开始](docs/human/00-start-here.zh-CN.md)
 和[架构图](docs/human/10-architecture.zh-CN.md)即可。
+
+跟着 [五个完整案例](docs/human/50-worked-cases.zh-CN.md) 做一次判断：private/DIRECT
+重叠、domain 与 IP-only 分流、router-local 与 LAN 覆盖、awake 与 sleeping client，
+以及新发布的旧证据。agent 可以沿 [可执行 workflow](docs/agent/workflow.md) 从 structured
+policy explanation 走到可校验的 claim/acceptance handoff。
 
 <a id="what-signalbox-is"></a>
 ## Signalbox 是什么——又不是什么
@@ -86,6 +91,9 @@ flowchart LR
 python3 -m venv .venv
 .venv/bin/python -m pip install --requirement requirements-dev.txt
 make verify PYTHON=.venv/bin/python
+.venv/bin/python -m scripts.policy
+.venv/bin/python -m scripts.replay
+.venv/bin/python -m scripts.handoff --evaluated-at 2026-10-03T00:00:03Z
 ```
 
 这个 gate 先用 fixed Draft 2020-12 schema bootstrap contract catalog，再验证跨文件
@@ -103,17 +111,13 @@ state](docs/current-state.md)。
 <a id="status-and-permission"></a>
 ## 状态与许可
 
-F0.2.2 executable-authority closure 与 F1 Human Surface 已在 [current
-state](docs/current-state.md) 记录的 exact implementation commit 和 hosted gate 上
-完成 source verification 与 publication。F0.3 underlay observability 已完成
-source verification，并通过 PR #1 merge commit
-`5ca593db7c4ce101ee9afcc2aaf5ce1bbde9b3a2` 集成进 canonical `main`：
-`network-underlay` subject 与 `underlay-operational` profile 让 degraded DIRECT
-underlay 在 proxy lane 全绿时仍然可见。这次 source integration 不声称任何 release
-或 tag、installed payload、activation 或 live-router mutation、live path evidence，
-也不声称 owner 或 client acceptance。完整 Signalbox v1 尚未完成；installation、
-activation、private-ingress deployment 与 acceptance 仍是彼此独立的 gate。
-`ACCEPT-08`
+F0.3 underlay observability 已通过 PR #1 集成进 canonical `main`。
+F2 Agent Surface 更新是 source candidate：完整 reference chain diagnostic、
+observation/attempt freshness、实际 claim/acceptance 对象与 synthetic current-pointer
+sequencing。精确 Git 与 hosted verification 状态在 [current state](docs/current-state.md)。
+完整 Signalbox v1 尚未完成。synthetic record、scenario replay 与 source test 不证明
+installed payload、activation、live path、deployed recovery 或 owner/client acceptance。
+release 与 runtime gate 仍然独立。`ACCEPT-08`
 
 目前尚未选择 license。能够看到或持有本 repo 不等于获得 reuse rights。在明确
 contribution 与 rights terms 之前，暂不接受外部 code 或 documentation contribution。

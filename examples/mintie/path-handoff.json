@@ -1,0 +1,125 @@
+{
+  "schema": "signalbox.handoff/v1",
+  "handoff_id": "handoff/sample-lane-history",
+  "scope_ref": "role-binding/alder",
+  "synthetic": true,
+  "evidence": [
+    {
+      "id": "evidence/source",
+      "scope_ref": "role-binding/alder",
+      "stage": "source",
+      "artifact_ref": "contracts/traffic-policy.json",
+      "observed_at": "2026-08-31T10:00:07Z",
+      "outcome": "pass"
+    },
+    {
+      "id": "evidence/installed",
+      "scope_ref": "role-binding/alder",
+      "stage": "installed",
+      "artifact_ref": "examples/mintie/deployment.json",
+      "observed_at": "2026-08-31T10:00:07Z",
+      "outcome": "pass"
+    },
+    {
+      "id": "evidence/activated",
+      "scope_ref": "role-binding/alder",
+      "stage": "activated",
+      "artifact_ref": "examples/mintie/traffic-policy.json",
+      "observed_at": "2026-08-31T10:00:07Z",
+      "outcome": "pass"
+    },
+    {
+      "id": "evidence/path-evidence",
+      "scope_ref": "role-binding/alder",
+      "stage": "path-evidence",
+      "artifact_ref": "examples/mintie/reports/lane-alder-pass.json",
+      "observed_at": "2026-08-31T10:00:07Z",
+      "outcome": "pass",
+      "valid_until": "2026-08-31T10:20:00Z"
+    }
+  ],
+  "claims": [
+    {
+      "schema": "signalbox.claim-record/v1",
+      "claim_id": "claim/source",
+      "scope_ref": "role-binding/alder",
+      "stage": "source",
+      "outcome": "pass",
+      "evidence_refs": [
+        "evidence/source"
+      ],
+      "observed_at": "2026-08-31T10:00:07Z"
+    },
+    {
+      "schema": "signalbox.claim-record/v1",
+      "claim_id": "claim/installed",
+      "scope_ref": "role-binding/alder",
+      "stage": "installed",
+      "outcome": "pass",
+      "evidence_refs": [
+        "evidence/installed"
+      ],
+      "observed_at": "2026-08-31T10:00:07Z",
+      "source_ref": "claim/source"
+    },
+    {
+      "schema": "signalbox.claim-record/v1",
+      "claim_id": "claim/activated",
+      "scope_ref": "role-binding/alder",
+      "stage": "activated",
+      "outcome": "pass",
+      "evidence_refs": [
+        "evidence/activated"
+      ],
+      "observed_at": "2026-08-31T10:00:07Z",
+      "installed_ref": "claim/installed",
+      "runtime_generation": "runtime/sample-041"
+    },
+    {
+      "schema": "signalbox.claim-record/v1",
+      "claim_id": "claim/path-evidence",
+      "scope_ref": "role-binding/alder",
+      "stage": "path-evidence",
+      "outcome": "pass",
+      "evidence_refs": [
+        "evidence/path-evidence"
+      ],
+      "observed_at": "2026-08-31T10:00:07Z",
+      "activated_ref": "claim/activated",
+      "health_report_ref": "examples/mintie/reports/lane-alder-pass.json",
+      "current_health_identity": {
+        "producer_ref": "reference/mintie-observer",
+        "subject_ref": "role-binding/alder",
+        "profile_ref": "mintie-egress-alder",
+        "profile_revision": 3,
+        "generation_epoch": "sample-epoch-alpha",
+        "generation": 101,
+        "attempt_id": "attempt-lane-alder-101",
+        "report_id": "report-lane-alder-pass-101"
+      }
+    }
+  ],
+  "acceptance_records": [
+    {
+      "schema": "signalbox.acceptance-record/v2",
+      "record_id": "acceptance/sample-lane-history",
+      "actor_class": "human",
+      "actor_ref": "actor/sample-owner",
+      "decision": "accepted",
+      "scope_ref": "role-binding/alder",
+      "claim_refs": [
+        "claim/source",
+        "claim/installed",
+        "claim/activated",
+        "claim/path-evidence"
+      ],
+      "evidence_refs": [
+        "evidence/source",
+        "evidence/installed",
+        "evidence/activated",
+        "evidence/path-evidence"
+      ],
+      "decided_at": "2026-08-31T10:00:07Z"
+    }
+  ]
+}

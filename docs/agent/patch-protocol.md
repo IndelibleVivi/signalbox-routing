@@ -22,7 +22,7 @@ authority and is never implied by a Signalbox patch.
 | Portable role | roles, routing references, Mintie bindings, human/agent explanation, tests |
 | Fallback policy | routing contract, protected-lane explanation, negative tests |
 | Route precedence | routing contract, ordered sample, overlap/order negatives, both architecture siblings |
-| Realization or acceptance boundary | claims contract, acceptance matrix, validator |
+| Realization or acceptance boundary | claims contract, actual claim/acceptance/handoff schemas and examples, acceptance matrix, handoff evaluator and tests |
 | Health dimension, profile, observation, report, or aggregate | health contract, sample profiles/reports/aggregate, health reference, tests |
 | Contract shape or revision | owning JSON, catalog, JSON Schema, dependent projections, compatibility check |
 | Sample identity | Mintie deployment and explanatory projection; portable role remains stable |
@@ -41,6 +41,12 @@ read current authority
   -> make verify
   -> inspect diff and current-state truth
 ```
+
+Before changing a profile, preserve the distinction between its operational
+`revision` and the catalog's schema contract revision. Breaking required fields
+need a new schema ID. Migrate reports/aggregate identity references coherently;
+never treat v2 profiles missing freshness limits as compatible with v3.
+Run scenario replay and concrete handoff validation through `make verify`.
 
 If only prose changes, do not manufacture a machine-contract revision. If
 behavior changes, prose-only edits are incomplete.

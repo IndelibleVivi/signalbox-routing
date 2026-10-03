@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:signalbox:schema:claims:v1",
+  "$id": "urn:signalbox:schema:claims:v2",
   "title": "Signalbox realization and acceptance claims",
   "type": "object",
   "additionalProperties": false,
@@ -10,16 +10,25 @@
     "observation_outcomes",
     "realization_stages",
     "required_realization_references",
-    "acceptance_record"
+    "acceptance_record",
+    "claim_record_schema",
+    "handoff_schema",
+    "handoff_rules"
   ],
   "properties": {
-    "schema": {"const": "signalbox.claims/v1"},
-    "contract_revision": {"type": "integer", "minimum": 1},
+    "schema": {"const": "signalbox.claims/v2"},
+    "contract_revision": {"type": "integer", "minimum": 2},
     "observation_outcomes": {
       "type": "array",
       "minItems": 3,
       "uniqueItems": true,
-      "items": {"enum": ["pass", "fail", "unknown"]}
+      "items": {
+        "enum": [
+          "pass",
+          "fail",
+          "unknown"
+        ]
+      }
     },
     "realization_stages": {
       "type": "array",
@@ -27,7 +36,13 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "rank", "authority", "proves", "does_not_prove"],
+        "required": [
+          "id",
+          "rank",
+          "authority",
+          "proves",
+          "does_not_prove"
+        ],
         "properties": {
           "id": {"type": "string", "minLength": 1},
           "rank": {"type": "integer", "minimum": 1},
@@ -47,6 +62,73 @@
         "items": {"type": "string", "minLength": 1}
       }
     },
-    "acceptance_record": {"type": "object"}
+    "acceptance_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "decisions",
+        "required_fields",
+        "can_upgrade_realization_stage",
+        "is_current_path_proof"
+      ],
+      "properties": {
+        "schema": {"const": "signalbox.acceptance-record/v2"},
+        "decisions": {
+          "const": [
+            "accepted",
+            "rejected",
+            "revoked"
+          ]
+        },
+        "required_fields": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 8,
+          "items": {
+            "enum": [
+              "record_id",
+              "actor_class",
+              "actor_ref",
+              "decision",
+              "scope_ref",
+              "claim_refs",
+              "evidence_refs",
+              "decided_at"
+            ]
+          }
+        },
+        "can_upgrade_realization_stage": {"const": false},
+        "is_current_path_proof": {"const": false}
+      }
+    },
+    "claim_record_schema": {"const": "signalbox.claim-record/v1"},
+    "handoff_schema": {"const": "signalbox.handoff/v1"},
+    "handoff_rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference_resolution",
+        "scope_match",
+        "evidence_stage_match",
+        "decision_time_requires_available_evidence",
+        "path_claim_requires_canonical_health_evaluation",
+        "synthetic_only",
+        "acceptance_is_historical",
+        "path_scope_match",
+        "path_identity_source"
+      ],
+      "properties": {
+        "reference_resolution": {"const": "bundle-local-ids-and-contained-artifacts"},
+        "scope_match": {"const": "exact"},
+        "evidence_stage_match": {"const": "exact"},
+        "decision_time_requires_available_evidence": {"const": true},
+        "path_claim_requires_canonical_health_evaluation": {"const": true},
+        "synthetic_only": {"const": true},
+        "acceptance_is_historical": {"const": true},
+        "path_scope_match": {"const": "exact-report-subject"},
+        "path_identity_source": {"const": "trusted-current-pointer"}
+      }
+    }
   }
 }

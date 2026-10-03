@@ -1,6 +1,6 @@
 {
   "schema": "signalbox.docs-pairs/v3",
-  "contract_revision": 5,
+  "contract_revision": 6,
   "pairs": [
     {
       "doc_id": "signalbox.readme",
@@ -35,13 +35,7 @@
         "CLAIM-01",
         "ROUTE-02",
         "HEALTH-01",
-        "HEALTH-10",
-        "HEALTH-14",
-        "HEALTH-15",
-        "HEALTH-16",
-        "HEALTH-17",
-        "HEALTH-18",
-        "HEALTH-19"
+        "HEALTH-10"
       ],
       "required_sections": [
         "proxy-layer-model",
@@ -72,7 +66,8 @@
         "protected-lane",
         "enforcement-boundary",
         "canonical-private-ingress",
-        "recovery-readiness"
+        "recovery-readiness",
+        "actual-packet-path"
       ]
     },
     {
@@ -139,6 +134,33 @@
         "authorization-boundaries",
         "dns-and-quic",
         "evidence-and-fallback"
+      ]
+    },
+    {
+      "doc_id": "signalbox.human.worked-cases",
+      "zh-CN": "docs/human/50-worked-cases.zh-CN.md",
+      "en": "docs/human/50-worked-cases.en.md",
+      "required_contract_ids": [
+        "ROUTE-02",
+        "ROUTE-06",
+        "ROUTE-07",
+        "PRIVATE-01",
+        "PRIVATE-02",
+        "CLAIM-02",
+        "CLAIM-03",
+        "HEALTH-06",
+        "HEALTH-10",
+        "HEALTH-12",
+        "HEALTH-16",
+        "HEALTH-20",
+        "ENFORCE-01"
+      ],
+      "required_sections": [
+        "canonical-direct-overlap",
+        "domain-versus-ip-only",
+        "router-probe-versus-lan",
+        "awake-versus-sleeping",
+        "new-report-old-observations"
       ]
     }
   ]

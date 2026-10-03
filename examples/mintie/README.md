@@ -80,13 +80,27 @@ standalone `lane-hearth-fail.json` and `private-rowan-unknown.json` reports
 remain as separate single-subject examples of `fail` and `unknown`.
 
 The sample operational interval is 15 minutes and each operational report
-remains fresh for at most 20 minutes. Recovery-preflight reports remain fresh
-for at most five minutes and exact-match one operation, desired-state digest,
+has a report/observation age cap of 20 minutes and an attempt duration cap of
+five minutes. Its actual effective window ends at the earliest required
+observation expiry, so it can be shorter than 20 minutes after completion. Recovery-preflight reports remain fresh
+with report/observation caps and an attempt duration cap of five minutes and exact-match one operation, desired-state digest,
 runtime generation, restore scope, producer, subject, profile and revision,
 generation epoch, exact generation, report ID, and attempt ID. Its pass is
 usable only after publication and canonical structural and semantic validation.
 History is bounded by a 256 KiB file limit, two archives, and 288 entries. The
 numbers are sample deployment policy, not universal router requirements.
+
+## Concrete handoffs and replay
+
+`handoff.json` demonstrates an agent's synthetic source decision.
+`path-handoff.json` demonstrates the complete four-stage reference chain and a
+historical scoped acceptance. Its installed/activated evidence references are
+public sample artifacts, not target readbacks. None is Faye's owner acceptance.
+Path handoff validation at the sample lane publication time passes; current
+path PASS after expiry is rejected even if the historical decision was accepted.
+Use the [agent workflow](../../docs/agent/workflow.md) for commands and input trust.
+The [eight synthetic scenarios](../scenarios/README.md) connect judgments to
+expected outputs and tests without a live network.
 
 ## Deliberate boundary
 

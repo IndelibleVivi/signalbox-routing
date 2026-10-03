@@ -5,11 +5,11 @@
 | Concern | Normative source | Primary specification IDs |
 | --- | --- | --- |
 | Project and reference identity | `contracts/roles.json`, `examples/mintie/deployment.json` | `IDENT-01` to `IDENT-03` |
-| Realization and acceptance boundaries | `contracts/claims.json` | `CLAIM-01` to `CLAIM-03` |
+| Realization and acceptance boundaries | `contracts/claims.json` | `CLAIM-01` to `CLAIM-04` |
 | Traffic actions, precedence, and fallback | `contracts/traffic-policy.json`, `examples/mintie/traffic-policy.json` | `ROUTE-01` to `ROUTE-07` |
 | Enforcement and restore gates | `contracts/traffic-policy.json` | `ENFORCE-01`, `ENFORCE-02` |
 | Private ingress | roles plus traffic policy | `PRIVATE-01` to `PRIVATE-04` |
-| Health profiles, observations, reports, and aggregates | `contracts/health-contract.json` | `HEALTH-01` to `HEALTH-19` |
+| Health profiles, observations, reports, and aggregates | `contracts/health-contract.json` | `HEALTH-01` to `HEALTH-21` |
 | Documentation parity | `contracts/docs-pairs.json` | `DOC-01` to `DOC-05` |
 | Structural schemas and compatibility routing | `contracts/catalog.json`, `schemas/` | `AUTH-03` to `AUTH-05` |
 
@@ -125,8 +125,11 @@ else any unknown  -> outcome unknown
 else              -> outcome pass
 ```
 
-Every attempt publishes a terminal report using atomic replacement of the
-current pointer. Failed and unknown attempts advance generation. Generation is
+Every attempt reserves its generation at start and publishes a terminal
+report. The latest started attempt invalidates older current evidence; late
+completion is archived without overwriting the newer attempt. Publication and
+the exact compare/decision share one serialized boundary in the reference
+model. Deployment pointer replacement must be atomic and durable. Failed and unknown attempts advance generation. Generation is
 monotonic only inside `producer_ref + subject_ref + profile_ref +
 generation_epoch`; an epoch changes only through explicit reset or migration.
 The canonical evidence evaluator first validates the report schema and all
@@ -170,6 +173,16 @@ each member stores `effective_outcome_at_assembly`. Treat it as immutable
 historical evidence. Build a new aggregate when a current view is required;
 never age or rewrite the stored member outcomes in place. `HEALTH-15`
 
+## Freshness and standalone inputs
+
+Current `health-profile/v3` requires `max_report_age_seconds`,
+`max_observation_age_seconds` and `max_attempt_duration_seconds`. Cap
+`valid_until` by both completion plus report age and every required observation
+plus observation age; cap the whole attempt duration. A fresh completion cannot
+renew old observations. The canonical evaluator validates contract, report and
+single-profile structure/semantics before typed operations. Registry validation
+separately checks subject kind and exactly-one topology. `HEALTH-20`
+
 ## Recovery-readiness semantics
 
 Recovery readiness reports whether the implementation can safely observe and
@@ -187,9 +200,12 @@ canonically valid, published, fresh pass for that one context and identity may
 open the gate. A newer report forces an abort and current-pointer re-read; it
 does not inherit authorization from an older expectation.
 
-This repository implements the source decision contract, not the runtime
-current-pointer CAS/lock protocol. A deployment must still make its read and
-mutation state machine race-safe and emit its own receipt.
+The repository supplies a [synthetic sequencing/CAS reference](workflow.md#recovery-sequencing)
+with start-time reservations, immutable terminal reports, late-completion
+handling and continuity-aware restart. It uses an in-memory lock and emits only
+decisions. A deployment must implement durable sequencing and place its actual
+authorized restore effect inside the same serialized transaction; the source
+model does not activate those runtime guarantees.
 
 Platform-specific table warm-up, module loading, or listener initialization
 may satisfy the contract, but those mechanisms do not become portable
@@ -211,3 +227,10 @@ An `AcceptanceRecord` is orthogonal. It records `accepted`, `rejected`, or
 `revoked` for a named actor, scope, claims, and evidence at a decision time. It
 does not upgrade a realization stage and is not current path proof. Never
 compress several stages or a decision into the word `healthy`.
+
+
+Actual objects use `claim-record/v1`, `acceptance-record/v2` and `handoff/v1`.
+Follow the [task entry](workflow.md) and [two Mintie handoffs](../../examples/mintie/README.md).
+Bundle reference resolution, stage/scope/time constraints and fresh canonical
+path evidence are executable. Synthetic records are examples, not Faye's owner
+acceptance or installation readback. `CLAIM-04`

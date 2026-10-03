@@ -1,4 +1,4 @@
-<!-- doc_id: signalbox.readme; language: en; contract_revision: 5 -->
+<!-- doc_id: signalbox.readme; language: en; contract_revision: 6 -->
 <!-- contracts: SIG-01 SIG-02 IDENT-01 CLAIM-01 DOC-02 AUTH-05 ACCEPT-08 -->
 
 **English** · [简体中文](README.zh-CN.md)
@@ -30,6 +30,12 @@ into the normative core only when you are implementing or reviewing policy.
 New to the terms? The five-minute [Start here](docs/human/00-start-here.en.md)
 and [architecture map](docs/human/10-architecture.en.md) remain the shortest
 orientation.
+
+Try one complete judgment in the [five worked cases](docs/human/50-worked-cases.en.md):
+private/DIRECT overlap, domain versus IP-only routing, router-local versus LAN
+coverage, awake versus sleeping clients, and newly published stale evidence.
+An agent can follow the [executable workflow](docs/agent/workflow.md) from a
+structured policy explanation to a validated claim/acceptance handoff.
 
 <a id="what-signalbox-is"></a>
 ## What Signalbox is — and is not
@@ -96,6 +102,9 @@ Create an isolated development environment once, then run the complete gate:
 python3 -m venv .venv
 .venv/bin/python -m pip install --requirement requirements-dev.txt
 make verify PYTHON=.venv/bin/python
+.venv/bin/python -m scripts.policy
+.venv/bin/python -m scripts.replay
+.venv/bin/python -m scripts.handoff --evaluated-at 2026-10-03T00:00:03Z
 ```
 
 The gate bootstraps the contract catalog from a fixed Draft 2020-12 schema,
@@ -115,17 +124,15 @@ the exact published boundary, see [current state](docs/current-state.md).
 <a id="status-and-permission"></a>
 ## Status and permission
 
-F0.2.2 executable-authority closure and the F1 Human Surface are source-verified
-and published at the exact implementation commit and hosted gate recorded in
-[current state](docs/current-state.md). F0.3 underlay observability is
-source-verified and source-integrated into canonical `main` by the PR #1
-merge commit `5ca593db7c4ce101ee9afcc2aaf5ce1bbde9b3a2`: a `network-underlay`
-subject and `underlay-operational` profile keep a degraded DIRECT underlay
-visible while proxy lanes are green. That source integration claims no release
-or tag, no installed payload, no activation or live-router mutation, no live
-path evidence, and no owner or client acceptance. Full Signalbox v1 remains
-incomplete; installation, activation, private-ingress deployment, and
-acceptance remain separate gates. `ACCEPT-08`
+F0.3 underlay observability is source-integrated into canonical `main` by
+PR #1. The F2 Agent Surface update is a source candidate: complete reference
+chain diagnostics, observation/attempt freshness, real claim/acceptance
+objects, and synthetic current-pointer sequencing. The exact Git and hosted
+verification state is recorded in [current state](docs/current-state.md).
+Full Signalbox v1 remains incomplete. Synthetic records, scenario replay and
+source tests prove no installed payload, activation, live path, deployed
+recovery, or owner/client acceptance. Release and runtime gates remain separate.
+`ACCEPT-08`
 
 No license has been selected. Possession of or visibility into this repository
 does not grant reuse rights. External code and documentation contributions are

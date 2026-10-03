@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:signalbox:schema:claim-record:v1",
+  "title": "Signalbox claim-record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "claim_id",
+    "scope_ref",
+    "stage",
+    "outcome",
+    "evidence_refs",
+    "observed_at"
+  ],
+  "properties": {
+    "schema": {
+      "const": "signalbox.claim-record/v1"
+    },
+    "claim_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scope_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stage": {
+      "enum": [
+        "source",
+        "installed",
+        "activated",
+        "path-evidence"
+      ]
+    },
+    "outcome": {
+      "enum": [
+        "pass",
+        "fail",
+        "unknown"
+      ]
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "installed_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime_generation": {
+      "type": "string",
+      "minLength": 1
+    },
+    "activated_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "health_report_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "current_health_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "producer_ref",
+        "subject_ref",
+        "profile_ref",
+        "profile_revision",
+        "generation_epoch",
+        "generation",
+        "report_id",
+        "attempt_id"
+      ],
+      "properties": {
+        "producer_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subject_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profile_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generation_epoch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "report_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "attempt_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profile_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

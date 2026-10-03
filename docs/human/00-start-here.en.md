@@ -3,126 +3,90 @@ doc_id: signalbox.human.start-here
 language: en
 status: foundation-explanatory
 authority: ../specification.md
-contract_revision: 5
+contract_revision: 6
 ---
 
 **English** · [简体中文](00-start-here.zh-CN.md)
 
 <a id="proxy-layer-model"></a>
-# Start here: move proxy selection to the router
+# Start here: three requests in one home
 
-Signalbox is not primarily about which proxy port an application should use.
-It asks which layer should own proxy policy. `SIG-01`
+A phone and a laptop use Mintie, the sample router. Signalbox explains the
+policy behind their requests and the evidence needed to judge it. `SIG-01`
 
-```text
-explicit application proxy
-  -> operating-system proxy or PAC
-  -> local TUN interception
-  -> transparent router interception
-  -> upstream egress role
-```
+| Request | Information Mintie needs | Chosen path | If the path cannot be established |
+| --- | --- | --- | --- |
+| An ordinary site outside the DIRECT allowlist | Destination and policy match | Alder, the pinned general primary | Retain the guard; no automatic DIRECT fallback |
+| A protected application's matched dependencies | Protected set and transport | Hearth, the residential role | Fail closed; no general or DIRECT degradation |
+| An approved private service at its canonical HTTPS origin | Origin, approved scope, dedicated gateway | Alder Private to the exact private destination | Preserve the restriction; do not invent a public fallback |
 
-Moving policy toward the network entrance means applications need less proxy
-awareness. It also gives the control plane more responsibility for DNS,
-routing, failure semantics, observation, and recovery. Router transparency is
-valuable when that centralized policy remains understandable and verifiable.
+A DIRECT allowlist can deliberately select an ordinary request. It does not
+cover every connection made by the same application. A request without a
+usable domain match may still take the default proxy path. Walk through
+[cases 1 and 2](50-worked-cases.en.md) to see overlap and IP-only connections.
+
+The router owns transparent policy. Applications, OS proxy settings, and local
+TUN interception are other places where policy can live; they need an explicit
+compatibility design if they compete with router ownership.
 
 <a id="identity-namespaces"></a>
-## Keep three namespaces separate
+## Give the names a job
 
 `IDENT-02`
 
-| Kind | Signalbox example | Deployment stability |
+| Name in the story | Portable role | Meaning |
 | --- | --- | --- |
-| Portable role | `general-primary` | Stable semantics |
-| Sample identity | `Alder` | Replaceable reference name |
-| Private live binding | endpoint, credential, or provider outside the repo | Volatile; requires fresh readback |
+| Mintie | `routing-control-plane` | Owns interception, DNS policy and enforcement |
+| Alder | `general-primary` | Pinned ordinary proxy-required path |
+| Rowan | `general-secondary` | Independently observable standby, no implied automatic failover |
+| Hearth | `claude-residential` | Protected application egress, no fallback |
+| Alder Private | `private-ingress-primary` | Dedicated gateway identity, even when hosted on Alder |
 
-Mintie is the reference deployment, not another name for Signalbox. She gives
-the guide one complete topology without turning a private live network into a
-portable constant.
+Names are sample identities; roles carry policy and capability semantics.
+Endpoints, accounts and credentials are private deployment bindings outside
+this repo. Sharing a host does not give ordinary egress private-origin access.
 
 <a id="realization-and-acceptance"></a>
-## One green light proves one layer; acceptance is separate
+## A green probe, a phone that still cannot connect
 
-`CLAIM-01`
+The router can reach Alder while the phone fails before reaching interception.
+The probe skipped part of the phone's path. Start with the
+[packet path and observation points](10-architecture.en.md#actual-packet-path),
+then [case 3](50-worked-cases.en.md#router-probe-versus-lan). `CLAIM-01`
 
 ```text
 SOURCE -> INSTALLED -> ACTIVATED -> PATH-EVIDENCE
                                       :
-                                      +--> ACCEPTANCE RECORD
+                                      +--> scoped ACCEPTANCE RECORD
 ```
 
-- Source tests prove that the repository expresses its intended contract.
-- File presence proves that a payload was installed.
-- Process, loaded-config, route-table, and guard evidence prove the observed
-  activated shape.
-- A lane probe proves only that path evidence.
-- A real browser, PWA, or device action may produce a named acceptance record,
-  but that scoped decision cannot upgrade technical evidence or prove the path
-  remains current forever.
-
-If a layer cannot be queried, its outcome is `unknown`. Query failure is not
-evidence that a rule is absent or a subsystem is off.
+Source checks prove source. Installation readback proves file presence.
+Activation readback proves loaded process and kernel state. A path probe proves
+its named path at that time. A person or client may accept a scoped result;
+that decision cannot upgrade the evidence or keep it fresh forever.
 
 <a id="fail-closed"></a>
-## Fail closed is a policy, not an outage shortcut
+## What safe failure feels like
 
-`ROUTE-02`
-
-DIRECT serves only approved LAN, bootstrap, or direct allowlists. When
-protected traffic requires a proxy and the exit, DNS, routing process, or
-kernel state cannot be established, the policy fails and retains protection
-instead of silently degrading to the raw WAN.
-
-That contract also requires an independent management or break-glass path. A
-diagnostic actor must not depend exclusively on the path it is repairing.
+A protected request may stop working while management access remains available.
+That is the expected guard behavior when the required path is failed or
+unknown. DIRECT is allowlist-only, never a proxy-failure fallback. Maintain an
+independent management or break-glass path. `ROUTE-02`
 
 <a id="health-model"></a>
-## Health is more than opening a page
+## Choose the next evidence
 
-`HEALTH-01` `HEALTH-10` `HEALTH-14` `HEALTH-15` `HEALTH-16` `HEALTH-17` `HEALTH-18` `HEALTH-19`
+Health separates the control plane, each egress/private lane and the household
+underlay. One subject's PASS cannot speak for another. An aggregate preserves
+those outcomes without a single top-level verdict. `HEALTH-01` `HEALTH-10`
 
-Signalbox separates transport, exit identity, DNS, control plane, enforcement,
-resources, persistence, and recovery readiness. A `HealthProfile` says what to
-observe; every attempt publishes an immutable `HealthReport`. Each registered
-control plane has exactly one recovery-preflight and one control-plane
-operational profile, while each registered egress or private-ingress lane has
-exactly one lane-operational profile. Profile kind cannot cross subject kind. A
-registered network underlay is its own subject kind with its own
-underlay-operational profile kind; each registered network underlay has exactly
-one such profile, and a deployment that registers none simply has no underlay
-member. The underlay is never an egress lane and never a DIRECT fallback.
+- Awake clients work but sleeping clients stall: compare the same radio at the
+  same time; [case 4](50-worked-cases.en.md#awake-versus-sleeping).
+- A report just published but its probes ran long ago: reject it as current
+  recovery evidence; [case 5](50-worked-cases.en.md#new-report-old-observations).
+- A query cannot establish state: keep `unknown`; do not call it OFF or absent.
 
-A report has no effective outcome until the canonical evaluator proves its v2
-structure and semantics, checks `published_at <= evaluated_at <= valid_until`,
-and exact-matches the expected current producer, subject, profile and revision,
-epoch, generation, report ID, and attempt ID. A stale, unpublished, malformed,
-regressed, superseded, or mismatched recorded pass is therefore `unknown`.
-
-A `recovery-preflight` profile asks only whether state can be queried,
-reconciled, and restored safely for one exact operation and desired-state
-digest. Operational health is split into one control-plane report, one report
-per egress or private-ingress lane, and one report per registered network
-underlay. An underlay report observes actual path behavior: transport, resolver,
-loaded responsiveness, and recent link availability. A degraded household or
-WAN path therefore stays visible while the control plane and proxy lanes look
-green. It cannot infer shaping activation and cannot authorize any route change.
-An aggregate preserves those member outcomes; it never flattens them into a
-single green network status.
-
-Each dimension is rolled up from explicit observations. A lane transport pass
-needs both a transport-neutral probe and a role-specific probe from independent
-dependency groups. Neither a profile, report, nor aggregate selects or mutates
-routes.
-
-An aggregate is a historical assembly receipt, not a value that silently
-changes as time passes. Its member outcomes pass through that same canonical
-evaluator once at `assembled_at`; a current view requires fresh reports and a
-new aggregate.
-
-A cold-boot incident provides the key example: a route table may be logically
-empty while the platform cannot query it reliably. Recovery then has no basis
-to claim that runtime is `OFF`. Queryability is itself a health dimension.
-
-Continue with [Signalbox architecture and packet paths](10-architecture.en.md).
+For exact profile cardinality, publication windows, observation ages and
+current-pointer identity, use [health and observability](../reference/health-and-observability.md).
+For a complete agent handoff and recovery races, use the
+[Agent Surface](../agent/README.md).

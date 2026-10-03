@@ -4,6 +4,14 @@ Signalbox's Agent Surface is a deterministic route into the normative
 contracts. It is not a live-router runbook and does not authorize external
 mutation.
 
+## Task entry
+
+Begin with [从事实到可校验交接](workflow.md) for a complete executable task.
+It connects policy explanation, source verification, actual claim/acceptance
+records and eight scenario replays. Use the normative read order below when a
+relation or diagnostic needs inspection. The workflow does not authorize live
+network work.
+
 ## Read order
 
 1. `../../AGENTS.md` — repository authority and mutation boundaries.

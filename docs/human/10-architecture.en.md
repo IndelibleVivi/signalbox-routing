@@ -3,7 +3,7 @@ doc_id: signalbox.human.architecture
 language: en
 status: foundation-explanatory
 authority: ../specification.md
-contract_revision: 5
+contract_revision: 6
 ---
 
 **English** · [简体中文](10-architecture.zh-CN.md)
@@ -43,6 +43,58 @@ The Mintie executable projection also locks each settled route ID to one exact
 action, match form, and allowed field set. Route order remains necessary, but
 an action swap or an extra field is contract drift rather than an equivalent
 implementation. `ROUTE-07`
+
+<a id="actual-packet-path"></a>
+## Actual packet path and observation points
+
+This is a conceptual Linux TProxy realization, not Mintie's live ruleset.
+The data and DNS requests are separate flows; domain policy needs usable
+resolver/sniffing evidence. Linux TProxy combines interception/packet marking,
+policy routing to local delivery, and a transparent listening socket; exact
+marks, tables, hooks and admission rules belong to the deployment. See the
+[Linux kernel TProxy documentation](https://docs.kernel.org/networking/tproxy.html).
+
+```mermaid
+flowchart TD
+  CLIENT[LAN client]
+  DNS[DNS capture and resolver policy]
+  ADMIT[LAN admission and firewall hooks]
+  MARK[TPROXY interception and packet mark]
+  RULE[Policy rule selects local delivery table]
+  SOCKET[Local transparent socket]
+  POLICY[Canonical private before DIRECT<br/>protected and default policy]
+  EGRESS[Selected egress or dedicated gateway]
+  ORIGIN[Destination or exact private origin]
+  FORWARD[Kernel allowlisted forwarding]
+  OUTPUT[Router-originated DIRECT socket]
+  GUARD[Independent guard<br/>fail or UNKNOWN retains restriction]
+  PROBE[Router-local lane probe]
+
+  CLIENT -->|DNS request| DNS
+  DNS -.->|resolver or domain evidence| POLICY
+  CLIENT -->|data packet| ADMIT
+  ADMIT --> MARK --> RULE --> SOCKET --> POLICY
+  POLICY -->|proxy-required or private| EGRESS --> ORIGIN
+  ADMIT -->|kernel DIRECT only after canonical exclusion| FORWARD --> ORIGIN
+  POLICY -->|userspace DIRECT allowlist| OUTPUT --> ORIGIN
+  PROBE -->|explicit lane dial skips LAN interception| EGRESS
+  ADMIT -.->|enforcement observation| GUARD
+  MARK -.->|enforcement observation| GUARD
+  FORWARD -.->|forwarding restriction| GUARD
+  OUTPUT -.->|router-output restriction| GUARD
+```
+
+Observe LAN admission, interception marks, the selected policy rule/local route,
+the transparent socket, selected egress, and forwarding guard separately. A
+router-local explicit lane probe joins at egress: it does not traverse the
+client's PREROUTING, mark-to-table delivery or admission path. Kernel DIRECT
+bypass uses forwarding; userspace DIRECT creates a router-originated output
+socket. Both require canonical-origin precedence.
+Forwarding/output constraints and local-delivery admission are different
+enforcement points;
+a deployment must verify its actual hooks rather than copy this graph as rules.
+A healthy router-to-egress probe leaves the skipped boundaries unknown.
+Use [case 3](50-worked-cases.en.md#router-probe-versus-lan) to test that inference.
 
 <a id="protected-lane"></a>
 ## Protected lane
