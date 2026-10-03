@@ -25,7 +25,7 @@ activated to path evidence, or old path evidence to current path evidence.
 - report identity, profile reference/revision, producer, subject, epoch, and
   attempt are present;
 - timestamp order is valid and `valid_until` stays inside the exact profile's
-  maximum report age;
+  maximum report age, every required observation expiry, and attempt duration;
 - generation has not regressed inside its producer/subject/profile/epoch scope,
   and the expected epoch has not changed unexpectedly;
 - all dimensions required by that profile are present;
@@ -45,3 +45,16 @@ activated to path evidence, or old path evidence to current path evidence.
   another, and a restore gate exact-matches operation, desired-state digest,
   runtime generation, scope, and epoch;
 - observation remains separate from routing or recovery mutation.
+
+
+## Executable records
+
+`signalbox.claims/v2` owns the semantics; `claim-record/v1` and
+`acceptance-record/v2` own concrete object shapes. The v1 acceptance descriptor
+is retired from the active catalog. The [source handoff](../../examples/mintie/handoff.json)
+and [four-stage synthetic handoff](../../examples/mintie/path-handoff.json)
+reference explicit actors, scopes and evidence. Neither is a real installation,
+activation or owner-acceptance receipt. Validate with the
+[agent workflow](workflow.md). Missing actor/scope/time, broken references,
+cross-stage evidence and stale current path claims are rejected. A historic
+accepted decision remains historical; it cannot renew path evidence.

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:signalbox:schema:health-contract:v5",
+  "$id": "urn:signalbox:schema:health-contract:v6",
   "title": "Signalbox health contract",
   "type": "object",
   "additionalProperties": false,
@@ -19,6 +19,7 @@
     "evidence_evaluation",
     "generation",
     "freshness",
+    "profile_freshness_required_fields",
     "recovery_gate",
     "deployment_aggregate",
     "publication",
@@ -27,11 +28,12 @@
     "retention_policy_required_fields",
     "forbidden_durable_keys",
     "reason_codes",
-    "reason_code_contexts"
+    "reason_code_contexts",
+    "sequencing"
   ],
   "properties": {
-    "schema": {"const": "signalbox.health-contract/v5"},
-    "contract_revision": {"type": "integer", "minimum": 5},
+    "schema": {"const": "signalbox.health-contract/v6"},
+    "contract_revision": {"type": "integer", "minimum": 6},
     "transient_outcomes": {"$ref": "#/$defs/stringSet"},
     "terminal_outcomes": {"$ref": "#/$defs/stringSet"},
     "rollup_precedence": {"$ref": "#/$defs/stringSet"},
@@ -109,8 +111,12 @@
         "required",
         "basis",
         "maximum_formula",
+        "observation_formula",
+        "attempt_formula",
         "published_before_or_at_valid_until",
         "stale_effective_outcome",
+        "stale_observation_effective_outcome",
+        "excessive_attempt_duration_effective_outcome",
         "missing_or_malformed_effective_outcome",
         "profile_revision_mismatch_effective_outcome"
       ],
@@ -118,12 +124,17 @@
         "required": {"type": "boolean"},
         "basis": {"type": "string", "minLength": 1},
         "maximum_formula": {"type": "string", "minLength": 1},
+        "observation_formula": {"type": "string", "minLength": 1},
+        "attempt_formula": {"type": "string", "minLength": 1},
         "published_before_or_at_valid_until": {"type": "boolean"},
         "stale_effective_outcome": {"$ref": "#/$defs/terminal"},
+        "stale_observation_effective_outcome": {"$ref": "#/$defs/terminal"},
+        "excessive_attempt_duration_effective_outcome": {"$ref": "#/$defs/terminal"},
         "missing_or_malformed_effective_outcome": {"$ref": "#/$defs/terminal"},
         "profile_revision_mismatch_effective_outcome": {"$ref": "#/$defs/terminal"}
       }
     },
+    "profile_freshness_required_fields": {"$ref": "#/$defs/stringSet"},
     "recovery_gate": {
       "type": "object",
       "additionalProperties": false,
@@ -201,6 +212,26 @@
         "minItems": 1,
         "items": {"$ref": "#/$defs/reasonCodeContext"}
       }
+    },
+    "sequencing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation_allocation",
+        "new_attempt_invalidates_current",
+        "late_completion",
+        "compare_and_decision",
+        "restart_continuity",
+        "unconfirmed_continuity_outcome"
+      ],
+      "properties": {
+        "generation_allocation": {"const": "attempt-start"},
+        "new_attempt_invalidates_current": {"const": true},
+        "late_completion": {"const": "archive-only"},
+        "compare_and_decision": {"const": "same-serialized-boundary"},
+        "restart_continuity": {"const": "required"},
+        "unconfirmed_continuity_outcome": {"const": "unknown"}
+      }
     }
   },
   "$defs": {
@@ -234,7 +265,10 @@
     "reasonCodeContext": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["profile_kind", "dimension"],
+      "required": [
+        "profile_kind",
+        "dimension"
+      ],
       "properties": {
         "profile_kind": {"type": "string", "minLength": 1},
         "dimension": {"type": "string", "minLength": 1}

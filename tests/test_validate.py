@@ -60,6 +60,7 @@ def copy_tracked_tree(destination: Path) -> None:
 class SignalboxValidationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.roles = load_json("contracts/roles.json")
         cls.health_contract = load_json("contracts/health-contract.json")
         cls.profiles_document = load_json("examples/mintie/health-profiles.json")
         cls.profiles = {
@@ -562,7 +563,7 @@ class SignalboxValidationTests(unittest.TestCase):
             ("producer_ref", "reference/other-observer"),
             ("subject_ref", "role-binding/rowan"),
             ("profile_ref", "mintie-egress-rowan"),
-            ("profile_revision", 3),
+            ("profile_revision", 4),
             ("generation", 102),
             ("report_id", "report-other"),
             ("attempt_id", "attempt-other"),
@@ -961,7 +962,9 @@ class SignalboxValidationTests(unittest.TestCase):
             fixture = json.loads(path.read_text(encoding="utf-8"))
             traffic = copy.deepcopy(self.reference_traffic)
             traffic["route_order"] = [by_id[route_id] for route_id in fixture["route_ids"]]
-            errors = validator.validate_reference_traffic(traffic, self.deployment)
+            errors = validator.validate_reference_traffic(
+                traffic, self.deployment, self.roles, self.profiles_document, self.health_contract
+            )
             with self.subTest(path=path.name):
                 self.assertTrue(
                     any(fixture["expected_error"] in error for error in errors),
@@ -1124,7 +1127,7 @@ class SignalboxValidationTests(unittest.TestCase):
                 )
                 route["action"] = action
                 errors = validator.validate_reference_traffic(
-                    traffic, self.deployment
+                    traffic, self.deployment, self.roles, self.profiles_document, self.health_contract
                 )
                 self.assertTrue(
                     any(route_id in error and "action" in error for error in errors),
@@ -1137,7 +1140,9 @@ class SignalboxValidationTests(unittest.TestCase):
             "mode": "pinned",
             "role_binding_ref": "alder",
         }
-        errors = validator.validate_reference_traffic(traffic, self.deployment)
+        errors = validator.validate_reference_traffic(
+                traffic, self.deployment, self.roles, self.profiles_document, self.health_contract
+            )
         self.assertTrue(any("protocol-observation" in error for error in errors), errors)
 
     def test_boundary_scan_rejects_machine_local_paths(self):
@@ -1405,12 +1410,12 @@ class SignalboxValidationTests(unittest.TestCase):
         self.assertTrue(any("unexpected revision" in error for error in errors), errors)
         current = load_json("contracts/docs-pairs.json")
         self.assertEqual(current["schema"], "signalbox.docs-pairs/v3")
-        self.assertEqual(current["contract_revision"], 5)
+        self.assertEqual(current["contract_revision"], 6)
         entries = {
             entry["schema_id"]: entry
             for entry in load_json("contracts/catalog.json")["entries"]
         }
-        self.assertEqual(entries["signalbox.docs-pairs/v3"]["revision"], 5)
+        self.assertEqual(entries["signalbox.docs-pairs/v3"]["revision"], 6)
 
     def test_markdown_links_cannot_escape_repository(self):
         with tempfile.TemporaryDirectory() as temp_dir:

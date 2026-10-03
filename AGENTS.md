@@ -28,7 +28,9 @@ runtime tags.
 | `examples/mintie/*` | Public-safe reference deployment; never a production binding or credential source |
 | `scripts/validate_schemas.py` | Fixed-schema catalog bootstrap followed by catalog-driven JSON Schema validation |
 | `scripts/repository_paths.py` | Shared repo-containment resolver for catalog, documentation, and aggregate references |
-| `scripts/validate.py` and `tests/` | Cross-file semantics, Git-index public-boundary scanning, and regression checks; not runtime or client acceptance |
+| `scripts/validate.py` and `tests/` | Cross-file semantics, canonical report/profile evaluation, Git-index public-boundary scanning and regressions; not runtime acceptance |
+| `scripts/handoff.py` | Concrete scoped claim and historical acceptance evaluation; public synthetic records only |
+| `scripts/reference_workflow.py`, `scripts/replay.py` | Synthetic current-pointer sequencing and replayable judgment references; no durable/live pointer or restore effect |
 | `.github/workflows/verify.yml` | Hosted source gate across supported Python versions |
 
 Attached specifications, transcripts, logs, incident notes, and external
@@ -64,6 +66,17 @@ replace the authority map above.
 - A restore gate exact-matches producer, subject, profile and revision, epoch,
   generation, report ID, attempt ID, and gate context. A higher or lower
   generation is a mismatch; abort and re-read the current pointer.
+- Profiles on the active v3 line cap observation age and attempt duration as
+  well as report age; the earliest required observation expiry caps validity.
+  Contract/profile/report structure precedes typed semantics in standalone
+  evaluation. Never renew an old probe by completing a report later.
+- A public handoff is synthetic. Bind path-claim scope to the exact report
+  subject; acceptance records cannot upgrade stages or renew evidence.
+- The reference publisher reserves generation at start, archives late terminal
+  reports without replacing newer attempts, and serializes compare/decision
+  under an in-memory lock. Resume exact-matches snapshot producer/subject/profile
+  scope. A deployment must implement durable sequencing and
+  its authorized effect within the same transaction; source tests prove neither.
 - Deployment aggregation applies that same canonical evaluator, preserves
   assembly-time member outcomes as a historical receipt, and never emits a
   top-level health verdict.

@@ -1,4 +1,4 @@
-<!-- doc_id: signalbox.readme; language: zh-CN; contract_revision: 5 -->
+<!-- doc_id: signalbox.readme; language: zh-CN; contract_revision: 6 -->
 <!-- contracts: SIG-01 SIG-02 IDENT-01 CLAIM-01 DOC-02 AUTH-05 ACCEPT-08 -->
 
 [English](README.md) · **简体中文**
@@ -25,6 +25,11 @@ public-safe example 和验证工具。普通读者不必先啃完所有 contract
 
 如果这些词还很陌生，先读五分钟版的[从这里开始](docs/human/00-start-here.zh-CN.md)
 和[架构图](docs/human/10-architecture.zh-CN.md)即可。
+
+跟着 [五个完整案例](docs/human/50-worked-cases.zh-CN.md) 做一次判断：private/DIRECT
+重叠、domain 与 IP-only 分流、router-local 与 LAN 覆盖、awake 与 sleeping client，
+以及新发布的旧证据。agent 可以沿 [可执行 workflow](docs/agent/workflow.md) 从 structured
+policy explanation 走到可校验的 claim/acceptance handoff。
 
 <a id="what-signalbox-is"></a>
 ## Signalbox 是什么——又不是什么
@@ -96,6 +101,28 @@ target，不会跟随。这个 detector 不是 Git history audit，也不是 uni
 scanner。Hosted CI 会在 Python 3.11、3.12、3.13 上重复执行这个 source gate。
 `AUTH-05`
 
+### 亲手跑一次 source 判断
+
+建立上面的 environment 后，从 repo root 运行这些命令。它们只在本机读取公开的
+synthetic example，不连接路由器，也不 apply policy。
+
+| 你想检查什么 | 命令 | 输出能证明什么 |
+| --- | --- | --- |
+| canonical private ingress 的引用链为什么完整 | `.venv/bin/python -m scripts.policy` | Mintie source example 的 `valid`、origin → gateway → host → role/capabilities → subject/profile `chain` 与 `diagnostics` |
+| routing、coverage、freshness 或 sequence 判断是否符合预期 | `.venv/bin/python -m scripts.replay` | 八个 synthetic result；每个 `passed` 比较 `actual` 与 `expected` |
+| scoped source claim 与历史 acceptance 的引用是否合法 | `.venv/bin/python -m scripts.handoff --evaluated-at 2026-10-03T00:00:03Z` | 样例 handoff 的 `valid`、有依据的 `claim_outcomes` 与 `diagnostics` |
+
+例如，重放一份刚发布、内部 observation 却已经过旧的 report：
+
+```bash
+.venv/bin/python -m scripts.replay --case new-report-old-observations
+```
+
+这个 scenario 在 `effective_outcome` 为 `unknown`、`restore_allowed` 为 `false`
+时通过。这里的 `passed: true` 表示预期的拒绝行为成立，不代表观察路径健康。
+handoff 命令的显式时间用于求值历史样例。想看完整四阶段 handoff 如何在 evidence
+window 内通过、过期后被拒绝，继续看 [agent workflow](docs/agent/workflow.md#replay-a-historical-handoff)。
+
 Agent 从 [Agent Surface](docs/agent/README.md) 继续；事故机制见 [failure
 catalog](docs/reference/failure-catalog.md)；准确 publication boundary 见 [current
 state](docs/current-state.md)。
@@ -103,17 +130,13 @@ state](docs/current-state.md)。
 <a id="status-and-permission"></a>
 ## 状态与许可
 
-F0.2.2 executable-authority closure 与 F1 Human Surface 已在 [current
-state](docs/current-state.md) 记录的 exact implementation commit 和 hosted gate 上
-完成 source verification 与 publication。F0.3 underlay observability 已完成
-source verification，并通过 PR #1 merge commit
-`5ca593db7c4ce101ee9afcc2aaf5ce1bbde9b3a2` 集成进 canonical `main`：
-`network-underlay` subject 与 `underlay-operational` profile 让 degraded DIRECT
-underlay 在 proxy lane 全绿时仍然可见。这次 source integration 不声称任何 release
-或 tag、installed payload、activation 或 live-router mutation、live path evidence，
-也不声称 owner 或 client acceptance。完整 Signalbox v1 尚未完成；installation、
-activation、private-ingress deployment 与 acceptance 仍是彼此独立的 gate。
-`ACCEPT-08`
+F0.3 underlay observability 已通过 PR #1 集成进 canonical `main`。
+F2 Agent Surface 更新是 source candidate：完整 reference chain diagnostic、
+observation/attempt freshness、实际 claim/acceptance 对象与 synthetic current-pointer
+sequencing。精确 Git 与 hosted verification 状态在 [current state](docs/current-state.md)。
+完整 Signalbox v1 尚未完成。synthetic record、scenario replay 与 source test 不证明
+installed payload、activation、live path、deployed recovery 或 owner/client acceptance。
+release 与 runtime gate 仍然独立。`ACCEPT-08`
 
 目前尚未选择 license。能够看到或持有本 repo 不等于获得 reuse rights。在明确
 contribution 与 rights terms 之前，暂不接受外部 code 或 documentation contribution。

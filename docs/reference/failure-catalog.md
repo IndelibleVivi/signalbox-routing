@@ -142,20 +142,23 @@ or current live-system truth.
   iteration.
 - Protecting contracts: `CLAIM-02`, `CLAIM-03`, `HEALTH-06`, `HEALTH-10`.
 
-## `FAIL-012` — Sudden onset blamed on frozen infrastructure
+## `FAIL-012` — Change trigger confused with defect or repair location
 
-- First broken boundary: attribution and change detection.
-- Pattern: a previously healthy client class degrades abruptly while the
-  infrastructure side is provably frozen — firmware install timestamps,
-  config hashes, and uptime all predate the first symptom. The actual change
-  sits on the client side, such as an OS update that alters Wi-Fi sleep
-  timing, corroborated by new randomized client identities appearing in AP
-  association logs at the same time.
-- Unsafe interpretation: the loudest recent infrastructure work, or the
-  oldest standing suspicion about the ISP or router, is treated as the cause,
-  and remediation trials mutate the side that did not change.
-- Portable response: before any remediation trial, establish the change
-  frontier with fresh read-back — install and flash dates, config hashes, and
-  uptime on the frozen side against release timelines and identity churn on
-  the client side — and suspect the side that changed first.
+- First broken boundary: causal attribution and change detection.
+- Pattern: a client class suddenly degrades while observed infrastructure
+  firmware/configuration history predates the symptom. A client sleep-policy
+  change may trigger a latent AP delivery defect or interaction incompatibility.
+  The changed side, the failing mechanism, and the best repair location can be
+  three different things.
+- Unsafe interpretation: recent router work must be the cause, or unchanged
+  firmware/configuration proves infrastructure cannot contain a defect.
+- Portable response: use existing firmware/configuration history and fresh
+  uptime/readback to rank experiments and exclude particular recent regressions.
+  Do not calculate new hashes without an identity decision that needs them.
+  Compare same-radio, same-time client classes and upstream controls; localize
+  the first failing interaction independently from the change trigger. A repair
+  may belong to the AP, the client, or an explicitly scoped compatibility path.
+  Frozen configuration does not exclude latent implementation defects,
+  resource state changes, RF changes or interactions with changed peers.
 - Protecting contracts: `CLAIM-02`, `HEALTH-06`.
+- Worked evidence: [awake versus sleeping clients](../human/50-worked-cases.en.md#awake-versus-sleeping).

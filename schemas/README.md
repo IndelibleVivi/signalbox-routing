@@ -20,3 +20,14 @@ membership, network-underlay subject/profile binding, and bilingual semantic
 anchors are validated by
 [`scripts/validate.py`](../scripts/validate.py). Neither gate is runtime or path
 evidence.
+
+
+Active F2 shapes are health-contract/v6, health-profile/v3, claims/v2,
+claim-record/v1, acceptance-record/v2 and handoff/v1. The acceptance schema now
+validates actual decisions rather than a required-field descriptor. Reports
+and aggregates retain v2 because their shapes are unchanged. Profile config
+revisions are independent of catalog contract revisions. See the
+[compatibility and task entry](../docs/agent/workflow.md).
+Concrete claim/handoff semantics are owned by
+[`scripts/handoff.py`](../scripts/handoff.py); freshness and report semantics
+remain in the canonical health evaluator.
