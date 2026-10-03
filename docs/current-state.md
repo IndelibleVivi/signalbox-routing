@@ -16,8 +16,18 @@ Last updated: 2026-10-03
   instances, ten reference reports, one historical regression fixture, concrete
   handoff validation, eight synthetic replay judgments and 130 unit tests.
   The prior baseline had 79 unit tests. These are source checks, not live evidence.
-- Git/remote: the verified source candidate is prepared for the existing remote.
-  Hosted CI and protected-main integration remain separate; a PR is required.
+- Git/remote: source candidate published on `f2-agent-surface` through
+  [PR #3](https://github.com/IndelibleVivi/signalbox-routing/pull/3), open and
+  not merged into protected `main`. Implementation commit:
+  `3abe19fee33b10a832b70472a22fb0c112d0a590`.
+- Hosted implementation receipt:
+  [run 37123181025](https://github.com/IndelibleVivi/signalbox-routing/actions/runs/37123181025)
+  passed Python 3.11, 3.12, 3.13 and `signalbox-verify` for that implementation
+  commit. Later status-only commits have their own PR checks; the linked run is
+  an exact historical receipt, not a claim about every later head.
+- Visual verification: the new packet-path and recovery-sequence Mermaid
+  diagrams rendered on GitHub and were inspected. Diagram source remains
+  ordinary Markdown; no Mermaid plugin or production binding was added.
 - Normative source line: specification revision 6; health-contract/v6,
   health-profile/v3, claims/v2, claim-record/v1, acceptance-record/v2 and
   handoff/v1. Report and aggregate shapes retain v2.

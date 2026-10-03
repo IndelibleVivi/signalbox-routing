@@ -2,7 +2,7 @@
 
 Status: active
 Current execution tranche: F2 Agent Surface source update (implementation and
-local verification complete; candidate, not merged or deployed)
+local and hosted implementation verification complete; candidate, not merged or deployed)
 Most recently integrated tranche: F0.3 underlay observability via PR #1
 Previous source boundary: F0.2.2 executable-authority closure
 Next programme tranche after F2: F3 complete Mintie reference deployment
@@ -72,7 +72,7 @@ different phases. This plan ends at verified Signalbox source.
 | --- | --- | --- | --- | --- | --- |
 | `ACCEPT-01` | Normative contracts agree | F0/F0.2.1/F0.2.2 contracts | Identity settled | semantic validator, JSON Schema, contract tests | F0.2.2 source and remote boundary complete; full v1 pending |
 | `ACCEPT-02` | Paired Human Surface teaches the complete model | F1 human guide | F0 IDs and diagrams | doc-pair parity plus manual read | F1 source and remote boundary complete; full v1 pending |
-| `ACCEPT-03` | Agent Surface defines implementation and evidence behavior | F2 agent reference | F0 contracts | structured chain diagnostics, concrete handoffs, sequence/restore replay and behavior tests | F2 source-complete candidate; local gate passed |
+| `ACCEPT-03` | Agent Surface defines implementation and evidence behavior | F2 agent reference | F0 contracts | structured chain diagnostics, concrete handoffs, sequence/restore replay and behavior tests | F2 source-complete candidate; local and hosted implementation gates passed |
 | `ACCEPT-04` | Mintie is a portable, public-safe reference deployment | F0.2/F0.2.2/F3 Mintie example | F0 roles/routing/health | example validation and Git-index boundary scan | exact reference route grammar and broader source scan are published; full F3 pending |
 | `ACCEPT-05` | Reusable failure mechanisms are retained | F4 failure depth | F0 health/evidence | failure-ID coverage | F0.2 mechanisms added; F4 pending |
 | `ACCEPT-06` | Validation rejects meaningful contract drift | F0.2.2 validator and F5 hardening | F0 contracts | positive and negative tests plus the hosted implementation gate | exact published receipts are owned by `docs/current-state.md`; F5 pending |
