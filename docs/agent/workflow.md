@@ -51,6 +51,36 @@ descriptor-only v1 schema：`record_id`、`actor_class`、`actor_ref`、`decisio
 profile 在 registry 中且完整有效；调用者传入的 current identity 必须来自可信 pointer read，
 不能从想使用的历史 report 自己拼出“current”。
 
+<a id="replay-a-historical-handoff"></a>
+### 重放一份历史 handoff
+
+从 repo root 运行以下两个命令。它们读取同一份公开 synthetic bundle，只改变
+evaluation time；没有产生 installed 或 activated readback。
+
+在 sample report 的 publication time 求值：
+
+```bash
+.venv/bin/python -m scripts.handoff --file examples/mintie/path-handoff.json --evaluated-at 2026-08-31T10:00:12Z
+```
+
+预期 exit code 为 `0`、`valid: true`、四个 `claim_outcomes` 全部为 `pass`，
+`diagnostics` 为空。这支持样例内部的结构、引用和时间关系。
+
+在次日求值：
+
+```bash
+.venv/bin/python -m scripts.handoff --file examples/mintie/path-handoff.json --evaluated-at 2026-09-01T10:00:12Z
+```
+
+预期 exit code 为 `1`、`valid: false`，`claim/path-evidence` 的有效 outcome 是
+`unknown`；其余三个 stage 保持 `pass`。diagnostics 包含 `stale-evidence`、
+`unusable-path-evidence` 和 `claim-outcome-mismatch`：bundle 仍声称当前 path PASS，
+过期 evidence 已不能支持它。这个 nonzero exit 是预期的拒绝，不是环境安装失败。
+历史 acceptance 记录不变，也不能续期 path evidence。
+
+执行自己的已授权 source 任务时，记录本次真实 evidence 和时间。样例中的固定时间
+用于重放，不能冒充当前报告、可信 pointer read 或人的验收决定。
+
 ## Evaluator 的输入前提与兼容性
 
 `evaluate_health_evidence(report, contract, profile, report_schema, evaluated_at,

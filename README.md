@@ -102,9 +102,6 @@ Create an isolated development environment once, then run the complete gate:
 python3 -m venv .venv
 .venv/bin/python -m pip install --requirement requirements-dev.txt
 make verify PYTHON=.venv/bin/python
-.venv/bin/python -m scripts.policy
-.venv/bin/python -m scripts.replay
-.venv/bin/python -m scripts.handoff --evaluated-at 2026-10-03T00:00:03Z
 ```
 
 The gate bootstraps the contract catalog from a fixed Draft 2020-12 schema,
@@ -116,6 +113,32 @@ symlink targets are inspected without being followed. This detector is not a
 Git-history audit or a universal secret scanner. Hosted CI repeats the source
 gate on Python 3.11, 3.12, and 3.13.
 `AUTH-05`
+
+### Try a source judgment
+
+Run these from the repository root after setting up the environment above.
+Each command reads public synthetic examples locally; none contacts a router
+or applies a policy.
+
+| What you want to inspect | Command | What the output establishes |
+| --- | --- | --- |
+| Why canonical private ingress has a complete reference chain | `.venv/bin/python -m scripts.policy` | `valid`, an origin → gateway → host → role/capabilities → subject/profile `chain`, and `diagnostics` for the Mintie source example |
+| Whether a routing, coverage, freshness or sequence judgment matches its expected result | `.venv/bin/python -m scripts.replay` | Eight synthetic results; each `passed` compares `actual` with `expected` |
+| Whether a scoped source claim and historical acceptance have valid references | `.venv/bin/python -m scripts.handoff --evaluated-at 2026-10-03T00:00:03Z` | `valid`, supported `claim_outcomes`, and `diagnostics` for the sample handoff |
+
+For example, replay a report that has just been published but contains old
+observations:
+
+```bash
+.venv/bin/python -m scripts.replay --case new-report-old-observations
+```
+
+This scenario passes when `effective_outcome` is `unknown` and
+`restore_allowed` is `false`. Here `passed: true` means the expected rejection
+worked; it does not mean the observed path is healthy. The handoff command's
+explicit time evaluates a historical sample. For a four-stage handoff that
+passes within its evidence window and is rejected after expiry, follow the
+[agent workflow](docs/agent/workflow.md#replay-a-historical-handoff).
 
 For agents, continue with the [Agent Surface](docs/agent/README.md). For incident
 mechanisms, see the [failure catalog](docs/reference/failure-catalog.md). For

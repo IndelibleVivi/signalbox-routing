@@ -35,6 +35,10 @@ Last updated: 2026-10-03
 - Normative source line: specification revision 6; health-contract/v6,
   health-profile/v3, claims/v2, claim-record/v1, acceptance-record/v2 and
   handoff/v1. Report and aggregate shapes retain v2.
+- Reader follow-up: the paired READMEs explain each CLI's inputs and output
+  meaning; Agent Surface links task-specific implementations; the workflow
+  demonstrates historical handoff validity and expiry; the glossary and
+  programme coverage ledger reflect this candidate without claiming full v1.
 - Full Signalbox v1 remains incomplete. F3 complete configuration and negative
   proofs, F4 remaining failure depth, F5 historical compatibility/supply-chain
   work and F6 whole-programme reconciliation remain open in the

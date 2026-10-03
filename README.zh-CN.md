@@ -91,9 +91,6 @@ flowchart LR
 python3 -m venv .venv
 .venv/bin/python -m pip install --requirement requirements-dev.txt
 make verify PYTHON=.venv/bin/python
-.venv/bin/python -m scripts.policy
-.venv/bin/python -m scripts.replay
-.venv/bin/python -m scripts.handoff --evaluated-at 2026-10-03T00:00:03Z
 ```
 
 这个 gate 先用 fixed Draft 2020-12 schema bootstrap contract catalog，再验证跨文件
@@ -103,6 +100,28 @@ public-boundary violations。binary blob 不会被 follow 或 decode；symlink �
 target，不会跟随。这个 detector 不是 Git history audit，也不是 universal secret
 scanner。Hosted CI 会在 Python 3.11、3.12、3.13 上重复执行这个 source gate。
 `AUTH-05`
+
+### 亲手跑一次 source 判断
+
+建立上面的 environment 后，从 repo root 运行这些命令。它们只在本机读取公开的
+synthetic example，不连接路由器，也不 apply policy。
+
+| 你想检查什么 | 命令 | 输出能证明什么 |
+| --- | --- | --- |
+| canonical private ingress 的引用链为什么完整 | `.venv/bin/python -m scripts.policy` | Mintie source example 的 `valid`、origin → gateway → host → role/capabilities → subject/profile `chain` 与 `diagnostics` |
+| routing、coverage、freshness 或 sequence 判断是否符合预期 | `.venv/bin/python -m scripts.replay` | 八个 synthetic result；每个 `passed` 比较 `actual` 与 `expected` |
+| scoped source claim 与历史 acceptance 的引用是否合法 | `.venv/bin/python -m scripts.handoff --evaluated-at 2026-10-03T00:00:03Z` | 样例 handoff 的 `valid`、有依据的 `claim_outcomes` 与 `diagnostics` |
+
+例如，重放一份刚发布、内部 observation 却已经过旧的 report：
+
+```bash
+.venv/bin/python -m scripts.replay --case new-report-old-observations
+```
+
+这个 scenario 在 `effective_outcome` 为 `unknown`、`restore_allowed` 为 `false`
+时通过。这里的 `passed: true` 表示预期的拒绝行为成立，不代表观察路径健康。
+handoff 命令的显式时间用于求值历史样例。想看完整四阶段 handoff 如何在 evidence
+window 内通过、过期后被拒绝，继续看 [agent workflow](docs/agent/workflow.md#replay-a-historical-handoff)。
 
 Agent 从 [Agent Surface](docs/agent/README.md) 继续；事故机制见 [failure
 catalog](docs/reference/failure-catalog.md)；准确 publication boundary 见 [current
