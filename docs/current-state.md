@@ -17,7 +17,7 @@ Last updated: 2026-10-04
 - Local verification: `make verify PYTHON=.venv/bin/python` passed 38 cataloged
   instances, ten reference reports, one historical regression fixture, concrete
   handoff validation, eight synthetic replay judgments, deterministic site build
-  and 166 unit tests. The pre-station candidate had 134 tests; the prior F2
+  and 167 unit tests. The pre-station candidate had 134 tests; the prior F2
   baseline had 79. These are source checks, not live evidence.
 - Git/remote: source candidate published on `f2-agent-surface` through
   [PR #3](https://github.com/IndelibleVivi/signalbox-routing/pull/3), open and
@@ -59,6 +59,9 @@ Last updated: 2026-10-04
   override a passing or expired report; matching canonical failures and unknown
   results remain supported. The report's own expiry applies even when the cited
   evidence omits its optional expiry annotation.
+- An unpublished report cannot support even an `unknown` path claim or an
+  earlier acceptance record. Publication availability is checked at both claim
+  and evaluation times, independently of outcome agreement.
 - Normative source line: specification revision 6; health-contract/v6,
   health-profile/v3, claims/v2, claim-record/v1, acceptance-record/v2 and
   handoff/v1. Report and aggregate shapes retain v2.

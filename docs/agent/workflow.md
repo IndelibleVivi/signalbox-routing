@@ -41,6 +41,8 @@ path claim 的 evidence references 必须包含被求值的 report artifact；�
 path claim 的 `pass`、`fail`、`unknown` 都必须与 canonical report 在 claim observation time
 和请求的 evaluation time 的有效结果一致。手填 evidence outcome 不能覆盖 report，
 省略 evidence 的可选 `valid_until` 也不能绕过 report 自身的 expiry。
+report 在 claim observation time 与 evaluation time 都必须已经 published；
+`evidence-not-yet-published` 不能被当作支持 `unknown` claim 或提前 acceptance 的证据。
 
 [acceptance-record/v2](../../schemas/acceptance-record.schema.json) 定义实际记录，替代旧的
 descriptor-only v1 schema：`record_id`、`actor_class`、`actor_ref`、`decision`、`scope_ref`、

@@ -209,6 +209,22 @@ class AgentSurfaceTests(unittest.TestCase):
                     self.assertFalse(result["valid"], result)
                     self.assertIn("unusable-path-evidence", [d["code"] for d in result["diagnostics"]])
 
+    def test_unpublished_report_cannot_support_unknown_claim_or_acceptance(self):
+        bundle = load("examples/mintie/path-handoff.json")
+        published = parse_rfc3339(bundle["claims"][-1]["observed_at"])
+        observed = published - timedelta(seconds=1)
+        for group in ("claims", "evidence"):
+            for item in bundle[group]:
+                item["observed_at"] = observed.isoformat()
+        bundle["claims"][-1]["outcome"] = "unknown"
+        bundle["evidence"][-1]["outcome"] = "unknown"
+        bundle["acceptance_records"][0]["decided_at"] = observed.isoformat()
+        for at in (observed, published):
+            with self.subTest(evaluated_at=at):
+                result = evaluate_handoff(ROOT, bundle, at)
+                self.assertFalse(result["valid"], result)
+                self.assertIn("unpublished-path-evidence", [d["code"] for d in result["diagnostics"]])
+
     def test_path_claim_accepts_matching_canonical_fail_and_unknown(self):
         bundle = load("examples/mintie/path-handoff.json")
         at = parse_rfc3339(bundle["claims"][-1]["observed_at"])
