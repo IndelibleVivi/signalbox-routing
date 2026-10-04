@@ -2,7 +2,7 @@
   "schema": "signalbox.health-report/v2",
   "id": "report-lane-rowan-pass-101",
   "profile_ref": "mintie-egress-rowan",
-  "profile_revision": 2,
+  "profile_revision": 3,
   "producer_ref": "reference/mintie-observer",
   "subject_ref": "role-binding/rowan",
   "generation_epoch": "sample-epoch-alpha",

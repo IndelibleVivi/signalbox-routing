@@ -1,6 +1,6 @@
 {
-  "schema": "signalbox.health-contract/v5",
-  "contract_revision": 5,
+  "schema": "signalbox.health-contract/v6",
+  "contract_revision": 6,
   "transient_outcomes": [
     "checking"
   ],
@@ -161,11 +161,20 @@
     "required": true,
     "basis": "valid_until",
     "maximum_formula": "valid_until <= completed_at + profile.max_report_age_seconds",
+    "observation_formula": "valid_until <= observation.observed_at + profile.max_observation_age_seconds",
+    "attempt_formula": "completed_at - started_at <= profile.max_attempt_duration_seconds",
     "published_before_or_at_valid_until": true,
     "stale_effective_outcome": "unknown",
+    "stale_observation_effective_outcome": "unknown",
+    "excessive_attempt_duration_effective_outcome": "unknown",
     "missing_or_malformed_effective_outcome": "unknown",
     "profile_revision_mismatch_effective_outcome": "unknown"
   },
+  "profile_freshness_required_fields": [
+    "max_report_age_seconds",
+    "max_observation_age_seconds",
+    "max_attempt_duration_seconds"
+  ],
   "recovery_gate": {
     "profile_kind": "recovery-preflight",
     "required_context_fields": [
@@ -271,5 +280,13 @@
         "dimension": "enforcement"
       }
     ]
+  },
+  "sequencing": {
+    "generation_allocation": "attempt-start",
+    "new_attempt_invalidates_current": true,
+    "late_completion": "archive-only",
+    "compare_and_decision": "same-serialized-boundary",
+    "restart_continuity": "required",
+    "unconfirmed_continuity_outcome": "unknown"
   }
 }

@@ -3,7 +3,7 @@ doc_id: signalbox.human.architecture
 language: zh-CN
 status: foundation-explanatory
 authority: ../specification.md
-contract_revision: 5
+contract_revision: 6
 ---
 
 [English](10-architecture.en.md) · **简体中文**
@@ -40,6 +40,55 @@ default route、packet mark 和 interception ownership。
 Mintie executable projection 还把每个 settled route ID 绑定到 exact action、match
 form 与 allowed field set。route order 仍然必要，但替换 action 或多塞一个 field
 属于 contract drift，不是等价实现。`ROUTE-07`
+
+<a id="actual-packet-path"></a>
+## 实际 packet path 与观测位置
+
+这是一种概念性的 Linux TProxy realization，不是 Mintie 的 live ruleset。
+data 与 DNS 请求是两条 flow，domain policy 需要可用的 resolver/sniffing evidence。
+Linux TProxy 结合 interception/packet mark、policy routing 到 local delivery、
+以及 transparent listening socket；具体 mark、table、hook 与 admission rule 由 deployment
+拥有。参考 [Linux kernel TProxy 文档](https://docs.kernel.org/networking/tproxy.html)。
+
+```mermaid
+flowchart TD
+  CLIENT[LAN client]
+  DNS[DNS capture and resolver policy]
+  ADMIT[LAN admission and firewall hooks]
+  MARK[TPROXY interception and packet mark]
+  RULE[Policy rule selects local delivery table]
+  SOCKET[Local transparent socket]
+  POLICY[Canonical private before DIRECT<br/>protected and default policy]
+  EGRESS[Selected egress or dedicated gateway]
+  ORIGIN[Destination or exact private origin]
+  FORWARD[Kernel allowlisted forwarding]
+  OUTPUT[Router-originated DIRECT socket]
+  GUARD[Independent guard<br/>fail or UNKNOWN retains restriction]
+  PROBE[Router-local lane probe]
+
+  CLIENT -->|DNS request| DNS
+  DNS -.->|resolver or domain evidence| POLICY
+  CLIENT -->|data packet| ADMIT
+  ADMIT --> MARK --> RULE --> SOCKET --> POLICY
+  POLICY -->|proxy-required or private| EGRESS --> ORIGIN
+  ADMIT -->|kernel DIRECT only after canonical exclusion| FORWARD --> ORIGIN
+  POLICY -->|userspace DIRECT allowlist| OUTPUT --> ORIGIN
+  PROBE -->|explicit lane dial skips LAN interception| EGRESS
+  ADMIT -.->|enforcement observation| GUARD
+  MARK -.->|enforcement observation| GUARD
+  FORWARD -.->|forwarding restriction| GUARD
+  OUTPUT -.->|router-output restriction| GUARD
+```
+
+分别观察 LAN admission、interception mark、policy rule/local route、transparent socket、
+所选 egress 与 forwarding guard。router-local 的显式 lane probe 从 egress 接入，
+没有走 client 的 PREROUTING、mark-to-table delivery 或 admission 路径。
+kernel DIRECT bypass 走 forwarding；userspace DIRECT 创建 router-originated output socket。
+两者都必须先排除 canonical-origin match。forwarding/output restriction 与 local-delivery
+admission 是不同 enforcement point；
+deployment 必须核查实际 hook，不能把图直接当 ruleset。
+router-to-egress 的健康证据让被跳过的边界继续保持 unknown。
+[案例 3](50-worked-cases.zh-CN.md#router-probe-versus-lan) 可以检验这个推断。
 
 <a id="protected-lane"></a>
 ## Protected lane

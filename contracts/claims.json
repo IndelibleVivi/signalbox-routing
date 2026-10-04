@@ -1,6 +1,6 @@
 {
-  "schema": "signalbox.claims/v1",
-  "contract_revision": 1,
+  "schema": "signalbox.claims/v2",
+  "contract_revision": 2,
   "observation_outcomes": [
     "pass",
     "fail",
@@ -46,11 +46,12 @@
     ],
     "path-evidence": [
       "activated_ref",
-      "health_report_ref"
+      "health_report_ref",
+      "current_health_identity"
     ]
   },
   "acceptance_record": {
-    "schema": "signalbox.acceptance-record/v1",
+    "schema": "signalbox.acceptance-record/v2",
     "decisions": [
       "accepted",
       "rejected",
@@ -59,6 +60,7 @@
     "required_fields": [
       "record_id",
       "actor_class",
+      "actor_ref",
       "decision",
       "scope_ref",
       "claim_refs",
@@ -67,5 +69,18 @@
     ],
     "can_upgrade_realization_stage": false,
     "is_current_path_proof": false
+  },
+  "claim_record_schema": "signalbox.claim-record/v1",
+  "handoff_schema": "signalbox.handoff/v1",
+  "handoff_rules": {
+    "reference_resolution": "bundle-local-ids-and-contained-artifacts",
+    "scope_match": "exact",
+    "evidence_stage_match": "exact",
+    "decision_time_requires_available_evidence": true,
+    "path_claim_requires_canonical_health_evaluation": true,
+    "synthetic_only": true,
+    "acceptance_is_historical": true,
+    "path_scope_match": "exact-report-subject",
+    "path_identity_source": "trusted-current-pointer"
   }
 }

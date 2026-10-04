@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="{{LANG}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Signalbox 通信札记：猫、电报纸带，以及日常网络里的好办法。">
+  <title>{{TITLE}}</title>
+  <link rel="icon" href="{{BASE}}assets/tape-s-mark.webp" type="image/webp">
+  <link rel="stylesheet" href="{{BASE}}assets/site.css">
+</head>
+<body>
+<div id="sbx-station" aria-label="Signalbox 通信札记">
+  <a class="sx-skip" href="#sx-main">跳到正文</a>
+  <header class="sx-header">
+    <div class="sx-brand">
+      <img class="sx-mark" src="{{BASE}}assets/tape-s-mark.webp" alt="Signalbox 穿孔纸带 S 标记">
+      <div>
+        <div class="sx-wordmark">Signalbox</div>
+        <small>PERSONAL NETWORK NOTES</small>
+      </div>
+    </div>
+    <nav class="sx-nav" aria-label="主导航">
+      <a href="{{BASE}}index.html">通信室</a>
+      <a href="{{BASE}}docs/human/20-basic-router-guide.zh-CN.html">读手册</a>
+      <a href="{{BASE}}docs/human/10-architecture.zh-CN.html">图解</a>
+      <a href="{{BASE}}docs/human/50-worked-cases.zh-CN.html">案例</a>
+      <a href="{{BASE}}index.html#sx-workbench">工作台</a>
+      <button type="button" data-open-dispatch aria-haspopup="dialog">收信匣</button>
+    </nav>
+  </header>
+
+  <main id="sx-main">
+{{CONTENT}}
+  </main>
+
+  <section class="sx-mail-corner" aria-label="页边的收信匣">
+    <div>
+      <div class="sx-label">TO: THE CURIOUS</div>
+      <p>有人在纸带上留了一句话。旋动字母位移旋钮，把密文译回来。</p>
+      <button type="button" class="sx-mail-link" data-open-dispatch aria-haspopup="dialog">OPEN THE LETTER ↗</button>
+    </div>
+    <button class="sx-envelope" type="button" data-open-dispatch aria-haspopup="dialog" aria-label="打开小猫送来的电文">
+      <img src="{{BASE}}assets/courier-note.webp" alt="小猫从信封后探出眼睛和爪子，旁边是一条卷起的穿孔纸带。">
+    </button>
+  </section>
+
+  <dialog class="sx-dispatch" data-dispatch aria-label="转轮译电小彩蛋">
+    <div class="sx-dispatch-top">
+      <span class="sx-label">SIGNALBOX / PRIVATE NOTE 001</span>
+      <button class="sx-close" type="button" data-close-dispatch>折起电文 ×</button>
+    </div>
+    <div class="sx-cryptogram">
+      <div><div class="sx-label">CIPHER TEXT</div><strong>VWLOO JURZLQJ</strong></div>
+      <div class="sx-key-control" aria-label="字母位移旋钮">
+        <button type="button" data-key-down aria-label="旋钮退一格">−</button>
+        <div class="sx-dial"><span>KEY</span><output data-key-value>00</output></div>
+        <button type="button" data-key-up aria-label="旋钮进一格">+</button>
+      </div>
+    </div>
+    <div class="sx-decoded" aria-live="polite">
+      <div class="sx-label">THE LETTER SAYS</div>
+      <div class="sx-decoded-output" data-decoded>VWLOO JURZLQJ</div>
+      <div class="sx-secret-note" data-secret-note hidden>
+        <p>这里还有空白，<br>留给下一次灵机一动。</p>
+        <small>STILL GROWING</small>
+      </div>
+    </div>
+    <details class="sx-hint">
+      <summary>一点提示</summary>
+      <p>把旋钮向前转三格。每一格，会把字母往回移动一位；26 格会回到原处。</p>
+    </details>
+  </dialog>
+
+  <footer class="sx-footer">
+    <span class="sx-mono">SIGNALBOX · A WORK IN PROGRESS</span>
+    <span>
+      <a href="https://github.com/IndelibleVivi/signalbox-routing" target="_blank" rel="noopener">GitHub ↗</a>　·　
+      <a href="https://indeliblevivi.github.io/infra-field-guide/" target="_blank" rel="noopener">Infra Field Guide ↗</a>　·　
+      <a href="{{BASE}}site/README.html">本站说明</a>
+    </span>
+  </footer>
+</div>
+<script src="{{BASE}}assets/site.js" defer></script>
+</body>
+</html>

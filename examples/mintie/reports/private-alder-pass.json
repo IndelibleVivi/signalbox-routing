@@ -2,7 +2,7 @@
   "schema": "signalbox.health-report/v2",
   "id": "report-private-alder-pass-101",
   "profile_ref": "mintie-private-alder",
-  "profile_revision": 2,
+  "profile_revision": 3,
   "producer_ref": "reference/mintie-observer",
   "subject_ref": "gateway/alder-private",
   "generation_epoch": "sample-epoch-alpha",

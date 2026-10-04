@@ -28,7 +28,11 @@ runtime tags.
 | `examples/mintie/*` | Public-safe reference deployment; never a production binding or credential source |
 | `scripts/validate_schemas.py` | Fixed-schema catalog bootstrap followed by catalog-driven JSON Schema validation |
 | `scripts/repository_paths.py` | Shared repo-containment resolver for catalog, documentation, and aggregate references |
-| `scripts/validate.py` and `tests/` | Cross-file semantics, Git-index public-boundary scanning, and regression checks; not runtime or client acceptance |
+| `scripts/validate.py` and `tests/` | Cross-file semantics, canonical report/profile evaluation, Git-index public-boundary scanning and regressions; not runtime acceptance |
+| `scripts/handoff.py` | Concrete scoped claim and historical acceptance evaluation; public synthetic records only |
+| `scripts/reference_workflow.py`, `scripts/replay.py` | Synthetic current-pointer sequencing and replayable judgment references; no durable/live pointer or restore effect |
+| `site/`, `scripts/build_site.py` | Authored reading-station shell, supplied assets and build projection; article authority remains its canonical Markdown |
+| `build/site/` | Ignored generated static output; never edit it as a source or treat it as deployment evidence |
 | `.github/workflows/verify.yml` | Hosted source gate across supported Python versions |
 
 Attached specifications, transcripts, logs, incident notes, and external
@@ -64,6 +68,17 @@ replace the authority map above.
 - A restore gate exact-matches producer, subject, profile and revision, epoch,
   generation, report ID, attempt ID, and gate context. A higher or lower
   generation is a mismatch; abort and re-read the current pointer.
+- Profiles on the active v3 line cap observation age and attempt duration as
+  well as report age; the earliest required observation expiry caps validity.
+  Contract/profile/report structure precedes typed semantics in standalone
+  evaluation. Never renew an old probe by completing a report later.
+- A public handoff is synthetic. Bind path-claim scope to the exact report
+  subject; acceptance records cannot upgrade stages or renew evidence.
+- The reference publisher reserves generation at start, archives late terminal
+  reports without replacing newer attempts, and serializes compare/decision
+  under an in-memory lock. Resume exact-matches snapshot producer/subject/profile
+  scope. A deployment must implement durable sequencing and
+  its authorized effect within the same transaction; source tests prove neither.
 - Deployment aggregation applies that same canonical evaluator, preserves
   assembly-time member outcomes as a historical receipt, and never emits a
   top-level health verdict.
@@ -109,6 +124,13 @@ For a semantic change:
 8. Run `make verify`, inspect the diff, and report source, Git, remote, runtime,
    and owner-acceptance states separately.
 
+The reading station renders canonical Markdown and existing scenario receipts.
+Edit article content at its existing source, not in the site template or built
+HTML. Build-time replay calls the canonical synthetic implementation; a web
+receipt is not a second evaluator or live health feed. Preserve supplied asset
+provenance, generated/source boundaries and the declared font/diagram network
+requests. Source build and loopback preview do not authorize hosted deployment.
+
 Use one canonical path. Remove superseded behavior and references in the same
 change unless a current consumer or staged compatibility boundary requires
 them.
@@ -125,10 +147,15 @@ them.
   incident chronology and private evidence remain outside Git.
 - Keep paired human documents semantically aligned through
   `contracts/docs-pairs.json`; do not let translation become a second contract.
+- Rebuild and check the reading station when included Markdown, relative links,
+  stable anchors, site templates/assets or replay inputs change. The site gate
+  belongs to `make verify`; `site/README.md` owns exact build/preview procedures.
 - The public-boundary detector enumerates paths from the current Git index and
   scans their current textual worktree content, not a selected extension list.
   Its bounded patterns are defense in depth, not a Git-history or universal
-  secret audit; exceptions must be exact and publicly justified.
+  secret audit; exceptions must be exact and publicly justified. IPv6
+  candidates occupy complete address tokens; CSS pseudo-element names are
+  not partial address literals.
 
 ## Verification and Git closure
 

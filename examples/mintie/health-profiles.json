@@ -5,7 +5,7 @@
   "profiles": [
     {
       "id": "mintie-recovery-preflight",
-      "revision": 2,
+      "revision": 3,
       "kind": "recovery-preflight",
       "subject_ref": "control-plane/mintie",
       "observation_only": true,
@@ -19,7 +19,7 @@
         "recovery-readiness": {"minimum_observations": 1, "minimum_by_evidence_class": {"queryability": 1}, "minimum_dependency_groups": 1}
       },
       "aggregation": {"pass_when": "all-required-pass", "fail_when": "any-required-fail", "unknown_when": "otherwise"},
-      "freshness": {"max_report_age_seconds": 300},
+      "freshness": {"max_report_age_seconds": 300, "max_observation_age_seconds": 300, "max_attempt_duration_seconds": 300},
       "publication": {"current_write": "atomic-replace", "completed_attempt_must_publish": true},
       "retention": {"max_file_bytes": 262144, "archive_count": 2, "max_entries": 288},
       "privacy": {"result_detail": "reason-code-only", "raw_diagnostics": "forbidden"},
@@ -28,7 +28,7 @@
     },
     {
       "id": "mintie-control-plane-operational",
-      "revision": 2,
+      "revision": 3,
       "kind": "control-plane-operational",
       "subject_ref": "control-plane/mintie",
       "observation_only": true,
@@ -43,7 +43,7 @@
         "recovery-readiness": {"minimum_observations": 1, "minimum_by_evidence_class": {"queryability": 1}, "minimum_dependency_groups": 1}
       },
       "aggregation": {"pass_when": "all-required-pass", "fail_when": "any-required-fail", "unknown_when": "otherwise"},
-      "freshness": {"max_report_age_seconds": 1200},
+      "freshness": {"max_report_age_seconds": 1200, "max_observation_age_seconds": 1200, "max_attempt_duration_seconds": 300},
       "publication": {"current_write": "atomic-replace", "completed_attempt_must_publish": true},
       "retention": {"max_file_bytes": 262144, "archive_count": 2, "max_entries": 288},
       "privacy": {"result_detail": "reason-code-only", "raw_diagnostics": "forbidden"},
@@ -52,7 +52,7 @@
     },
     {
       "id": "mintie-underlay-wan",
-      "revision": 1,
+      "revision": 2,
       "kind": "underlay-operational",
       "subject_ref": "underlay/mintie-wan",
       "observation_only": true,
@@ -66,7 +66,7 @@
         "availability": {"minimum_observations": 1, "minimum_by_evidence_class": {"link-stability": 1}, "minimum_dependency_groups": 1}
       },
       "aggregation": {"pass_when": "all-required-pass", "fail_when": "any-required-fail", "unknown_when": "otherwise"},
-      "freshness": {"max_report_age_seconds": 1200},
+      "freshness": {"max_report_age_seconds": 1200, "max_observation_age_seconds": 1200, "max_attempt_duration_seconds": 300},
       "publication": {"current_write": "atomic-replace", "completed_attempt_must_publish": true},
       "retention": {"max_file_bytes": 262144, "archive_count": 2, "max_entries": 288},
       "privacy": {"result_detail": "reason-code-only", "raw_diagnostics": "forbidden"},
@@ -74,7 +74,7 @@
     },
     {
       "id": "mintie-egress-alder",
-      "revision": 2,
+      "revision": 3,
       "kind": "lane-operational",
       "subject_ref": "role-binding/alder",
       "observation_only": true,
@@ -87,14 +87,14 @@
         "dns": {"minimum_observations": 1, "minimum_by_evidence_class": {"resolver-path": 1}, "minimum_dependency_groups": 1}
       },
       "aggregation": {"pass_when": "all-required-pass", "fail_when": "any-required-fail", "unknown_when": "otherwise"},
-      "freshness": {"max_report_age_seconds": 1200},
+      "freshness": {"max_report_age_seconds": 1200, "max_observation_age_seconds": 1200, "max_attempt_duration_seconds": 300},
       "publication": {"current_write": "atomic-replace", "completed_attempt_must_publish": true},
       "retention": {"max_file_bytes": 262144, "archive_count": 2, "max_entries": 288},
       "privacy": {"result_detail": "reason-code-only", "raw_diagnostics": "forbidden"}
     },
     {
       "id": "mintie-egress-rowan",
-      "revision": 2,
+      "revision": 3,
       "kind": "lane-operational",
       "subject_ref": "role-binding/rowan",
       "observation_only": true,
@@ -107,14 +107,14 @@
         "dns": {"minimum_observations": 1, "minimum_by_evidence_class": {"resolver-path": 1}, "minimum_dependency_groups": 1}
       },
       "aggregation": {"pass_when": "all-required-pass", "fail_when": "any-required-fail", "unknown_when": "otherwise"},
-      "freshness": {"max_report_age_seconds": 1200},
+      "freshness": {"max_report_age_seconds": 1200, "max_observation_age_seconds": 1200, "max_attempt_duration_seconds": 300},
       "publication": {"current_write": "atomic-replace", "completed_attempt_must_publish": true},
       "retention": {"max_file_bytes": 262144, "archive_count": 2, "max_entries": 288},
       "privacy": {"result_detail": "reason-code-only", "raw_diagnostics": "forbidden"}
     },
     {
       "id": "mintie-egress-hearth",
-      "revision": 2,
+      "revision": 3,
       "kind": "lane-operational",
       "subject_ref": "role-binding/hearth",
       "observation_only": true,
@@ -127,14 +127,14 @@
         "dns": {"minimum_observations": 1, "minimum_by_evidence_class": {"resolver-path": 1}, "minimum_dependency_groups": 1}
       },
       "aggregation": {"pass_when": "all-required-pass", "fail_when": "any-required-fail", "unknown_when": "otherwise"},
-      "freshness": {"max_report_age_seconds": 1200},
+      "freshness": {"max_report_age_seconds": 1200, "max_observation_age_seconds": 1200, "max_attempt_duration_seconds": 300},
       "publication": {"current_write": "atomic-replace", "completed_attempt_must_publish": true},
       "retention": {"max_file_bytes": 262144, "archive_count": 2, "max_entries": 288},
       "privacy": {"result_detail": "reason-code-only", "raw_diagnostics": "forbidden"}
     },
     {
       "id": "mintie-private-alder",
-      "revision": 2,
+      "revision": 3,
       "kind": "lane-operational",
       "subject_ref": "gateway/alder-private",
       "observation_only": true,
@@ -147,14 +147,14 @@
         "dns": {"minimum_observations": 1, "minimum_by_evidence_class": {"resolver-path": 1}, "minimum_dependency_groups": 1}
       },
       "aggregation": {"pass_when": "all-required-pass", "fail_when": "any-required-fail", "unknown_when": "otherwise"},
-      "freshness": {"max_report_age_seconds": 1200},
+      "freshness": {"max_report_age_seconds": 1200, "max_observation_age_seconds": 1200, "max_attempt_duration_seconds": 300},
       "publication": {"current_write": "atomic-replace", "completed_attempt_must_publish": true},
       "retention": {"max_file_bytes": 262144, "archive_count": 2, "max_entries": 288},
       "privacy": {"result_detail": "reason-code-only", "raw_diagnostics": "forbidden"}
     },
     {
       "id": "mintie-private-rowan",
-      "revision": 2,
+      "revision": 3,
       "kind": "lane-operational",
       "subject_ref": "gateway/rowan-private",
       "observation_only": true,
@@ -167,7 +167,7 @@
         "dns": {"minimum_observations": 1, "minimum_by_evidence_class": {"resolver-path": 1}, "minimum_dependency_groups": 1}
       },
       "aggregation": {"pass_when": "all-required-pass", "fail_when": "any-required-fail", "unknown_when": "otherwise"},
-      "freshness": {"max_report_age_seconds": 1200},
+      "freshness": {"max_report_age_seconds": 1200, "max_observation_age_seconds": 1200, "max_attempt_duration_seconds": 300},
       "publication": {"current_write": "atomic-replace", "completed_attempt_must_publish": true},
       "retention": {"max_file_bytes": 262144, "archive_count": 2, "max_entries": 288},
       "privacy": {"result_detail": "reason-code-only", "raw_diagnostics": "forbidden"}

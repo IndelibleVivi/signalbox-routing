@@ -1,7 +1,7 @@
 # Signalbox Product and Architecture Specification
 
 Status: canonical working specification
-Revision: 5
+Revision: 6
 Authority: current Faye/Cove task decisions, with earlier Mintie materials used
 as evidence rather than executable instructions
 
@@ -58,7 +58,9 @@ external implementations cannot silently widen or replace normative contracts.
 its current file, JSON Schema, revision owner, compatibility posture, and
 dependent projections. JSON Schema owns portable structural validation;
 `scripts/validate.py` owns cross-document semantic invariants that shape alone
-cannot prove.
+cannot prove. `scripts/handoff.py` owns concrete claim/acceptance evaluation;
+`scripts/reference_workflow.py` and `scripts/replay.py` provide synthetic
+sequence and judgment references, reusing the canonical health evaluator.
 
 `AUTH-04` — The fixed canonical catalog schema validates
 `contracts/catalog.json` before any catalog-controlled path is consumed.
@@ -98,6 +100,16 @@ stage or become fresh path proof.
 `CLAIM-03` — `unknown` is a valid observation outcome at every layer. A failed,
 unsupported, stale, or ambiguous query remains unknown; it is never translated
 into absence, off, pass, or healthy.
+
+`CLAIM-04` — Concrete claims and acceptance records resolve explicit evidence
+and prior-stage references inside one exact scope. Claims cannot use another
+stage's evidence or cite observations from the future. Acceptance identifies
+actor class and actor, scope, claims, evidence and decision time; it remains a
+historical decision. A current path claim requires a registered compatible
+profile, the canonical health evaluator and a trusted exact current identity;
+its scope equals the report subject and its cited evidence includes the evaluated
+report artifact. Historical acceptance cannot renew stale
+path evidence. Public handoffs remain explicitly synthetic reference objects.
 
 ## 6. Routing and enforcement
 
@@ -218,7 +230,9 @@ unexpected epoch or a regression inside the same epoch as `unknown`.
 
 `HEALTH-12` — A producer cannot self-issue arbitrary freshness. Every report
 must satisfy `valid_until <= completed_at + max_report_age_seconds` from the
-exact referenced profile, and `published_at <= valid_until`.
+exact referenced profile, and `published_at <= valid_until`. This report-age
+limit is necessary but not sufficient: observation expiry and attempt duration
+also constrain authority under `HEALTH-20`.
 
 `HEALTH-13` — A recovery-preflight report carries an exact `gate_context`
 binding the operation, desired-state digest, observed runtime generation, and
@@ -279,6 +293,29 @@ only for control-plane `enforcement` observation, including the
 `recovery-preflight` profile that observes the same enforcement state. Generic
 reason codes are unconstrained by profile kind or dimension.
 
+`HEALTH-20` — Every profile declares positive `max_report_age_seconds`,
+`max_observation_age_seconds` and `max_attempt_duration_seconds` limits.
+`completed_at - started_at` cannot exceed the attempt limit. `valid_until`
+cannot exceed any required observation's `observed_at + max_observation_age_seconds`;
+the earliest required observation expiry caps the whole report window.
+Completion/publication cannot renew old evidence. Invalid freshness yields
+`unknown` at the canonical evaluator and cannot open restore. Contract, profile
+and report structure must be valid before type-dependent semantic evaluation;
+a malformed nested value or incomplete standalone profile cannot crash or
+produce an effective PASS.
+
+`HEALTH-21` — A sequence owner reserves generation at attempt start. The latest
+started attempt invalidates older current evidence while checking. Every
+completed attempt retains its immutable terminal report; a late completion of
+an earlier attempt cannot replace the latest started attempt's current state.
+Compare expected identity, evaluate exact context and perform any separately
+authorized effect inside one serialized boundary. Ordinary restart preserves
+epoch and sequence only from established durable continuity in the same
+producer/subject/profile scope. Unknown continuity
+retains `unknown` and the guard; a larger generation is no substitute. The source
+reference uses an in-memory lock and trusted synthetic snapshot and emits only
+decisions, never a deployed restore effect or durability proof.
+
 ## 9. Incident-derived portable lessons
 
 `INCIDENT-01` — Cold-boot query failure showed that a logically empty policy
@@ -298,7 +335,10 @@ freshness enforcement are normative.
 ## 10. Documentation architecture
 
 `DOC-01` — Human and Agent Surfaces intentionally differ in form while sharing
-role IDs, contract IDs, evidence vocabulary, and normative JSON.
+role IDs, contract IDs, evidence vocabulary, and normative JSON. The start page
+teaches three requests before detailed health fields; paired worked cases link
+symptoms, known/unknown facts, path locations, synthetic inputs, counterproofs
+and allowed conclusions to executable regression scenarios.
 
 `DOC-02` — Chinese and English human documents are sibling files. Paired files
 must retain the required contract IDs and semantic section coverage.

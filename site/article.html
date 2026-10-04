@@ -1,0 +1,35 @@
+    <section class="sx-reader" data-reader-view aria-label="{{ARTICLE_TITLE}}">
+      <div class="sx-reader-top">
+        <a class="sx-back" href="{{BASE}}index.html">← 回到通信室</a>
+        <span class="sx-label">{{READER_LABEL}}</span>
+      </div>
+      <div class="sx-reader-layout">
+        <aside class="sx-reading-margin">
+          <details class="sx-toc">
+            <summary class="sx-label">IN THIS NOTE</summary>
+            <nav aria-label="本篇目录" data-reader-toc>
+{{TOC}}
+            </nav>
+          </details>
+          <div class="sx-lang-switch" aria-label="语言对照">
+            {{LANG_LINKS}}
+          </div>
+          <div class="sx-note-slip">
+            需要一台能管理的 VPS？<br>
+            <a href="https://indeliblevivi.github.io/infra-field-guide/" target="_blank" rel="noopener">先翻翻 IFG ↗</a>
+          </div>
+        </aside>
+        <article>
+          <div class="sx-label">{{ARTICLE_LABEL}}</div>
+          <p class="sx-provenance">
+            由 <span class="sx-mono">{{SOURCE_PATH}}</span> 生成，内容以该 Markdown 为准。
+            <a href="{{SOURCE_LINK}}" target="_blank" rel="noopener">查看 HEAD source ↗</a>　·　
+            <a href="{{BASE}}index.html">通信室</a>
+            {{SOURCE_NOTICE}}
+          </p>
+          <div class="sx-content" data-reader-content>
+{{ARTICLE_BODY}}
+          </div>
+        </article>
+      </div>
+    </section>

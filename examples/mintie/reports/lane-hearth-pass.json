@@ -2,7 +2,7 @@
   "schema": "signalbox.health-report/v2",
   "id": "report-lane-hearth-pass-102",
   "profile_ref": "mintie-egress-hearth",
-  "profile_revision": 2,
+  "profile_revision": 3,
   "producer_ref": "reference/mintie-observer",
   "subject_ref": "role-binding/hearth",
   "generation_epoch": "sample-epoch-alpha",
