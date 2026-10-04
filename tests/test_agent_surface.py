@@ -11,7 +11,7 @@ from threading import Event
 from scripts.handoff import evaluate_handoff
 from scripts.reference_workflow import ReferencePublisher
 from scripts.replay import assess_coverage, replay_case, select_route
-from scripts.validate import parse_rfc3339
+from scripts.validate import evaluate_health_evidence, parse_rfc3339
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -99,6 +99,38 @@ class AgentSurfaceTests(unittest.TestCase):
         result = evaluate_handoff(ROOT, bundle, at)
         self.assertIn("health-scope-mismatch", [d["code"] for d in result["diagnostics"]])
 
+    def test_handoff_timestamp_case_preserves_fresh_and_expired_judgments(self):
+        bundle = load("examples/mintie/path-handoff.json")
+        at = parse_rfc3339(bundle["claims"][-1]["observed_at"])
+        fresh = evaluate_handoff(ROOT, bundle, at)
+        expired = evaluate_handoff(ROOT, bundle, at + timedelta(days=1))
+        self.assertTrue(fresh["valid"], fresh)
+        self.assertFalse(expired["valid"], expired)
+        for separator, suffix in (("T", "z"), ("t", "Z"), ("t", "z")):
+            with self.subTest(separator=separator, suffix=suffix):
+                changed = copy.deepcopy(bundle)
+                for group in ("claims", "evidence", "acceptance_records"):
+                    for item in changed[group]:
+                        for field in ("observed_at", "valid_until", "decided_at"):
+                            if field in item:
+                                item[field] = item[field][:-1].replace("T", separator) + suffix
+                self.assertEqual(evaluate_handoff(ROOT, changed, at), fresh)
+                self.assertEqual(evaluate_handoff(ROOT, changed, at + timedelta(days=1)), expired)
+
+    def test_health_timestamp_case_preserves_fresh_and_expired_judgments(self):
+        changed = copy.deepcopy(self.report)
+        for field in ("started_at", "completed_at", "published_at", "valid_until"):
+            changed[field] = changed[field].lower()
+        for dimension in changed["dimensions"].values():
+            for observation in dimension["observations"]:
+                observation["observed_at"] = observation["observed_at"].lower()
+        for at, outcome in ((self.now, "pass"), (self.now + timedelta(days=1), "unknown")):
+            with self.subTest(evaluated_at=at):
+                expected = evaluate_health_evidence(self.report, self.contract, self.profile, self.schema, at)
+                self.assertEqual(expected.effective_outcome, outcome)
+                actual = evaluate_health_evidence(changed, self.contract, self.profile, self.schema, at)
+                self.assertEqual(actual, expected)
+
     def test_replay_all_five_cases_and_three_races(self):
         cases = load("examples/scenarios/cases.json")
         self.assertEqual(len(cases), 8)
@@ -133,6 +165,12 @@ class AgentSurfaceTests(unittest.TestCase):
         self.assertEqual(assess_coverage(required, complete)["effective_outcome"], "pass")
         complete["admission"] = "fail"
         self.assertEqual(assess_coverage(required, complete)["effective_outcome"], "fail")
+
+    def test_empty_coverage_scope_is_unknown_even_with_unscoped_observations(self):
+        for observations in ({}, {"egress": "pass"}, {"egress": "fail"}):
+            with self.subTest(observations=observations):
+                self.assertEqual(assess_coverage([], observations),
+                                 {"effective_outcome": "unknown", "unobserved_boundaries": []})
 
     def test_invalid_route_grammar_cannot_be_replayed_as_direct(self):
         traffic = load("examples/mintie/traffic-policy.json")

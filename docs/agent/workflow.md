@@ -91,6 +91,10 @@ expected_current_identity=...)` 是 canonical evaluator。输入时间必须 tim
 然后校验 publication window、observation freshness 和 exact identity。结构错误先返回
 `unknown / malformed-evidence`，不进入依赖类型的语义操作。`HEALTH-16` `HEALTH-20`
 
+共享 timestamp parser 将 schema 接受的 RFC 3339 `T`/`t`、`Z`/`z` 和 numeric offset
+统一到 UTC。大小写不改变 handoff 或 health report 的 freshness、expiry 与历史 acceptance
+判断；生成示例仍使用大写 `T`、`Z`。
+
 独立 evaluator 校验一个 profile 的完整内容。deployment topology 的 subject compatibility
 与 exactly-one cardinality 由 repository/profile registry validation 负责；使用前应先验证
 registry。提供 current identity 的调用者拥有该输入的 runtime truth；函数无法从一份 JSON

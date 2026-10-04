@@ -40,7 +40,7 @@ def assess_coverage(required: list[str], observations: dict[str, object]) -> dic
     for boundary in required:
         state = observations.get(boundary)
         states.append(state if isinstance(state, str) and state in {"pass", "fail", "unknown"} else "unknown")
-    return {"effective_outcome": expected_health_rollup(states),
+    return {"effective_outcome": expected_health_rollup(states) if states else "unknown",
             "unobserved_boundaries": missing}
 
 

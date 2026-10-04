@@ -20,5 +20,7 @@ Read the [worked cases](../../docs/human/50-worked-cases.en.md) and
 
 Coverage consumes terminal `pass`/`fail`/`unknown` states. Unsupported labels or
 wrongly typed values become `unknown`; they cannot contribute a passing judgment.
+An empty required-boundary list also yields `unknown`: observations outside a
+declared scope cannot establish coverage or supply its verdict.
 Snapshot resume preserves its producer/subject/profile scope; another owner must
 use an explicit reset/migration rather than inherit the old current report.

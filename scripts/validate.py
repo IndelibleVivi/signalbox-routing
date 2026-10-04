@@ -368,7 +368,7 @@ def _structural_schema_errors(instance: Any, schema: Any, label: str) -> list[st
 def parse_rfc3339(value: Any) -> datetime:
     if not isinstance(value, str) or not value:
         raise ValueError("timestamp must be a non-empty string")
-    normalized = value[:-1] + "+00:00" if value.endswith("Z") else value
+    normalized = value[:-1] + "+00:00" if value.endswith(("Z", "z")) else value
     parsed = datetime.fromisoformat(normalized)
     if parsed.tzinfo is None:
         raise ValueError("timestamp must include an offset")
