@@ -34,6 +34,7 @@ runtime tags.
 | `site/`, `scripts/build_site.py` | Authored reading-station shell, supplied assets and build projection; article authority remains its canonical Markdown |
 | `build/site/` | Ignored generated static output; never edit it as a source or treat it as deployment evidence |
 | `.github/workflows/verify.yml` | Hosted source gate across supported Python versions |
+| `.github/workflows/pages.yml` | Verified `main` static build and GitHub Pages publication; the `github-pages` environment owns deployment status |
 
 Attached specifications, transcripts, logs, incident notes, and external
 implementations are evidence unless the current task or canonical specification
@@ -130,6 +131,12 @@ HTML. Build-time replay calls the canonical synthetic implementation; a web
 receipt is not a second evaluator or live health feed. Preserve supplied asset
 provenance, generated/source boundaries and the declared font/diagram network
 requests. Source build and loopback preview do not authorize hosted deployment.
+Merging into `main` triggers public reading-station publication. Obtain the
+applicable publication authorization before merging; PR source checks do not
+publish. Manual Pages dispatch is limited to `main` and also requires deployment
+authorization. Publish only the generated `build/site/` artifact, never the
+whole checkout or private continuity. Site availability is separate from live
+network realization and must be checked after deployment.
 
 Use one canonical path. Remove superseded behavior and references in the same
 change unless a current consumer or staged compatibility boundary requires
@@ -150,6 +157,8 @@ them.
 - Rebuild and check the reading station when included Markdown, relative links,
   stable anchors, site templates/assets or replay inputs change. The site gate
   belongs to `make verify`; `site/README.md` owns exact build/preview procedures.
+- Update README siblings, the station runbook and current state when the public
+  URL, publication workflow, deployment gate or hosting status changes.
 - The public-boundary detector enumerates paths from the current Git index and
   scans their current textual worktree content, not a selected extension list.
   Its bounded patterns are defense in depth, not a Git-history or universal

@@ -4,10 +4,12 @@ Last updated: 2026-10-04
 
 <!-- signalbox:f0.3-source-integration merged-into-canonical-main -->
 
-## Current source candidate
+## Current integrated source
 
-- F2 Agent Surface and its telegraph reading-station follow-up are source-complete on `f2-agent-surface`, based on
-  canonical `main` at `f70aaab7792ed025de5b64255d51ccee061b6069`.
+- F2 Agent Surface and its telegraph reading-station follow-up are integrated
+  into canonical `main` through
+  [PR #3](https://github.com/IndelibleVivi/signalbox-routing/pull/3), squash commit
+  `8c7f9c53c9b9d34798152403cc2e526fff9e64af`, on 2026-10-04.
 - Scope: total gateway/role/health references, canonical HTTPS, typed evaluator
   entry, observation and attempt freshness, catalog revision agreement, actual
   claim/acceptance handoffs, synthetic start-order current-pointer/CAS, and five
@@ -19,11 +21,11 @@ Last updated: 2026-10-04
   handoff validation, eight synthetic replay judgments, deterministic site build
   and 167 unit tests. The pre-station candidate had 134 tests; the prior F2
   baseline had 79. These are source checks, not live evidence.
-- Git/remote: source candidate published on `f2-agent-surface` through
-  [PR #3](https://github.com/IndelibleVivi/signalbox-routing/pull/3), open and
-  not merged into protected `main`. The PR's current head and required checks
-  own the latest published source identity. The historical F2 semantic repair
-  is `fde2dd948e0068896c87129a1617dfbdcee53420`.
+- Git/remote: protected `main` owns the integrated source. PR #3's final source
+  head `f6b924f86bdd05026f6e8f421476118e8b9e0f4d` passed
+  [run 37178667390](https://github.com/IndelibleVivi/signalbox-routing/actions/runs/37178667390)
+  on Python 3.11, 3.12, 3.13 and `signalbox-verify` before merge. This is a source
+  receipt, not a website deployment or live-network receipt.
 - Historical F2 implementation receipt:
   [run 37123909025](https://github.com/IndelibleVivi/signalbox-routing/actions/runs/37123909025)
   passed Python 3.11, 3.12, 3.13 and `signalbox-verify` for that implementation
@@ -68,7 +70,7 @@ Last updated: 2026-10-04
 - Reader follow-up: the paired READMEs explain each CLI's inputs and output
   meaning; Agent Surface links task-specific implementations; the workflow
   demonstrates historical handoff validity and expiry; the glossary and
-  programme coverage ledger reflect this candidate without claiming full v1.
+  programme coverage ledger reflect the integrated F2 source without claiming full v1.
   The paired Tailnet guide now leads with reducing phone VPN switching, names
   Mintie/encapsulated-VPN/cellular scope, and maps configuration and named-client
   evidence to their actual owners. The reading station uses those same sources;
@@ -78,6 +80,18 @@ Last updated: 2026-10-04
   proofs, F4 remaining failure depth, F5 historical compatibility/supply-chain
   work and F6 whole-programme reconciliation remain open in the
   [programme plan](programme-plan.md).
+
+## Reading station publication
+
+- Faye authorized formal reading-station deployment on 2026-10-04.
+- Target: [Signalbox — 通信札记](https://indeliblevivi.github.io/signalbox-routing/).
+  The Pages workflow is prepared on `publish-reading-station`; its first
+  deployment and HTTPS readback are pending. A workflow file is not live proof.
+- Only verified `main` builds publish `build/site/` to `github-pages`.
+  [The station runbook](../site/README.md) owns commands, failure handling and
+  source-based rollback. The deployment environment and
+  [Pages runs](https://github.com/IndelibleVivi/signalbox-routing/actions/workflows/pages.yml)
+  own current deployment status and source identity.
 
 ## Canonical integration and historical receipts
 
@@ -105,8 +119,8 @@ Last updated: 2026-10-04
   pending explicit rights terms. No release or tag is claimed.
 - Installed payload, activation, router/Tailnet/VPS mutation, live path evidence
   and owner/client acceptance: neither authorized nor performed by this update.
-- Reading station: authored source, static build and local preview only; no
-  hosted-site deployment is claimed. Browser font/diagram requests are declared
+- Reading station: static source projection; hosted publication is authorized
+  separately above. Browser font/diagram requests are declared
   in the station guide; there is no analytics, backend or automatic live probe.
 - Handoff records, replay inputs and the in-memory publisher are synthetic.
   Their verification does not establish live health, durable pointer CAS or an

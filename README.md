@@ -46,6 +46,9 @@ the supplied cat illustrations, punched-tape mark, diagrams, cases and a
 selectable workbench of synthetic replay receipts. Full article text is built
 from the same repository Markdown; it is maintained in one place.
 
+Read online at **[Signalbox — 通信札记](https://indeliblevivi.github.io/signalbox-routing/)**.
+Verified `main` updates publish the generated static site through GitHub Pages.
+
 After installing the development requirements below:
 
 ```bash
@@ -56,7 +59,7 @@ make site-serve PYTHON=.venv/bin/python
 Open the loopback address printed by the preview command. See the
 [station guide](site/README.md) for routes, build ownership, asset provenance,
 font/diagram network requests and preview details. This is a source-built
-reading surface; no hosted site or deployment is claimed.
+reading surface; hosting it does not install or activate any networking policy.
 
 <a id="what-signalbox-is"></a>
 ## What Signalbox is — and is not
@@ -169,7 +172,7 @@ the exact published boundary, see [current state](docs/current-state.md).
 ## Status and permission
 
 F0.3 underlay observability is source-integrated into canonical `main` by
-PR #1. The F2 Agent Surface update is a source candidate: complete reference
+PR #1. F2 is source-integrated through PR #3: complete reference
 chain diagnostics, observation/attempt freshness, real claim/acceptance
 objects, and synthetic current-pointer sequencing. The exact Git and hosted
 verification state is recorded in [current state](docs/current-state.md).

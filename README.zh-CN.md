@@ -38,6 +38,9 @@ Signalbox 的 **电报 reading station** 把这些内容放进同一个阅读入
 穿孔纸带标记、手册、图解、案例，以及可以选择 synthetic replay receipt 的工作台。
 完整正文直接从仓库 Markdown 构建，内容维护在一处。
 
+在线阅读：**[Signalbox — 通信札记](https://indeliblevivi.github.io/signalbox-routing/)**。
+经过验证的 `main` 更新会通过 GitHub Pages 发布生成的静态站点。
+
 安装下文的 development requirements 后：
 
 ```bash
@@ -47,7 +50,7 @@ make site-serve PYTHON=.venv/bin/python
 
 打开 preview command 输出的 loopback 地址。routes、build ownership、资产 provenance、
 字体／图解的 network request 与预览方式见 [station guide](site/README.md)。这是由
-source 构建的阅读页面，目前不声称 hosted site 或 deployment。
+source 构建的阅读页面；发布站点不代表安装或激活任何 networking policy。
 
 <a id="what-signalbox-is"></a>
 ## Signalbox 是什么——又不是什么
@@ -149,7 +152,7 @@ state](docs/current-state.md)。
 ## 状态与许可
 
 F0.3 underlay observability 已通过 PR #1 集成进 canonical `main`。
-F2 Agent Surface 更新是 source candidate：完整 reference chain diagnostic、
+F2 Agent Surface 已通过 PR #3 集成进 source：完整 reference chain diagnostic、
 observation/attempt freshness、实际 claim/acceptance 对象与 synthetic current-pointer
 sequencing。精确 Git 与 hosted verification 状态在 [current state](docs/current-state.md)。
 完整 Signalbox v1 尚未完成。synthetic record、scenario replay 与 source test 不证明
