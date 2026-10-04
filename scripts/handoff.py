@@ -145,8 +145,8 @@ def evaluate_handoff(
                         states.append(evaluation.effective_outcome)
                         if not evaluation.structurally_valid or not evaluation.semantically_valid:
                             reject("malformed-path-evidence", path + "/health_report_ref", "; ".join(evaluation.errors))
-                        if claim["outcome"] == "pass" and evaluation.effective_outcome != "pass":
-                            reject("unusable-path-evidence", path + "/health_report_ref", "; ".join(evaluation.reason_codes) or "Effective report outcome is not pass.")
+                        if claim["outcome"] != evaluation.effective_outcome:
+                            reject("unusable-path-evidence", path + "/health_report_ref", "; ".join(evaluation.reason_codes) or f"Canonical report outcome is {evaluation.effective_outcome}.")
         expected = expected_health_rollup(states) if states else "unknown"
         outcomes[claim["claim_id"]] = expected
         if claim["outcome"] != expected:

@@ -195,6 +195,47 @@ class AgentSurfaceTests(unittest.TestCase):
         self.assertFalse(result["valid"], result)
         self.assertIn("uncited-health-report", [d["code"] for d in result["diagnostics"]])
 
+    def test_path_claim_annotations_cannot_override_canonical_outcome(self):
+        bundle = load("examples/mintie/path-handoff.json")
+        at = parse_rfc3339(bundle["claims"][-1]["observed_at"])
+        del bundle["evidence"][-1]["valid_until"]
+        for outcome in ("fail", "unknown"):
+            for instant in (at, at + timedelta(days=1)):
+                with self.subTest(outcome=outcome, evaluated_at=instant):
+                    changed = copy.deepcopy(bundle)
+                    changed["claims"][-1]["outcome"] = outcome
+                    changed["evidence"][-1]["outcome"] = outcome
+                    result = evaluate_handoff(ROOT, changed, instant)
+                    self.assertFalse(result["valid"], result)
+                    self.assertIn("unusable-path-evidence", [d["code"] for d in result["diagnostics"]])
+
+    def test_path_claim_accepts_matching_canonical_fail_and_unknown(self):
+        bundle = load("examples/mintie/path-handoff.json")
+        at = parse_rfc3339(bundle["claims"][-1]["observed_at"])
+        del bundle["evidence"][-1]["valid_until"]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for folder in ("contracts", "schemas", "examples"):
+                shutil.copytree(ROOT / folder, root / folder)
+            report_path = root / bundle["claims"][-1]["health_report_ref"]
+            original = json.loads(report_path.read_text())
+            for outcome, reason in (("fail", "timeout"), ("unknown", "unreachable")):
+                with self.subTest(outcome=outcome):
+                    report = copy.deepcopy(original)
+                    report["outcome"] = report["dimensions"]["transport"]["state"] = outcome
+                    report["dimensions"]["transport"]["observations"][1].update(state=outcome, reason_code=reason)
+                    report_path.write_text(json.dumps(report))
+                    changed = copy.deepcopy(bundle)
+                    changed["claims"][-1]["outcome"] = outcome
+                    changed["evidence"][-1]["outcome"] = outcome
+                    result = evaluate_handoff(root, changed, at)
+                    self.assertTrue(result["valid"], result)
+                    self.assertEqual(result["claim_outcomes"]["claim/path-evidence"], outcome)
+                    if outcome == "fail":
+                        expired = evaluate_handoff(root, changed, at + timedelta(days=1))
+                        self.assertFalse(expired["valid"], expired)
+                        self.assertIn("unusable-path-evidence", [d["code"] for d in expired["diagnostics"]])
+
     def test_resume_cannot_change_generation_scope(self):
         candidate = self.begin_report("A")
         self.publisher.publish(candidate, self.now)

@@ -38,6 +38,9 @@ stage-specific reference 精确绑定 `source_ref`、`installed_ref + runtime_ge
 都会拒绝。bundle ID 与 repo-contained artifact path 是两个不同 namespace。
 path claim 的 evidence references 必须包含被求值的 report artifact；另一个 contained file
 不能为这份 report 提供 evidence 或 acceptance 依据。
+path claim 的 `pass`、`fail`、`unknown` 都必须与 canonical report 在 claim observation time
+和请求的 evaluation time 的有效结果一致。手填 evidence outcome 不能覆盖 report，
+省略 evidence 的可选 `valid_until` 也不能绕过 report 自身的 expiry。
 
 [acceptance-record/v2](../../schemas/acceptance-record.schema.json) 定义实际记录，替代旧的
 descriptor-only v1 schema：`record_id`、`actor_class`、`actor_ref`、`decision`、`scope_ref`、
