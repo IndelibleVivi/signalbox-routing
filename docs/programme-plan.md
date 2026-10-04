@@ -1,10 +1,9 @@
 # Signalbox Programme Plan
 
 Status: active
-Current execution tranche: F2 Agent Surface source candidate with its reading
-follow-up (source verification complete; not merged or deployed)
+Current follow-up: authorized reading-station publication, separate from network runtime
 Reader follow-up: telegraph reading station and same-source content integration
-Most recently integrated tranche: F0.3 underlay observability via PR #1
+Most recently integrated tranche: F2 Agent Surface and reading station via PR #3
 Previous source boundary: F0.2.2 executable-authority closure
 Next programme tranche after F2: F3 complete Mintie reference deployment
 Canonical specification: `docs/specification.md`, revision 6
@@ -54,6 +53,10 @@ installation, activation, or deployment.
   assets, and foreground practical network arrangements in the existing reader
   path. Static build and local browser verification do not authorize hosted
   deployment or a live-client implementation.
+- Faye authorized formal reading-station deployment on 2026-10-04: integrate
+  the verified source through protected-main PRs and publish its generated static
+  site on GitHub Pages. This does not authorize a router/Tailnet/VPS mutation,
+  runtime installation, release or license change.
 
 ## Dependency order
 
@@ -76,14 +79,14 @@ different phases. This plan ends at verified Signalbox source.
 
 | Acceptance | Intended outcome | Owning slice | Dependency / gate | Verification evidence | Status |
 | --- | --- | --- | --- | --- | --- |
-| `ACCEPT-01` | Normative contracts agree | F0/F0.2.1/F0.2.2/F2 contracts | Identity settled | semantic validator, JSON Schema, contract tests | F0.2.2 integrated; F2 source-complete candidate adds typed input, freshness and reference/revision closure; full v1 pending |
-| `ACCEPT-02` | Paired Human Surface teaches the complete model | F1 human guide and F2 reader projections | F0 IDs and diagrams | doc-pair parity plus manual read | F1 integrated; F2 candidate adds progressive request-based entry, packet-path observations and five paired worked cases; full v1 pending |
-| `ACCEPT-03` | Agent Surface defines implementation and evidence behavior | F2 agent reference | F0 contracts | structured chain diagnostics, concrete handoffs, sequence/restore replay and behavior tests | F2 source-complete candidate; local and hosted implementation gates passed |
-| `ACCEPT-04` | Mintie is a portable, public-safe reference deployment | F0.2/F0.2.2/F2/F3 Mintie example | F0 roles/routing/health | example validation and Git-index boundary scan | Integrated route grammar; F2 candidate adds source/four-stage handoffs and replay judgments pulled forward from F3; full F3 pending |
-| `ACCEPT-05` | Reusable failure mechanisms are retained | F0.3/F2 lessons and F4 failure depth | F0 health/evidence | failure-ID coverage and linked worked cases | Underlay and sleep-path lessons retained; F2 candidate separates trigger, defect and repair and adds five judgments; remaining F4 depth pending |
-| `ACCEPT-06` | Validation rejects meaningful contract drift | F0.2.2/F2 validator and F5 hardening | F0 contracts | positive and negative tests plus the hosted implementation gate | F2 candidate rejects typed-input, stale-observation, handoff and sequence drift; exact receipts are owned by `docs/current-state.md`; F5 pending |
-| `ACCEPT-07` | Repository surfaces agree | F0.2.2/F1/F2/F6 reconciliation | Current slice | `make verify`, links, diff review | F2 candidate's contracts, examples and human/agent projections agree; F6 whole-programme reconciliation pending |
-| `ACCEPT-08` | External gates remain truthful | Every slice | Explicit owner authorization | current-state and remote readback | F2 is a published source candidate, not merged/released/deployed; later gates remain separate |
+| `ACCEPT-01` | Normative contracts agree | F0/F0.2.1/F0.2.2/F2 contracts | Identity settled | semantic validator, JSON Schema, contract tests | F0.2.2 integrated; F2 integrated source adds typed input, freshness and reference/revision closure; full v1 pending |
+| `ACCEPT-02` | Paired Human Surface teaches the complete model | F1 human guide and F2 reader projections | F0 IDs and diagrams | doc-pair parity plus manual read | F1 integrated; F2 integrated source adds progressive request-based entry, packet-path observations and five paired worked cases; full v1 pending |
+| `ACCEPT-03` | Agent Surface defines implementation and evidence behavior | F2 agent reference | F0 contracts | structured chain diagnostics, concrete handoffs, sequence/restore replay and behavior tests | F2 integrated source; local and hosted implementation gates passed |
+| `ACCEPT-04` | Mintie is a portable, public-safe reference deployment | F0.2/F0.2.2/F2/F3 Mintie example | F0 roles/routing/health | example validation and Git-index boundary scan | Integrated route grammar; F2 integrated source adds source/four-stage handoffs and replay judgments pulled forward from F3; full F3 pending |
+| `ACCEPT-05` | Reusable failure mechanisms are retained | F0.3/F2 lessons and F4 failure depth | F0 health/evidence | failure-ID coverage and linked worked cases | Underlay and sleep-path lessons retained; F2 integrated source separates trigger, defect and repair and adds five judgments; remaining F4 depth pending |
+| `ACCEPT-06` | Validation rejects meaningful contract drift | F0.2.2/F2 validator and F5 hardening | F0 contracts | positive and negative tests plus the hosted implementation gate | F2 integrated source rejects typed-input, stale-observation, handoff and sequence drift; exact receipts are owned by `docs/current-state.md`; F5 pending |
+| `ACCEPT-07` | Repository surfaces agree | F0.2.2/F1/F2/F6 reconciliation | Current slice | `make verify`, links, diff review | F2 integrated source contracts, examples and human/agent projections agree; F6 whole-programme reconciliation pending |
+| `ACCEPT-08` | External gates remain truthful | Every slice | Explicit owner authorization | current-state and remote readback | F2 is source-integrated; reading-station publication is separately authorized and checked; release and network-runtime gates remain separate |
 
 ## Implementation slices
 
@@ -190,7 +193,7 @@ activation, runtime mutation, or owner/client acceptance is claimed, and no
 active F0.3 feature branch remains. F2 is the current source update; the F0.3
 integration receipt remains historical.
 
-### F2 — Complete Agent Surface (`source-candidate`)
+### F2 — Complete Agent Surface (`source-integrated`)
 
 Deliver one executable task entrance, exact implementation/source map, patch
 protocol, compatibility handling, stop rules, actual claim/acceptance/handoff
@@ -210,7 +213,7 @@ storage, cross-process CAS and actual recovery effects belong to separately
 authorized deployments. Full F3 configuration/negative-proof material and F5
 historical compatibility/supply-chain work remain pending.
 
-Status: source-complete candidate; local repository verification and Git
+Status: source-integrated through PR #3; local repository verification and Git
 closure are recorded in `docs/current-state.md`. No release, installation,
 activation, live network mutation or owner acceptance is implied.
 

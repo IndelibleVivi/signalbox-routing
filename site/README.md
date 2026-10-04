@@ -32,11 +32,43 @@ make site-serve PYTHON=.venv/bin/python SITE_PORT=8766
 # 浏览器打开 http://localhost:8766/
 ```
 
-没有部署命令。
-
 首页是 `index.html`。阅读页是仓库路径加 `.html`，例如
 `docs/human/40-tailnet-vps-private-ingress.zh-CN.html`。刷新、deep link、浏览器返回与
 中英对照链接都基于普通文件路径，在 project subpath 下也能工作，不需要 SPA fallback。
+
+## GitHub Pages 发布与恢复
+
+公开地址是 [Signalbox — 通信札记](https://indeliblevivi.github.io/signalbox-routing/)。
+[Pages workflow](../.github/workflows/pages.yml) 在 `main` push 或手动 dispatch 时工作；
+feature branch 的 PR 只运行 source gate，不发布。合入 `main` 会触发公开发布，
+因此 merge 或手动重发都必须在相应的部署授权内进行。
+
+仓库 Pages publishing source 使用 **GitHub Actions**，`github-pages` environment
+只允许 `main` 部署；`main` 保留 repository branch protection。workflow 用 Python 3.13
+安装 development requirements，
+运行 `make verify`（包含 deterministic site build），确认 source worktree 未改变，
+再上传唯一的 `build/site/` artifact。deploy job 依赖 build 成功，用 GitHub OIDC
+与 Pages permission 发布；没有长期部署 secret，也不上传整个 checkout。
+
+在已有授权内重新发布当前 `main`：
+
+```bash
+gh workflow run pages.yml --ref main
+gh run list --workflow pages.yml --limit 5
+gh run watch <run-id> --exit-status
+```
+
+失败时先查看该 run 的完整日志。build/verification 失败不会进入 deploy；修复 source
+并经 PR 合入后重试。若需要恢复先前内容，以 revert PR 恢复已知良好的 source，
+走相同 gate 和发布流程，不 force-push，也不手改 generated HTML。首次部署前没有旧站
+可回退；部署失败本身不证明公开站点当前是哪一版。
+
+成功 run 与 `github-pages` environment 记录 deployment；它们不替代线上读回。
+发布后检查 HTTPS 首页、直接打开并刷新阅读页、中英与 anchor 链接、三张图和 CSS/JS、
+工作台与收信匣。公开 `build-manifest.json` 的 `source_identity.commit` 应与该 deployment
+的 source SHA 一致，`state` 应为 `exact-head`。current deployment 状态见
+[current state](../docs/current-state.md) 与
+[Pages runs](https://github.com/IndelibleVivi/signalbox-routing/actions/workflows/pages.yml)。
 
 ## 内容与 source 归属
 
@@ -107,7 +139,7 @@ pass/fail/unknown：一次 match 可能正是预期中的 fail 或 unknown，不
 
 ## 已知限制
 
-- 这是 source-only 投影。构建与 source test 不证明任何 installed、activated、
+- 这是 source 内容的静态投影。站点上线、构建与 source test 不证明任何 installed、activated、
   live path、恢复或 owner/client acceptance。
 - 生成的 Mermaid 依赖外部 CDN；离线时只显示 code fallback。
 - 仓库仍没有选择 license；本站内容跟随其 source 的授权状态。
