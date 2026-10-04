@@ -1,8 +1,8 @@
 # Signalbox Programme Plan
 
 Status: active
-Current follow-up: authorized reading-station publication, separate from network runtime
-Reader follow-up: telegraph reading station and same-source content integration
+Most recent follow-up: reading-station publication complete; network runtime remains separate
+Reader follow-up: telegraph reading station and same-source content integration, published on GitHub Pages
 Most recently integrated tranche: F2 Agent Surface and reading station via PR #3
 Previous source boundary: F0.2.2 executable-authority closure
 Next programme tranche after F2: F3 complete Mintie reference deployment

@@ -84,9 +84,23 @@ Last updated: 2026-10-04
 ## Reading station publication
 
 - Faye authorized formal reading-station deployment on 2026-10-04.
-- Target: [Signalbox — 通信札记](https://indeliblevivi.github.io/signalbox-routing/).
-  The Pages workflow is prepared on `publish-reading-station`; its first
-  deployment and HTTPS readback are pending. A workflow file is not live proof.
+- Public reading station: [Signalbox — 通信札记](https://indeliblevivi.github.io/signalbox-routing/),
+  live over enforced HTTPS. Publication workflow integrated through
+  [PR #4](https://github.com/IndelibleVivi/signalbox-routing/pull/4), commit
+  `6d1ecb4feaf70453dcd7400038202ff0e99939f0`.
+- Initial publication receipt:
+  [run 37179114519](https://github.com/IndelibleVivi/signalbox-routing/actions/runs/37179114519)
+  passed build and deploy for that exact commit. On 2026-10-04, anonymous HTTPS
+  readback passed all 31 HTML routes; the three supplied illustrations and CSS/JS
+  matched source bytes. The public manifest reported the same commit and
+  `exact-head`. This is an initial receipt; later deployment identity belongs to
+  the environment and Pages runs below.
+- Public Chromium checks passed at 1440×900 and 390×844: reading/language/anchor
+  links, refresh/back, all eight visible canonical receipts, all 26 cipher keys
+  and both wraps, solved note, cat/Morse, keyboard dialog/Escape/focus return,
+  reduced motion and readable rendered diagrams. Normal diagram loading had no
+  console errors and no page overflow. These are hosted-station checks, not
+  physical-phone or live-network acceptance.
 - Only verified `main` builds publish `build/site/` to `github-pages`.
   [The station runbook](../site/README.md) owns commands, failure handling and
   source-based rollback. The deployment environment and
