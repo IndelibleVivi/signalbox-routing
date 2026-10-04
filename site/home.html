@@ -1,0 +1,108 @@
+    <section class="sx-cover" aria-labelledby="sx-home-title">
+      <div class="sx-cover-head">
+        <span class="sx-label">THE SIGNAL ROOM</span>
+        <span class="sx-label">路由、入口，与日常连接</span>
+      </div>
+      <div class="sx-cover-body">
+        <div class="sx-cover-copy">
+          <div class="sx-label">A NOTE FROM OUR OWN NETWORK</div>
+          <h1 id="sx-home-title">日常网络里的<br>好办法。</h1>
+          <p>从路由器分流到私有入口，把用过、想过、愿意分享的连接经验，慢慢写在这里。</p>
+          <div class="sx-cover-links">
+            <a class="sx-action" href="{{BASE}}docs/human/40-tailnet-vps-private-ingress.zh-CN.html">翻开本篇选读 <span aria-hidden="true">↗</span></a>
+            <button type="button" class="sx-quiet-button" data-open-dispatch aria-haspopup="dialog">看看信匣里有什么</button>
+          </div>
+        </div>
+        <figure class="sx-cat-figure">
+          <button type="button" class="sx-cat-button" data-cat-button aria-label="摸摸电报机旁的值班猫">
+            <img src="{{BASE}}assets/receiving-room.webp" alt="一只灰白猫伏在绿色电报机上，爪子按住卷出的纸带，旁边亮着黄铜台灯。">
+          </button>
+          <figcaption class="sx-cat-note" aria-live="polite">
+            <span data-cat-note>收信室里，好像还有谁在值班。</span>
+            <span class="sx-cat-source" data-cat-source hidden>
+              — J. C. Maxwell, 1860。
+              <a href="https://journal.sciencemuseum.ac.uk/article/valentine-from-a-telegraph-clerk/" target="_blank" rel="noopener">来源 ↗</a>
+            </span>
+          </figcaption>
+        </figure>
+      </div>
+      <div class="sx-tape">
+        <span class="sx-tape-code" data-callsign>... .. --. -. .- .-.. -... --- -..-</span>
+        <button type="button" data-callsign-button aria-pressed="false">译出呼号</button>
+      </div>
+    </section>
+
+    <section class="sx-sheet" aria-label="Signalbox 选读与内容索引">
+      <div class="sx-section-label">
+        <span class="sx-label">SELECTED NOTE</span>
+        <span class="sx-small">先从一个会用得上的安排开始</span>
+      </div>
+      <div class="sx-selected">
+        <div>
+          <h2>让 VPS 接入 Tailnet，<br>手机少切一次 VPN。</h2>
+          <p>适用于由 Mintie 路由器接管的手机流量：仍用熟悉的 HTTPS 网址，访问指定的私有应用。</p>
+          <a class="sx-action" href="{{BASE}}docs/human/40-tailnet-vps-private-ingress.zh-CN.html">读这篇方案 <span aria-hidden="true">↗</span></a>
+        </div>
+        <aside class="sx-route-slip" aria-label="本篇参考路径摘要">
+          <dl>
+            <dt>FROM</dt><dd>获准手机 · Mintie 接管流量</dd>
+            <dt>VIA</dt><dd>VPS 专用入口 · Tailnet</dd>
+            <dt>TO</dt><dd>指定的 HTTPS 应用</dd>
+          </dl>
+          <div class="sx-slip-foot sx-mono">Mintie reference / TCP 443</div>
+        </aside>
+      </div>
+
+      <div class="sx-section-label">
+        <span class="sx-label">THE CABINET</span>
+        <span class="sx-small">手册、图解、案例，还有一些小实验</span>
+      </div>
+      <div class="sx-cabinet">
+        <section class="sx-drawer">
+          <div class="sx-label">GUIDES / 手册</div>
+          <h3>把分流交给路由器</h3>
+          <p>从终端少做哪些配置，读到 DNS、选路顺序与失败时的处理。</p>
+          <a href="{{BASE}}docs/human/20-basic-router-guide.zh-CN.html">打开基础手册 ↗</a>
+        </section>
+        <section class="sx-drawer">
+          <div class="sx-label">ATLAS / 图解</div>
+          <h3>一条请求，怎样到达</h3>
+          <p>让路由器、网关与应用回到各自的位置，沿实际路径读懂连接。</p>
+          <a href="{{BASE}}docs/human/10-architecture.zh-CN.html">翻开架构图 ↗</a>
+        </section>
+        <section class="sx-drawer">
+          <div class="sx-label">CASEBOOK / 案例</div>
+          <h3>把容易混淆的地方讲透</h3>
+          <p>五个公开合成案例，从重叠规则、真实入口，读到观察结果的时效。</p>
+          <a href="{{BASE}}docs/human/50-worked-cases.zh-CN.html">逐篇读案例 ↗</a>
+        </section>
+        <section class="sx-drawer">
+          <div class="sx-label">WORKBENCH / 工作台</div>
+          <h3>自己动手，也交给 agent</h3>
+          <p>实现参考、公开样例和本地重放，给已经准备动手的读者。</p>
+          <a href="{{BASE}}index.html#sx-workbench">查看工作台 ↓</a>
+        </section>
+      </div>
+      <p class="sx-cabinet-end">这里还有空白，留给下一次灵机一动。</p>
+
+      <section class="sx-workbench" id="sx-workbench" aria-labelledby="sx-workbench-title">
+        <div class="sx-section-label">
+          <span class="sx-label">WORKBENCH · SYNTHETIC REPLAY</span>
+          <span class="sx-small">不是 live health，也不是新的 evaluator</span>
+        </div>
+        <h3 id="sx-workbench-title" style="margin-top:16px">八个合成判断，各自比对一次</h3>
+        <p class="sx-small sx-muted" style="margin-top:8px;max-width:44em">
+          下面每个结果都由构建时的 <span class="sx-mono">scripts.replay.replay_case</span> 算出，
+          再与 <span class="sx-mono">examples/scenarios/cases.json</span> 的 expected 值逐字段比较。
+          “expected judgment matched” 只说明这份合成判断与预期一致，可能是预期内的 fail 或 unknown；
+          它不代表任何设备、路径或部署现在健康。
+        </p>
+        <ul class="sx-scenario-list" role="list">
+          {{SCENARIO_BUTTONS}}
+        </ul>
+        <div class="sx-receipt" data-receipt aria-live="polite"></div>
+        <p class="sx-small sx-muted" style="margin-top:12px">
+          在仓库根目录运行 <span class="sx-mono">.venv/bin/python -m scripts.replay</span> 可看到同样的八个结果。
+        </p>
+      </section>
+    </section>

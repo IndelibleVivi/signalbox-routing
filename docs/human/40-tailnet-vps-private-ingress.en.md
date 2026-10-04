@@ -9,9 +9,42 @@ contract_revision: 6
 **English** · [简体中文](40-tailnet-vps-private-ingress.zh-CN.md)
 
 <a id="canonical-origin"></a>
-# Tailnet and VPS private ingress
+# Let the VPS join the Tailnet, so the phone switches VPNs less
 
-This advanced path preserves one browser origin across two ingress routes:
+A phone needs a private application, but using it should not require closing
+its everyday network tool, starting Tailscale, and switching back afterward.
+This arrangement lets a VPS join the Tailnet. An authenticated dedicated
+gateway dials only the approved HTTPS service; the phone does not need its own
+Tailscale client on the path covered by the router.
+
+The reference gives **Mintie ownership of the application's routing and DNS
+policy**. The VPS holds Tailnet membership, while the application keeps its
+login and authorization. Moving these responsibilities reduces terminal work
+without granting the phone access to the whole Tailnet.
+
+<a id="phone-vpn-slot"></a>
+## Check which access path this guide covers
+
+| Your arrangement | Supported conclusion |
+| --- | --- |
+| Mintie actually classifies the application's traffic and sends it to the dedicated gateway | The phone need not start Tailscale; declared routes handle ordinary access and the named private service separately |
+| An existing phone VPN encapsulates the traffic and sends it elsewhere | Do not assume Mintie can identify the inner hostname; establish routing ownership and compatibility first |
+| A phone on cellular data should keep using its existing proxy client | This needs supported outbound protocol, hostname rules, DNS, gateway authentication and separate path acceptance; the current reference does not deliver that complete client arrangement |
+
+Tailscale's [VPN coexistence guide](https://tailscale.com/docs/reference/faq/other-vpns)
+describes the iOS/Android restriction to one active VPN. Moving Tailnet
+membership to the VPS removes that terminal responsibility; membership alone
+does not create the phone-to-gateway path.
+
+If running Tailscale directly on the phone is sufficient, another gateway may
+not justify its upkeep. For VPS management, SSH or service deployment basics,
+start with [Infra Field Guide](https://indeliblevivi.github.io/infra-field-guide/),
+which also covers private access for remote workers managing machines. This
+guide follows terminal access to applications.
+
+## Keep using the same HTTPS address
+
+This arrangement preserves one browser origin across two ingress routes:
 
 - a public client uses the public authentication and tunnel path;
 - an approved private client uses Mintie, a dedicated VPS gateway identity,
@@ -21,6 +54,12 @@ Both open the same canonical HTTPS hostname. Cookies, localStorage, IndexedDB,
 Service Workers, PWA identity, and application URLs therefore remain attached
 to one origin. A raw Tailnet address or a second Tailnet-only hostname would
 solve reachability while splitting browser identity. `PRIVATE-01`
+
+For example, the browser opens `https://notes.example.com` on both paths.
+The entrypoint, the VPS's actual dial destination and the browser URL are
+different locations. A Tailnet backend does not require a private address in
+the browser. One origin preserves storage ownership; application login, cookie
+policy and public/private authentication still need separate verification.
 
 <!-- mermaid:id=canonical_private_ingress -->
 ```mermaid
@@ -66,6 +105,27 @@ In this reference pattern, the VPS gateways join the Tailnet while Mintie
 remains the sole routing and DNS policy owner. Adding another routing engine to
 the router would require a separate compatibility design rather than becoming
 an incidental setup step.
+
+<a id="implementation-map"></a>
+## Put each input where it actually operates
+
+Align these locations before implementation. The files are portable source
+examples, not installable runtime configuration. Endpoints, credentials, real
+client identities and readbacks remain in the private implementation.
+
+| Location | Inputs to establish | Current source reference | Observable result to confirm |
+| --- | --- | --- | --- |
+| Mintie | approved client scope, canonical hostname, transport, dedicated gateway binding | [Traffic policy](../../examples/mintie/traffic-policy.json) and [deployment](../../examples/mintie/deployment.json) | private precedence over DIRECT; only approved requests select the private identity |
+| VPS gateway | separate inbound credential, private-ingress role, exact origin service | [Role capabilities](../../contracts/roles.json) and deployment gateway bindings | successful authentication can dial only that service; ordinary credentials and neighboring destinations are denied |
+| Tailnet policy | gateway identity/tag allowed to the origin service | the authority table below and [agent implementation reference](../agent/tailnet-vps-implementation-reference.md) | the complete additive policy is reviewed, including existing broad grants |
+| Private origin | exact listener/firewall, canonical SNI, trusted certificate | hostname and transport constraints below | canonical TLS and application authentication work; no extra public or private listener appears |
+| Observation and acceptance | per-subject profiles, positive and negative path evidence | [Health profiles](../../examples/mintie/health-profiles.json) and [acceptance matrix](../agent/acceptance-matrix.md) | evidence names the path, current scope and valid window; peer presence alone is insufficient |
+
+The canonical hostname, gateway binding, origin service and transport must
+correspond across these locations. For a first source judgment, run
+`.venv/bin/python -m scripts.policy` and follow origin → gateway → host →
+role/capabilities → subject/profile. Success establishes source consistency;
+engine-specific installation configuration and client access remain implementation work.
 
 <a id="authorization-boundaries"></a>
 ## Bound access at every authority
@@ -137,6 +197,29 @@ its matched flow fails closed. Deliberately switching a client back to the
 public path is a separate policy or user action. Likewise, a primary and backup
 gateway do not create strict failover by existing; latency selection is not
 ordered primary/secondary behavior.
+
+<a id="client-checklist"></a>
+## Return to the phone and check the result
+
+After an authorized installation and activation in your own deployment, use
+the same named device to finish:
+
+1. The phone does not additionally run Tailscale, and the declared routing
+   owner really captures this application's traffic.
+2. Open the canonical HTTPS URL and verify trusted TLS, normal application
+   login and the required browser/PWA behavior.
+3. Ordinary requests retain their declared routes; ordinary egress credentials
+   cannot enter the private service through this arrangement.
+4. The private identity cannot access neighboring services. If the private
+   lane fails, the approved flow stops without automatic DIRECT or public
+   fallback. Fault injection requires separate authorization too.
+5. To withdraw the arrangement, preserve independent management access, follow
+   your deployment's authorized rollback procedure for routing, gateway
+   allows and Tailnet grants, and recheck access scope. This guide supplies no
+   apply or rollback script.
+
+Successful observations support scoped acceptance for this named client and
+occasion, not a guarantee for every phone, cellular access or a future time.
 
 This document is a source reference, not a claim that any Tailnet, VPS, router,
 origin, or client is installed, activated, or healthy. Agents implementing the

@@ -1,8 +1,9 @@
 # Signalbox Programme Plan
 
 Status: active
-Current execution tranche: F2 Agent Surface source update (implementation and
-local and hosted implementation verification complete; candidate, not merged or deployed)
+Current execution tranche: F2 Agent Surface source candidate with its reading
+follow-up (source verification complete; not merged or deployed)
+Reader follow-up: telegraph reading station and same-source content integration
 Most recently integrated tranche: F0.3 underlay observability via PR #1
 Previous source boundary: F0.2.2 executable-authority closure
 Next programme tranche after F2: F3 complete Mintie reference deployment
@@ -48,6 +49,11 @@ installation, activation, or deployment.
   in-scope improvements are authorized. Standing Git closure applies to the
   existing source remote; protected-main policy still requires a source branch
   and PR. No runtime, release or license gate is widened.
+- Faye authorized the 2026-10-04 discussion/kit continuation as source work:
+  integrate the selected telegraph reading station, reuse the supplied visual
+  assets, and foreground practical network arrangements in the existing reader
+  path. Static build and local browser verification do not authorize hosted
+  deployment or a live-client implementation.
 
 ## Dependency order
 
@@ -152,6 +158,13 @@ private-ingress guide. Depth remains in the normative core; the public entrance
 now exposes it progressively. Exact published commit and hosted evidence are
 owned by `docs/current-state.md`.
 
+The reading-station follow-up builds these same Markdown sources into a
+telegraph-themed surface with manuals, diagrams, cases and existing synthetic
+workbench receipts. The Tailnet/VPS entrance now starts with reducing phone
+VPN switching and names the exact Mintie coverage and client-access limits.
+It adds a reading projection, not a new operational authority or a claim that
+F3's engine-specific configurations and live negative proofs are complete.
+
 ### F0.3 — Underlay observability (`completed-at-source-boundary`)
 
 Make a degraded household or WAN underlay observable even when control-plane
@@ -238,6 +251,14 @@ remains private implementation evidence and is not an execution tranche here.
 The F1 reader rebalance changes exposure order, not normative depth: basic
 readers enter through three bounded paths while contracts, schemas, and the
 Agent Surface retain the complete implementation model.
+
+The 2026-10-04 discussion corrected a proposed network-reasoning textbook
+direction toward useful arrangements for everyday devices. The adopted
+reading station leads with those arrangements and retains exact mechanism and
+evidence references underneath. A new Mesh return-route laboratory is not an
+execution tranche: it was superseded as the proposed centre of the work.
+Full mobile-client access recipes, concrete engine configuration and deployment
+acceptance remain F3/implementation work; visual navigation cannot establish them.
 
 ## Full acceptance
 

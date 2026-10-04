@@ -19,9 +19,10 @@ public-safe example 和验证工具。普通读者不必先啃完所有 contract
   什么责任移到路由器、什么仍要显式配置，以及日常使用里的 fail closed。
 - **我要设计 routing / DNS policy。** 看[分流、DNS 与 fail-closed](docs/human/30-routing-dns-and-fail-closed.zh-CN.md)：
   ownership、precedence、protected lane、health 与 recovery boundary。
-- **我要通过 VPS gateway 和 Tailnet 访问私有服务。** 看[canonical private-ingress
-  指南](docs/human/40-tailnet-vps-private-ingress.zh-CN.md)：一个 HTTPS origin、独立身份、
-  exact destination 与分层证据。
+- **我想使用私有服务，又不想为它在手机上另开一次 VPN。** 看 [Tailnet-on-VPS
+  指南](docs/human/40-tailnet-vps-private-ingress.zh-CN.md)：Mintie 接管实际覆盖的应用流量，
+  专用 VPS gateway 加入 Tailnet，浏览器继续使用原来的 HTTPS 地址。手机 VPN 的流量封装
+  与蜂窝网络客户端接入，需要各自的 compatibility 与证据。
 
 如果这些词还很陌生，先读五分钟版的[从这里开始](docs/human/00-start-here.zh-CN.md)
 和[架构图](docs/human/10-architecture.zh-CN.md)即可。
@@ -30,6 +31,23 @@ public-safe example 和验证工具。普通读者不必先啃完所有 contract
 重叠、domain 与 IP-only 分流、router-local 与 LAN 覆盖、awake 与 sleeping client，
 以及新发布的旧证据。agent 可以沿 [可执行 workflow](docs/agent/workflow.md) 从 structured
 policy explanation 走到可校验的 claim/acceptance handoff。
+
+### 翻开通信札记
+
+Signalbox 的 **电报 reading station** 把这些内容放进同一个阅读入口：现成的猫插画、
+穿孔纸带标记、手册、图解、案例，以及可以选择 synthetic replay receipt 的工作台。
+完整正文直接从仓库 Markdown 构建，内容维护在一处。
+
+安装下文的 development requirements 后：
+
+```bash
+make site PYTHON=.venv/bin/python
+make site-serve PYTHON=.venv/bin/python
+```
+
+打开 preview command 输出的 loopback 地址。routes、build ownership、资产 provenance、
+字体／图解的 network request 与预览方式见 [station guide](site/README.md)。这是由
+source 构建的阅读页面，目前不声称 hosted site 或 deployment。
 
 <a id="what-signalbox-is"></a>
 ## Signalbox 是什么——又不是什么

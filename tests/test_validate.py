@@ -1267,6 +1267,33 @@ class SignalboxValidationTests(unittest.TestCase):
                 )
         self.assertFalse(any("binary.bin" in error for error in errors), errors)
 
+    def test_ip_scanner_distinguishes_css_pseudo_elements_from_addresses(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            cases = {
+                "style.css": (
+                    "a::before {} a::after {} dialog::backdrop {} "
+                    "summary::-webkit-details-marker {}"
+                ),
+                "ipv4.txt": "198" + ".51.100.42",
+                "ipv6.txt": "fd00:" + ":42",
+                "ipv6-cidr.txt": "fd00:" + ":/64",
+                "ipv6-url.css": "url('https://[" + "2001:db8:" + ":42]/icon')",
+                "unspecified.txt": ":" * 2,
+            }
+            for relative, text in cases.items():
+                (root / relative).write_text(text, encoding="utf-8")
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            subprocess.run(["git", "add", "--all"], cwd=root, check=True)
+            errors = validator.scan_tracked_source_boundaries(root)
+        self.assertFalse(any("style.css" in error for error in errors), errors)
+        for relative in cases.keys() - {"style.css"}:
+            with self.subTest(relative=relative):
+                self.assertTrue(
+                    any(relative in error and "IP address literal" in error for error in errors),
+                    errors,
+                )
+
     def test_tracked_source_scanner_rejects_symlink_escape_without_following_it(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir) / "repo"

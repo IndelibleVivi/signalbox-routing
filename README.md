@@ -23,9 +23,11 @@ into the normative core only when you are implementing or reviewing policy.
 - **I am designing routing or DNS policy.** Read [routing, DNS, and
   fail-closed](docs/human/30-routing-dns-and-fail-closed.en.md): ownership,
   precedence, protected lanes, health, and recovery boundaries.
-- **I need private access through VPS gateways and a Tailnet.** Read the
-  [canonical private-ingress guide](docs/human/40-tailnet-vps-private-ingress.en.md):
-  one HTTPS origin, dedicated identities, exact destinations, and evidence.
+- **I want private services without starting another phone VPN.** Read the
+  [Tailnet-on-VPS guide](docs/human/40-tailnet-vps-private-ingress.en.md):
+  Mintie handles the covered application traffic, a dedicated VPS gateway joins
+  the Tailnet, and the browser keeps its HTTPS address. Phone VPN encapsulation
+  and cellular client access need their own compatibility and evidence.
 
 New to the terms? The five-minute [Start here](docs/human/00-start-here.en.md)
 and [architecture map](docs/human/10-architecture.en.md) remain the shortest
@@ -36,6 +38,25 @@ private/DIRECT overlap, domain versus IP-only routing, router-local versus LAN
 coverage, awake versus sleeping clients, and newly published stale evidence.
 An agent can follow the [executable workflow](docs/agent/workflow.md) from a
 structured policy explanation to a validated claim/acceptance handoff.
+
+### Browse the reading station
+
+Signalbox's **telegraph reading station** brings these guides together with
+the supplied cat illustrations, punched-tape mark, diagrams, cases and a
+selectable workbench of synthetic replay receipts. Full article text is built
+from the same repository Markdown; it is maintained in one place.
+
+After installing the development requirements below:
+
+```bash
+make site PYTHON=.venv/bin/python
+make site-serve PYTHON=.venv/bin/python
+```
+
+Open the loopback address printed by the preview command. See the
+[station guide](site/README.md) for routes, build ownership, asset provenance,
+font/diagram network requests and preview details. This is a source-built
+reading surface; no hosted site or deployment is claimed.
 
 <a id="what-signalbox-is"></a>
 ## What Signalbox is — and is not

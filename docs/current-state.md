@@ -1,33 +1,51 @@
 # Current State
 
-Last updated: 2026-10-03
+Last updated: 2026-10-04
 
 <!-- signalbox:f0.3-source-integration merged-into-canonical-main -->
 
 ## Current source candidate
 
-- F2 Agent Surface update is source-complete on `f2-agent-surface`, based on
+- F2 Agent Surface and its telegraph reading-station follow-up are source-complete on `f2-agent-surface`, based on
   canonical `main` at `f70aaab7792ed025de5b64255d51ccee061b6069`.
 - Scope: total gateway/role/health references, canonical HTTPS, typed evaluator
   entry, observation and attempt freshness, catalog revision agreement, actual
   claim/acceptance handoffs, synthetic start-order current-pointer/CAS, and five
-  paired worked cases with progressive reader paths.
+  paired worked cases with progressive reader paths. The reading station adds
+  thirty full Markdown reading pages, one home and eight selectable canonical
+  synthetic replay receipts, using the three supplied illustrations unchanged.
 - Local verification: `make verify PYTHON=.venv/bin/python` passed 38 cataloged
   instances, ten reference reports, one historical regression fixture, concrete
-  handoff validation, eight synthetic replay judgments and 134 unit tests.
-  The prior baseline had 79 unit tests. These are source checks, not live evidence.
+  handoff validation, eight synthetic replay judgments, deterministic site build
+  and 161 unit tests. The pre-station candidate had 134 tests; the prior F2
+  baseline had 79. These are source checks, not live evidence.
 - Git/remote: source candidate published on `f2-agent-surface` through
   [PR #3](https://github.com/IndelibleVivi/signalbox-routing/pull/3), open and
-  not merged into protected `main`. Latest behavior-changing commit:
-  `fde2dd948e0068896c87129a1617dfbdcee53420`.
-- Hosted implementation receipt:
+  not merged into protected `main`. The PR's current head and required checks
+  own the latest published source identity. The historical F2 semantic repair
+  is `fde2dd948e0068896c87129a1617dfbdcee53420`.
+- Historical F2 implementation receipt:
   [run 37123909025](https://github.com/IndelibleVivi/signalbox-routing/actions/runs/37123909025)
   passed Python 3.11, 3.12, 3.13 and `signalbox-verify` for that implementation
-  commit, including all 134 tests. Later status-only commits have their own PR checks; the linked run is
-  an exact historical receipt, not a claim about every later head.
+  commit, including all 134 tests. The reading-station follow-up has its own PR
+  checks; this linked run is an exact historical receipt and does not verify
+  later source or site changes.
 - Visual verification: the new packet-path and recovery-sequence Mermaid
   diagrams rendered on GitHub and were inspected. Diagram source remains
   ordinary Markdown; no Mermaid plugin or production binding was added.
+- Station browser verification: the generated checkout was exercised in
+  Chromium at 1440×900 and 390×844. Supplied assets and both declared fonts
+  loaded; full text, language/anchor links, refresh/back, project-subpath routes,
+  all eight receipts, all 26 cipher shifts, both key wraps, cat/Morse discovery,
+  keyboard dialog entry/Escape/focus return and reduced-motion behavior passed.
+  Wide diagrams retain readable text within a local scroll region. CDN and
+  render failure retain readable source. Normal diagram loading had no console
+  errors. Browser checks are source-preview evidence, not physical-phone or
+  live-network acceptance.
+- The public-boundary scanner now recognizes complete IPv6 tokens rather than
+  hexadecimal prefixes of CSS pseudo-elements. A regression reproduces the old
+  false positives and preserves rejection of genuine IPv4/IPv6/CIDR/URL literals;
+  no public IP exception was added.
 - PR review follow-up closes four source defects: unsupported coverage states,
   cross-scope snapshot resume, uncited evaluated path reports, and acceptance
   required-field agreement. Dedicated regressions reproduce and reject them;
@@ -39,6 +57,11 @@ Last updated: 2026-10-03
   meaning; Agent Surface links task-specific implementations; the workflow
   demonstrates historical handoff validity and expiry; the glossary and
   programme coverage ledger reflect this candidate without claiming full v1.
+  The paired Tailnet guide now leads with reducing phone VPN switching, names
+  Mintie/encapsulated-VPN/cellular scope, and maps configuration and named-client
+  evidence to their actual owners. The reading station uses those same sources;
+  [its guide](../site/README.md) owns build, loopback preview, asset provenance
+  and third-party font/diagram requests.
 - Full Signalbox v1 remains incomplete. F3 complete configuration and negative
   proofs, F4 remaining failure depth, F5 historical compatibility/supply-chain
   work and F6 whole-programme reconciliation remain open in the
@@ -70,6 +93,9 @@ Last updated: 2026-10-03
   pending explicit rights terms. No release or tag is claimed.
 - Installed payload, activation, router/Tailnet/VPS mutation, live path evidence
   and owner/client acceptance: neither authorized nor performed by this update.
+- Reading station: authored source, static build and local preview only; no
+  hosted-site deployment is claimed. Browser font/diagram requests are declared
+  in the station guide; there is no analytics, backend or automatic live probe.
 - Handoff records, replay inputs and the in-memory publisher are synthetic.
   Their verification does not establish live health, durable pointer CAS or an
   operational recovery effect.

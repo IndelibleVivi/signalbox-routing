@@ -261,8 +261,10 @@ IPV4_CANDIDATE = re.compile(
     r"(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}(?:/\d{1,2})?(?![\w.])"
 )
 IPV6_CANDIDATE = re.compile(
-    r"(?<![0-9A-Fa-f:])(?:[0-9A-Fa-f]{0,4}:){2,}"
-    r"[0-9A-Fa-f]{0,4}(?:/\d{1,3})?(?![0-9A-Fa-f:])"
+    # Consume an address token, never a hexadecimal prefix of a CSS selector
+    # such as ::before or the bare colons in ::-webkit-details-marker.
+    r"(?<![\w:-])(?:[0-9A-Fa-f]{0,4}:){2,}"
+    r"[0-9A-Fa-f]{0,4}(?:/\d{1,3})?(?![\w:-])"
 )
 MAC_LITERAL = re.compile(r"(?i)(?<![0-9a-f])(?:[0-9a-f]{2}:){5}[0-9a-f]{2}(?![0-9a-f])")
 SECRET_URI = re.compile(r"\b(?:trojan|hysteria2?|ss)://", re.IGNORECASE)
