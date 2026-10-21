@@ -65,7 +65,7 @@ gh run watch <run-id> --exit-status
 
 成功 run 与 `github-pages` environment 记录 deployment；它们不替代线上读回。
 发布后检查 HTTPS 首页、直接打开并刷新阅读页、中英与 anchor 链接、三张图和 CSS/JS、
-工作台与收信匣。公开 `build-manifest.json` 的 `source_identity.commit` 应与该 deployment
+工作台、寄信练习与收信匣。公开 `build-manifest.json` 的 `source_identity.commit` 应与该 deployment
 的 source SHA 一致，`state` 应为 `exact-head`。current deployment 状态见
 [current state](../docs/current-state.md) 与
 [Pages runs](https://github.com/IndelibleVivi/signalbox-routing/actions/workflows/pages.yml)。
@@ -73,8 +73,8 @@ gh run watch <run-id> --exit-status
 ## 内容与 source 归属
 
 - Article 内容全部来自 canonical Markdown，在 build 时读取。双语 pair 的注册表是
-  `contracts/docs-pairs.json`：六组 `docs/human/` 章节 pair，加上根 `README.md`
-  与 `README.zh-CN.md` 作为第七组。另有必要的 `docs/agent/`、`docs/reference/`、
+  `contracts/docs-pairs.json`：九组 `docs/human/` 章节 pair，加上根 `README.md`
+  与 `README.zh-CN.md` 作为第十组。另有必要的 `docs/agent/`、`docs/reference/`、
   `docs/specification.md`、`examples/`、`schemas/README.md`，以及阅读站自己的
   `site/README.md`。
 - 文章权威仍是它的 Markdown source，不是生成的 HTML。要改正文，改 source，
@@ -126,6 +126,34 @@ gh run watch <run-id> --exit-status
 pass/fail/unknown：一次 match 可能正是预期中的 fail 或 unknown，不代表 live health。
 它不是新的 evaluator，也不改变 `scripts/replay.py`。
 
+## 带着一小块家出门
+
+本期的旅行路由器、peer relay、Mesh/OpenWrt 三篇札记分别来自
+`docs/human/60-travel-router.*.md`、`70-peer-relay.*.md` 与
+`80-mesh-and-openwrt.*.md`。双语章节、图解与 sources 同在 canonical Markdown，
+首页只提供选读入口。它们与 Infra Field Guide 的网络／私有远程访问章节互相指路，
+不把别的仓库正文复制到站内。厂商能力保留查阅日期、平台和适用条件；不承诺
+Mintie 的已安装固件已经实现这些接法。
+
+首页的“寄往家里的信”把 `examples/postcards/` 里的公开合成走读做成交互：选择
+原生 Tailnet host 或经 subnet router 访问的旧 NAS，再选择适用的网络条件，逐站
+寄出、查看结果或重新寄。信先处于待寄状态，每次操作经过一个 authored stop；
+送达或受阻后可直接重播，“重新封信”则回到待寄并把焦点留在寄出按钮。
+直连受阻的场景声明获准 peer relay 的 UDP 路径仍可达；没有它时仍可能使用 DERP。
+服务拒绝的场景已获网络访问许可，拒绝来自应用身份检查，中继不能授予应用权限。
+缺回程场景只属于保留来源地址、关闭
+SNAT 的 NAS 接法，原生 Tailnet host 不提供这个选项。
+
+场景假设、路径步骤和结果以该 authored source 为准，Python build 生成可读内容与
+交互数据；浏览器只选择场景和推进步骤。没有 JavaScript 时仍能读完整走读。
+展开“直接阅读七封教学信”始终可读全部七例。
+信件示意不运行网络算法，不连接设备，不产生 health verdict，也不替代工作台的
+canonical replay。修改场景要重新运行 `make verify`，并在浏览器核验选择、推进、
+重新寄、键盘焦点、窄屏和 reduced-motion，以及缺少 JavaScript 时的内容。
+
+案例册里的 4via6 重叠站点和 exact-prefix failover 是两则解释案例，引用厂商机制；
+它们没有成为第九、第十个 executable replay，原来的八份回执继续由原实现求值。
+
 ## 交互
 
 - 代码块：在阅读页的 shell、JSON、text 与未标语言 fence 上渐进加入原生 “Copy”
@@ -138,6 +166,8 @@ pass/fail/unknown：一次 match 可能正是预期中的 fail 或 unknown，不
 - 值班猫：点击主插画轮换句子，第三次显示 Maxwell 电报情诗一行，紧邻作者与
   source link（引文只出现一次）。
 - 纸带呼号：在 `SIGNALBOX` 与国际摩尔斯电码之间切换。
+- 寄往家里的信：用原生控件选择目的地与场景，推进已写好的路途，保留完整的
+  无 JavaScript 走读。结果页链接回对应札记，方便理解后继续阅读。
 
 没有 autoplay，没有持续动画；focus 保持可见，用集成填充/下划线或克制的黄铜强调，
 不使用沉重的深色/红色 focus ring。`prefers-reduced-motion` 会关闭动画与平滑滚动。

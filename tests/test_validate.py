@@ -1437,12 +1437,12 @@ class SignalboxValidationTests(unittest.TestCase):
         self.assertTrue(any("unexpected revision" in error for error in errors), errors)
         current = load_json("contracts/docs-pairs.json")
         self.assertEqual(current["schema"], "signalbox.docs-pairs/v3")
-        self.assertEqual(current["contract_revision"], 6)
+        self.assertEqual(current["contract_revision"], 7)
         entries = {
             entry["schema_id"]: entry
             for entry in load_json("contracts/catalog.json")["entries"]
         }
-        self.assertEqual(entries["signalbox.docs-pairs/v3"]["revision"], 6)
+        self.assertEqual(entries["signalbox.docs-pairs/v3"]["revision"], 7)
 
     def test_markdown_links_cannot_escape_repository(self):
         with tempfile.TemporaryDirectory() as temp_dir:

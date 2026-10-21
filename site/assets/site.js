@@ -53,6 +53,132 @@
   scenarioButtons.forEach((button, i) => button.addEventListener("click", () => renderScenario(i)));
   if (scenarioButtons.length) renderScenario(0);
 
+  /* ---- Postcard teaching journeys: authored selection and steps only.
+     The question this interaction asks is "which prewritten letter did the
+     reader choose?", not "is a real path reachable?" No probes or fetches. */
+  const postcardData = root.querySelector("[data-postcard-data]");
+  const postcardSection = root.querySelector("#sx-postcards");
+  let postcards = null;
+  try {
+    postcards = JSON.parse(postcardData ? postcardData.textContent : "null");
+  } catch (_e) {
+    postcards = null;
+  }
+  if (postcards && postcardSection) {
+    const targets = new Map(postcards.targets.map((item) => [item.id, item]));
+    const conditions = new Map(postcards.conditions.map((item) => [item.id, item]));
+    const journeys = new Map(postcards.journeys.map((item) => [item.id, item]));
+    const enhanced = postcardSection.querySelector("[data-postcard-enhanced]");
+    const nextButton = postcardSection.querySelector("[data-postcard-next]");
+    const resetButton = postcardSection.querySelector("[data-postcard-reset]");
+    const articleLink = postcardSection.querySelector("[data-postcard-article]");
+    const stage = postcardSection.querySelector("[data-postcard-stage]");
+    const route = postcardSection.querySelector("[data-postcard-route]");
+    const result = postcardSection.querySelector("[data-postcard-result]");
+    const targetLabel = postcardSection.querySelector("[data-postcard-target-label]");
+    const conditionLabel = postcardSection.querySelector("[data-postcard-condition-label]");
+    const availability = postcardSection.querySelector("[data-postcard-availability]");
+    const targetButtons = [...postcardSection.querySelectorAll("[data-postcard-target]")];
+    const conditionButtons = [...postcardSection.querySelectorAll("[data-postcard-condition]")];
+    const progress = postcardSection.querySelector("[data-postcard-progress]");
+    const seal = postcardSection.querySelector("[data-postcard-seal]");
+    let targetId = "tailnet-host";
+    let conditionId = "normal";
+    // -1 is the sealed, unsent letter. Every click visits one authored stop.
+    let stepIndex = -1;
+
+    const selectedJourney = () => journeys.get(targetId + "-" + conditionId);
+    const renderStep = () => {
+      const journey = selectedJourney();
+      if (!journey) return;
+      const steps = journey.steps;
+      const ready = stepIndex < 0;
+      const complete = stepIndex === steps.length - 1;
+      const stopped = complete && journey.outcome === "stopped";
+      stage.dataset.outcome = ready ? "ready" : complete ? journey.outcome : "transit";
+      targetLabel.textContent = targets.get(journey.target_ref).label;
+      conditionLabel.textContent = conditions.get(journey.condition_ref).label;
+      seal.textContent = ready ? "待寄" : stopped ? "受阻" : complete ? "已送达" : "在途";
+      progress.textContent = "邮路进度 · " + (stepIndex + 1) + " / " + steps.length;
+      route.innerHTML = steps.map((step, index) => {
+        const state = index === stepIndex && stopped ? "stop"
+          : index < stepIndex ? "done"
+          : index === stepIndex ? "current" : "waiting";
+        return '<div class="sx-postcard-stop" role="listitem" data-state="' + state + '"'
+          + (index === stepIndex ? ' aria-current="step"' : '') + '>'
+          + '<span class="sx-postcard-stamp" aria-hidden="true">' + esc(step.stamp) + "</span>"
+          + "<b>" + esc(step.label) + "</b></div>";
+      }).join("");
+      const current = steps[stepIndex];
+      result.innerHTML = '<span class="sx-postcard-kicker">'
+        + esc(ready ? "READY TO POST" : stopped ? "LETTER STOPPED" : complete ? "LETTER DELIVERED" : "IN TRANSIT")
+        + "</span><h4>" + esc(current ? current.label : journey.title) + "</h4>"
+        + "<p>" + esc(current ? current.detail : journey.summary) + "</p>"
+        + (complete
+          ? "<p class=\"sx-postcard-caveat\"><strong>" + esc(journey.result)
+            + "</strong> " + esc(journey.caveat) + "</p>"
+          : "");
+      nextButton.textContent = ready ? "封好了，寄出 →"
+        : complete ? (stopped ? "信暂存这里 · 再寄一次 ↻" : "信已送达 · 再寄一次 ↻")
+        : "继续下一站 →";
+      const article = journey.article;
+      articleLink.href = article.source.slice(0, -3) + ".html#" + article.anchor;
+      articleLink.textContent = article.label + " ↗";
+    };
+    const syncConditions = () => {
+      conditionButtons.forEach((button) => {
+        const condition = conditions.get(button.dataset.postcardCondition);
+        const applies = condition.targets.includes(targetId);
+        button.disabled = !applies;
+        button.setAttribute("aria-disabled", String(!applies));
+        button.setAttribute("aria-pressed", String(
+          applies && button.dataset.postcardCondition === conditionId
+        ));
+      });
+      availability.textContent = "旧 NAS 用 source-preserving gateway；LAN 回程缺失只对这个模式出现。";
+    };
+    const select = (nextTarget, nextCondition) => {
+      targetId = nextTarget;
+      conditionId = nextCondition;
+      stepIndex = -1;
+      targetButtons.forEach((button) => button.setAttribute(
+        "aria-pressed", String(button.dataset.postcardTarget === targetId)
+      ));
+      syncConditions();
+      const journey = selectedJourney();
+      if (!journey) {
+        availability.textContent = "这组不在教学信的范围里，请换一个能适用的条件。";
+        return;
+      }
+      renderStep();
+    };
+    targetButtons.forEach((button) => button.addEventListener("click", () => {
+      let nextCondition = conditionId;
+      if (!conditions.get(nextCondition).targets.includes(button.dataset.postcardTarget)) {
+        nextCondition = "normal";
+      }
+      select(button.dataset.postcardTarget, nextCondition);
+    }));
+    conditionButtons.forEach((button) => button.addEventListener("click", () => {
+      const nextCondition = button.dataset.postcardCondition;
+      if (!conditions.get(nextCondition).targets.includes(targetId)) return;
+      select(targetId, nextCondition);
+    }));
+    nextButton.addEventListener("click", () => {
+      const journey = selectedJourney();
+      if (!journey) return;
+      stepIndex = stepIndex === journey.steps.length - 1 ? 0 : stepIndex + 1;
+      renderStep();
+    });
+    resetButton.addEventListener("click", () => {
+      select(targetId, conditionId);
+      nextButton.focus();
+    });
+    enhanced.dataset.ready = "true";
+    postcardSection.dataset.ready = "true";
+    select(targetId, conditionId);
+  }
+
   /* ---- Dispatch dialog: cipher, key wrap, solved note ---- */
   const dialog = root.querySelector("dialog.sx-dispatch");
   const cipher = "VWLOO JURZLQJ";

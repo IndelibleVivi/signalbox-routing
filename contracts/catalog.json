@@ -255,7 +255,7 @@
     },
     {
       "schema_id": "signalbox.docs-pairs/v3",
-      "revision": 6,
+      "revision": 7,
       "owner": "contracts/docs-pairs.json",
       "schema_path": "schemas/docs-pairs.schema.json",
       "compatibility": {
@@ -270,6 +270,25 @@
       "instances": [
         {
           "path": "contracts/docs-pairs.json"
+        }
+      ]
+    },
+    {
+      "schema_id": "signalbox.postcard-journeys/v1",
+      "revision": 1,
+      "owner": "examples/postcards/journeys.json",
+      "schema_path": "schemas/postcard-journeys.schema.json",
+      "compatibility": {
+        "same_schema_id": "backward-compatible-only",
+        "breaking_change": "new-schema-id-required"
+      },
+      "projection_dependencies": [
+        "docs/human/60-travel-router.zh-CN.md",
+        "docs/human/70-peer-relay.zh-CN.md"
+      ],
+      "instances": [
+        {
+          "path": "examples/postcards/journeys.json"
         }
       ]
     },

@@ -1,6 +1,6 @@
 {
   "schema": "signalbox.docs-pairs/v3",
-  "contract_revision": 6,
+  "contract_revision": 7,
   "pairs": [
     {
       "doc_id": "signalbox.readme",
@@ -137,6 +137,56 @@
       ]
     },
     {
+      "doc_id": "signalbox.human.travel-router",
+      "zh-CN": "docs/human/60-travel-router.zh-CN.md",
+      "en": "docs/human/60-travel-router.en.md",
+      "required_contract_ids": [
+        "ROUTE-01",
+        "CLAIM-01"
+      ],
+      "required_sections": [
+        "router-on-trip",
+        "subnet-path",
+        "prerequisites",
+        "what-observations-show",
+        "limits"
+      ]
+    },
+    {
+      "doc_id": "signalbox.human.peer-relay",
+      "zh-CN": "docs/human/70-peer-relay.zh-CN.md",
+      "en": "docs/human/70-peer-relay.en.md",
+      "required_contract_ids": [
+        "ROUTE-01",
+        "IDENT-03",
+        "CLAIM-01"
+      ],
+      "required_sections": [
+        "blocked-direct",
+        "relay-path",
+        "prerequisites",
+        "right-conclusion",
+        "vps-boundary"
+      ]
+    },
+    {
+      "doc_id": "signalbox.human.mesh-and-openwrt",
+      "zh-CN": "docs/human/80-mesh-and-openwrt.zh-CN.md",
+      "en": "docs/human/80-mesh-and-openwrt.en.md",
+      "required_contract_ids": [
+        "ROUTE-01",
+        "CLAIM-01"
+      ],
+      "required_sections": [
+        "choose-layer",
+        "data-path",
+        "openwrt-boundary",
+        "coexistence",
+        "product-boundaries",
+        "dated-conclusions"
+      ]
+    },
+    {
       "doc_id": "signalbox.human.worked-cases",
       "zh-CN": "docs/human/50-worked-cases.zh-CN.md",
       "en": "docs/human/50-worked-cases.en.md",
@@ -160,7 +210,9 @@
         "domain-versus-ip-only",
         "router-probe-versus-lan",
         "awake-versus-sleeping",
-        "new-report-old-observations"
+        "new-report-old-observations",
+        "4via6-site-identity",
+        "prefix-failure-vs-redundancy"
       ]
     }
   ]

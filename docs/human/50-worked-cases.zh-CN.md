@@ -8,12 +8,17 @@ contract_revision: 6
 
 [English](50-worked-cases.en.md) · **简体中文**
 
-# 五次可以重放的判断
+# 七个可以细读的判断
 
-这些案例教你判断何时证据足以支持结论。所有 input 都是
+synthetic replay 最初提供五个可以重放的判断，下面又补了两篇只用于解释外部
+机制的案例。replay 的 input 都是
 [synthetic](../../examples/scenarios/cases.json)。replay 复用 canonical route grammar
 和 health evaluator；输入的 route match、observation label 是模型，不是 DNS query、
 packet capture 或 radio diagnosis。
+
+案例 6 与 7 处理 Tailscale 的 4via6 与 prefix failover。它们没有进入
+`examples/scenarios/cases.json`，也不调用 replay evaluator：两篇只用公开文档解释
+路由机制，不产生 live 或 synthetic 的 PASS/FAIL 结论。
 
 ```bash
 .venv/bin/python -m scripts.replay
@@ -143,3 +148,74 @@ profile limit，canonical evaluator 会拒绝这种包装旧证据的 report。
 
 generation 42→43、旧 attempt 晚完成、restart uncertainty 的重放入口在
 [agent recovery races](../agent/workflow.md#recovery-sequencing)。
+
+<a id="4via6-site-identity"></a>
+## 6. 相同的 IPv4 range，不同的 site identity
+
+**症状：** 家里与办公室都使用同一个私有 IPv4 范围。只看
+`site A LAN ↔ site B LAN`，两台 router 似乎都“属于同一个网络”；但它们是两个
+不同 site，里面的旧设备也可能有相同的 IPv4 地址。
+
+**这不是 executable replay。** 本篇是外部机制的解释性案例，不进入
+`examples/scenarios/cases.json`。它不计算 subnet route、不探测任何节点，也不
+发出 live 或 synthetic 的 PASS/FAIL。
+
+**机制：** 裸 IPv4 subnet route 无法仅凭一个相同 prefix 区分两个 site。
+Tailscale 的 [4via6 subnet
+文档](https://tailscale.com/docs/features/subnet-routers/4via6-subnets)把
+每个 site 的身份编入唯一的 IPv6 mapping，因此保留原来的 IPv4 地址也能分辨
+“site A 的 LAN”与“site B 的 LAN”。
+
+```text
+IPv4 prefix P at site A --site A mapping--> Tailnet reachability
+IPv4 prefix P at site B --site B mapping--> different Tailnet reachability
+                 same P                              distinct identity
+```
+
+**同一 site 的 redundancy：** 若两台 router 使用同一个 site ID 与 mapping，
+它们可以宣告同一 site 的同一 prefix，为该 site 提供冗余。相同的 site ID 不能
+拿来表示新的 site：那会把本来不同的目的地压成同一个身份。
+
+**部署前的版本核对：** 查阅于 2026-10-22 的官方 4via6 文档要求为安全升级至
+Tailscale 1.102.3 或更高，并链接相关 advisory。这里的 site mapping 不应被当作
+旧版本仍可安全部署的依据。普通 IPv4 subnet router 的 SNAT 与回程问题，另见
+[旅行路由器一篇](60-travel-router.zh-CN.md#subnet-path)。
+
+**允许的结论：** 4via6 解决的是重叠 IPv4 site 的身份表达，不重编号设备，也不
+证明 policy、DNS、firewall 或 path 已正确。部署后仍须取得具名 path evidence。
+
+<a id="prefix-failure-vs-redundancy"></a>
+## 7. 更具体 prefix 失败，不会自动落到较宽的 route
+
+**症状：** 配置同时包含一个较宽的 route 与一个更具体的 prefix，具体 route
+背后的 router 离线。页面失败后，读者容易推断较宽 route 会接手。
+
+**这不是 executable replay。** 本篇同样只解释外部产品机制，不加入八个 canonical
+scenario。下面的文本路径不是 route-table readback，也不是任何节点当前状态的
+证据。
+
+```text
+specific prefix ---- offline router ---- X
+                    no automatic fallthrough
+broader prefix  ---- other router ----> separate candidate only
+```
+
+**机制：** Tailscale 的
+[overlapping subnet route failover
+文档](https://tailscale.com/docs/reference/troubleshooting/network-configuration/overlapping-subnet-route-failover)
+说明 exact-prefix failover 与 less-specific fallback 不是一回事：更具体的
+route 即使失效，也不会因为旁边存在较宽 route 而自动改用它。`via` 过滤的是哪些
+router 有资格参与，不是给 router 排一个自动回退顺序。
+
+**同一 prefix 的 redundancy：** 对同一个 exact prefix 配置多个合格 router，
+才有重复候选可讨论。哪一台可用、它们是否真正宣告同一规则、policy 如何选择，
+仍要看实际 readback。
+
+**错误推断 / 反证：** “prefix 越宽越兜底。”观察 selected route 与 exact prefix
+的候选状态，可以发现它并未自动改用较宽路径。网络层 route 也不能替应用层
+authorization 作决定。
+
+**允许的结论：** 具体 route 失败时，把结果保留为 fail 或 `UNKNOWN`，并检查
+同一 exact prefix 是否真有冗余；不要宣称它会落到较宽路由。参见
+[peer relay 与 transport](70-peer-relay.zh-CN.md#blocked-direct)以及
+[旅行路由器与 client-free 设备](60-travel-router.zh-CN.md#subnet-path)。
