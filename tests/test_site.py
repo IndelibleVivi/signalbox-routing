@@ -114,6 +114,19 @@ class BuildContentTests(SiteBuildMixin, unittest.TestCase):
         self.assertIn("sbx-mermaid-source", page)
         self.assertIn("flowchart", page)
 
+    def test_code_copy_is_progressive_and_mermaid_source_stays_untouched(self):
+        js = (ROOT / "site/assets/site.js").read_text(encoding="utf-8")
+        self.assertIn('root.querySelectorAll(".sx-content pre")', js)
+        self.assertIn('code.classList.contains("sbx-mermaid-source")', js)
+        self.assertIn("navigator.clipboard.writeText(code.textContent)", js)
+        self.assertIn('const language = (languageClass ? languageClass.slice("language-".length) : "code")', js)
+        css = (ROOT / "site/assets/site.css").read_text(encoding="utf-8")
+        self.assertIn(".sx-content .sx-copy-button { min-height: 44px;", css)
+        self.assertIn(".sx-content .sx-copy-button:focus-visible", css)
+        page = self.read("docs/agent/workflow.html")
+        self.assertNotIn("sx-copy-button", page)
+        self.assertIn("<pre><code", page)
+
 
 class HeadingIdTests(SiteBuildMixin, unittest.TestCase):
     def test_no_page_has_a_duplicate_id(self):
@@ -310,7 +323,9 @@ JS_HARNESS = r"""
 const fs = require("fs");
 const mk = (o = {}) => {
   const el = {
-    _a: { ...o }, textContent: o.textContent ?? "", hidden: !!o.hidden, dataset: {}, L: {},
+    _a: { ...o }, textContent: o.textContent ?? "", hidden: !!o.hidden, dataset: {},
+    classList: Object.assign([], { contains: () => false }), L: {},
+    children: [], parentNode: null,
     setAttribute(k, v) { this._a[k] = String(v); },
     getAttribute(k) { return this._a[k] ?? null; },
     hasAttribute(k) { return k in this._a; },
@@ -319,6 +334,26 @@ const mk = (o = {}) => {
     focus() {}, insertAdjacentElement() {},
     closest() { return { insertAdjacentElement() {} }; },
     querySelector() { return null; }, querySelectorAll() { return []; },
+  };
+  el.append = (...nodes) => {
+    el.children.push(...nodes);
+    nodes.forEach((node) => { node.parentNode = el; });
+  };
+  el.replaceWith = (replacement) => {
+    for (let ancestor = el.parentNode; ancestor; ancestor = ancestor.parentNode) {
+      if (ancestor === replacement) {
+        throw new TypeError(
+          "Failed to execute 'replaceWith' on 'Element': " +
+          "The new child element contains the parent."
+        );
+      }
+    }
+    if (el.parentNode) {
+      const index = el.parentNode.children.indexOf(el);
+      if (index >= 0) el.parentNode.children.splice(index, 1, replacement);
+    }
+    replacement.parentNode = el.parentNode;
+    el.parentNode = null;
   };
   return el;
 };
@@ -336,6 +371,19 @@ const data = mk({ textContent: JSON.stringify([
   { id: "x", label: "X", blurb: "", passed: true, expected: { a: 1 }, actual: { a: 1 } },
 ]) });
 const receipt = mk();
+const copiedCode = mk({ textContent: "make verify PYTHON=.venv/bin/python\n中文 “quoted” path\\n" });
+const copiedPre = mk();
+copiedPre.querySelector = () => copiedCode;
+const selectedRanges = [];
+const selection = {
+  removeAllRanges() { selectedRanges.length = 0; },
+  addRange(range) { selectedRanges.push(range); },
+};
+let clipboardText = null;
+let clipboardFails = false;
+let clipboardGate = false;
+let clipboardCalls = 0;
+let clipboardResolvers = [];
 const root = mk();
 root.querySelector = (s) => ({
   "[data-scenario-data]": data, "[data-receipt]": receipt, "dialog.sx-dispatch": dialog,
@@ -343,8 +391,28 @@ root.querySelector = (s) => ({
   "[data-callsign]": callsign, "[data-callsign-button]": csBtn,
   "[data-close-dispatch]": closeBtn, "[data-cat-button]": catBtn,
 }[s] || null);
-root.querySelectorAll = (s) => ({ "[data-scenario-button]": [mk()], "code.sbx-mermaid-source": [] }[s] || []);
+root.querySelectorAll = (s) => ({
+  "[data-scenario-button]": [mk()], ".sx-content pre": [copiedPre],
+  "code.sbx-mermaid-source": [],
+}[s] || []);
 global.document = { getElementById: () => root, activeElement: null };
+const created = [];
+global.document.createElement = (tag) => {
+  const node = mk();
+  node.tagName = tag;
+  created.push(node);
+  return node;
+};
+global.document.createRange = () => ({ selectNodeContents(node) { this.node = node; } });
+global.window = { getSelection: () => selection, matchMedia: () => ({ matches: false, addEventListener() {} }) };
+Object.defineProperty(globalThis, "navigator", { configurable: true, value: {
+  clipboard: { writeText: async (text) => {
+    clipboardCalls += 1;
+    if (clipboardFails) throw new Error("blocked");
+    clipboardText = text;
+    if (clipboardGate) await new Promise((resolve) => { clipboardResolvers.push(resolve); });
+  } },
+} });
 global.HTMLScriptElement = { prototype: { noModule: true } };
 eval(fs.readFileSync(process.argv[2], "utf8"));
 keyUp.dispatch("click"); keyUp.dispatch("click"); keyUp.dispatch("click");
@@ -361,7 +429,41 @@ const morseBack = callsign.textContent.startsWith("... ..");
 catBtn.dispatch("click"); catBtn.dispatch("click"); catBtn.dispatch("click");
 const catOk = catNote.textContent === "And all its circuits close in thee." && catSrc.hidden === false;
 const receiptOk = /EXPECTED/.test(receipt.innerHTML);
-console.log(JSON.stringify({ solvedOk, wrapOk, downOk, morseOk, morseBack, catOk, receiptOk }));
+const copyButton = created.find((node) => node.className === "sx-copy-button");
+const copyHint = created.find((node) => node.className === "sx-copy-hint");
+const copyFigure = created.find((node) => node.className === "sx-code-block");
+const copySetupOk = copiedPre.parentNode === copyFigure && copyFigure.children[1] === copiedPre
+  && copyButton.getAttribute("aria-label") === "复制代码"
+  && copyHint.hidden === true;
+// The adapter has no browser event return value; let the clipboard promise
+// settle before inspecting the button state.
+copyButton.dispatch("click");
+setImmediate(async () => {
+  const copySuccessOk = clipboardText === copiedCode.textContent
+    && copyButton.textContent === "已复制" && copyButton.dataset.state === "success";
+  clipboardFails = true;
+  await copyButton.dispatch("click");
+  const copyFailureOk = copyButton.textContent === "重试复制"
+    && copyButton.dataset.state === "failure" && copyHint.hidden === false
+    && selectedRanges[0].node === copiedCode;
+  // Rapid activation while one clipboard write is unresolved is ignored.
+  clipboardFails = false;
+  clipboardGate = true;
+  clipboardResolvers = [];
+  const callsBeforeRapid = clipboardCalls;
+  copyButton.dispatch("click");
+  copyButton.dispatch("click");
+  const rapidCallsOnce = clipboardCalls === callsBeforeRapid + 1;
+  clipboardResolvers.shift()();
+  clipboardGate = false;
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  const copyPendingOk = copyButton.textContent === "已复制"
+    && copyButton.dataset.state === "success";
+  console.log(JSON.stringify({
+    solvedOk, wrapOk, downOk, morseOk, morseBack, catOk, receiptOk,
+    copySetupOk, copySuccessOk, copyFailureOk, rapidCallsOnce, copyPendingOk,
+  }));
+});
 """
 
 

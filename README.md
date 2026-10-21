@@ -44,7 +44,11 @@ structured policy explanation to a validated claim/acceptance handoff.
 Signalbox's **telegraph reading station** brings these guides together with
 the supplied cat illustrations, punched-tape mark, diagrams, cases and a
 selectable workbench of synthetic replay receipts. Full article text is built
-from the same repository Markdown; it is maintained in one place.
+from the same repository Markdown; it is maintained in one place. On reading
+pages with JavaScript enabled, command and configuration fences gain a Copy
+button. It copies the visible code text exactly; if clipboard access is blocked,
+the code is selected and the page offers manual-copy guidance. Mermaid sources
+keep their existing diagram and source-fallback behavior.
 
 Read online at **[Signalbox — 通信札记](https://indeliblevivi.github.io/signalbox-routing/)**.
 Verified `main` updates publish the generated static site through GitHub Pages.
