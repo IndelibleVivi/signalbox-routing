@@ -31,6 +31,7 @@ runtime tags.
 | `scripts/validate.py` and `tests/` | Cross-file semantics, canonical report/profile evaluation, Git-index public-boundary scanning and regressions; not runtime acceptance |
 | `scripts/handoff.py` | Concrete scoped claim and historical acceptance evaluation; public synthetic records only |
 | `scripts/reference_workflow.py`, `scripts/replay.py` | Synthetic current-pointer sequencing and replayable judgment references; no durable/live pointer or restore effect |
+| `examples/postcards/` | Authored synthetic teaching journeys and their declared assumptions; no live observations or operational verdicts |
 | `site/`, `scripts/build_site.py` | Authored reading-station shell, supplied assets and build projection; article authority remains its canonical Markdown |
 | `build/site/` | Ignored generated static output; never edit it as a source or treat it as deployment evidence |
 | `.github/workflows/verify.yml` | Hosted source gate across supported Python versions |
@@ -131,6 +132,12 @@ HTML. Build-time replay calls the canonical synthetic implementation; a web
 receipt is not a second evaluator or live health feed. Preserve supplied asset
 provenance, generated/source boundaries and the declared font/diagram network
 requests. Source build and loopback preview do not authorize hosted deployment.
+The letter-home interaction projects the authored `examples/postcards/` scenes
+through the same site build. Keep each journey's assumptions, path and result
+in that source; browser code selects and advances its steps. Do not turn a
+story into a second routing/health evaluator, real probe, or a promise of
+firmware support. Native Tailnet hosts and source-preserving subnet paths have
+different return-route requirements; relaying never bypasses access policy.
 Merging into `main` triggers public reading-station publication. Obtain the
 applicable publication authorization before merging; PR source checks do not
 publish. Manual Pages dispatch is limited to `main` and also requires deployment
@@ -154,6 +161,9 @@ them.
   incident chronology and private evidence remain outside Git.
 - Keep paired human documents semantically aligned through
   `contracts/docs-pairs.json`; do not let translation become a second contract.
+- Keep vendor-mechanism notes dated and linked to their primary sources.
+  Explanatory worked cases need not be executable replay cases; preserve that
+  distinction in navigation, counts and verification claims.
 - Rebuild and check the reading station when included Markdown, relative links,
   stable anchors, site templates/assets or replay inputs change. The site gate
   belongs to `make verify`; `site/README.md` owns exact build/preview procedures.

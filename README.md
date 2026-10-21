@@ -28,14 +28,23 @@ into the normative core only when you are implementing or reviewing policy.
   Mintie handles the covered application traffic, a dedicated VPS gateway joins
   the Tailnet, and the browser keeps its HTTPS address. Phone VPN encapsulation
   and cellular client access need their own compatibility and evidence.
+- **I want to take a little of home on the road.** Follow the
+  [travel-router note](docs/human/60-travel-router.en.md), give a VPS a
+  [peer-relay job](docs/human/70-peer-relay.en.md), then compare
+  [Tailscale, Cloudflare Mesh, and OpenWrt](docs/human/80-mesh-and-openwrt.en.md).
+  These explain practical arrangements and their conditions; they do not
+  install them on Mintie.
 
 New to the terms? The five-minute [Start here](docs/human/00-start-here.en.md)
 and [architecture map](docs/human/10-architecture.en.md) remain the shortest
 orientation.
 
-Try one complete judgment in the [five worked cases](docs/human/50-worked-cases.en.md):
+Try one complete judgment in the [worked cases](docs/human/50-worked-cases.en.md):
 private/DIRECT overlap, domain versus IP-only routing, router-local versus LAN
 coverage, awake versus sleeping clients, and newly published stale evidence.
+Two further mechanism notes examine overlapping sites with 4via6 and why
+failover stays within the same advertised prefix. They are explanatory cases;
+the executable replay command below still runs eight canonical scenarios.
 An agent can follow the [executable workflow](docs/agent/workflow.md) from a
 structured policy explanation to a validated claim/acceptance handoff.
 
@@ -49,6 +58,13 @@ pages with JavaScript enabled, command and configuration fences gain a Copy
 button. It copies the visible code text exactly; if clipboard access is blocked,
 the code is selected and the page offers manual-copy guidance. Mermaid sources
 keep their existing diagram and source-fallback behavior.
+
+The home page's **letter home** lets you choose a native Tailnet host or an old
+NAS, change a declared network condition, and follow an authored packet journey
+one step at a time. Direct-connection trouble, a missing return route, and
+denied access lead to different stories. The walkthroughs remain readable
+without JavaScript. They use public synthetic scenes and never probe your
+network or determine live health.
 
 Read online at **[Signalbox — 通信札记](https://indeliblevivi.github.io/signalbox-routing/)**.
 Verified `main` updates publish the generated static site through GitHub Pages.

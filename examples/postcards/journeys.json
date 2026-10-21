@@ -1,0 +1,274 @@
+{
+  "schema": "signalbox.postcard-journeys/v1",
+  "reviewed_at": "2026-10-22",
+  "disclaimer": "公开合成的教学信札。它不发出探测，不读取网络状态，也不判断你现在能否连接。",
+  "targets": [
+    {
+      "id": "tailnet-host",
+      "label": "Tailnet 主机",
+      "detail": "原生成员 · 端到端"
+    },
+    {
+      "id": "nas-source-preserving",
+      "label": "旧 NAS",
+      "detail": "subnet gateway · 保留来源（SNAT 关闭）"
+    }
+  ],
+  "conditions": [
+    {
+      "id": "normal",
+      "label": "一路正常",
+      "detail": "transport 与权限都成立",
+      "targets": ["tailnet-host", "nas-source-preserving"]
+    },
+    {
+      "id": "direct-udp-blocked",
+      "label": "直连 UDP 被挡",
+      "detail": "需要另一条可用 transport",
+      "targets": ["tailnet-host", "nas-source-preserving"]
+    },
+    {
+      "id": "missing-return-route",
+      "label": "LAN 缺少回程路由",
+      "detail": "只适用于 source-preserving gateway",
+      "targets": ["nas-source-preserving"]
+    },
+    {
+      "id": "access-denied",
+      "label": "服务拒绝访问",
+      "detail": "网络获准，应用拒绝身份",
+      "targets": ["tailnet-host", "nas-source-preserving"]
+    }
+  ],
+  "journeys": [
+    {
+      "id": "tailnet-host-normal",
+      "target_ref": "tailnet-host",
+      "condition_ref": "normal",
+      "title": "封好这封直送信",
+      "summary": "一台获准设备先试直连，之后由主机核对身份。",
+      "steps": [
+        {
+          "stamp": "UDP",
+          "label": "先试直连",
+          "detail": "获准设备尝试直接 transport；这不是普通互联网代理出口。"
+        },
+        {
+          "stamp": "HOST",
+          "label": "主机拆信",
+          "detail": "直连可用，Tailnet 主机接受获准身份的访问。"
+        }
+      ],
+      "outcome": "delivered",
+      "result": "信送到了原生 Tailnet 主机。",
+      "caveat": "直接可用时不需要 relay；这个结果仍不证明其他目的地或其他时刻可用。",
+      "article": {
+        "source": "docs/human/70-peer-relay.zh-CN.md",
+        "anchor": "blocked-direct",
+        "label": "再读 transport 与 peer relay"
+      }
+    },
+    {
+      "id": "tailnet-host-direct-udp-blocked",
+      "target_ref": "tailnet-host",
+      "condition_ref": "direct-udp-blocked",
+      "title": "换一条邮路，不改收信人",
+      "summary": "直连 UDP 被挡，但到获准 peer relay 的另一条 UDP 路径仍然可达。",
+      "steps": [
+        {
+          "stamp": "UDP",
+          "label": "直连被挡",
+          "detail": "第一段 transport 没建立；目的地和身份并没有因此改变。"
+        },
+        {
+          "stamp": "RLY",
+          "label": "交给获准 relay",
+          "detail": "到获准 peer relay 的 UDP 端口可达；它只搬运 transport，目标访问仍须获准。"
+        },
+        {
+          "stamp": "HOST",
+          "label": "主机拆信",
+          "detail": "信沿另一条 transport 抵达；服务端仍按自己的权限规则接收。"
+        }
+      ],
+      "outcome": "delivered",
+      "result": "直连失败后，信通过获准的 peer relay 送到。",
+      "caveat": "这里假设 relay 获准且其 UDP 路径可达；没有可用 peer relay 时仍可能经过 DERP。不转 DIRECT，也不改变普通互联网出口。",
+      "article": {
+        "source": "docs/human/70-peer-relay.zh-CN.md",
+        "anchor": "relay-path",
+        "label": "看 relay 在路径里的位置"
+      }
+    },
+    {
+      "id": "tailnet-host-access-denied",
+      "target_ref": "tailnet-host",
+      "condition_ref": "access-denied",
+      "title": "信到了，门没有开",
+      "summary": "Tailnet 网络访问已经获准，但主机上的应用拒绝这次登录。",
+      "steps": [
+        {
+          "stamp": "UDP",
+          "label": "transport 到达",
+          "detail": "Tailnet 网络规则允许且直连可用，连接已经抵达应用。"
+        },
+        {
+          "stamp": "STOP",
+          "label": "身份核对拒绝",
+          "detail": "应用检查登录身份后拒绝访问；网络放行不等于应用授权。"
+        }
+      ],
+      "outcome": "stopped",
+      "result": "信停在门口。这里不会改用 relay，也不能把 transport 当成权限。",
+      "caveat": "relay 与进入 Tailnet 都不等于授权；换一条 transport 不会修复服务拒绝。",
+      "article": {
+        "source": "docs/human/70-peer-relay.zh-CN.md",
+        "anchor": "right-conclusion",
+        "label": "看错误结论怎样被推翻"
+      }
+    },
+    {
+      "id": "nas-source-preserving-normal",
+      "target_ref": "nas-source-preserving",
+      "condition_ref": "normal",
+      "title": "旧 NAS 的回信找到了门",
+      "summary": "source-preserving gateway 保留原始来源，LAN 也有返回路线。",
+      "steps": [
+        {
+          "stamp": "GW",
+          "label": "gateway 收下信",
+          "detail": "subnet gateway 关闭 SNAT，保留远端来源。"
+        },
+        {
+          "stamp": "LAN",
+          "label": "沿 subnet route 送达",
+          "detail": "获准的 subnet route 把信带到旧 NAS 所在的 LAN。"
+        },
+        {
+          "stamp": "RET",
+          "label": "NAS 写回信",
+          "detail": "LAN 中有一条回程路线，把回信交还 source-preserving gateway。"
+        },
+        {
+          "stamp": "PEER",
+          "label": "回信离开",
+          "detail": "gateway 把回信送回发起访问的 Tailnet 设备。"
+        }
+      ],
+      "outcome": "delivered",
+      "result": "NAS 没有装客户端，信仍然完整往返。",
+      "caveat": "这封教学信使用关闭 SNAT 的 source-preserving gateway；普通默认 SNAT 不要求同样的 LAN return route。",
+      "article": {
+        "source": "docs/human/60-travel-router.zh-CN.md",
+        "anchor": "subnet-path",
+        "label": "读 subnet route 与回程前提"
+      }
+    },
+    {
+      "id": "nas-source-preserving-direct-udp-blocked",
+      "target_ref": "nas-source-preserving",
+      "condition_ref": "direct-udp-blocked",
+      "title": "绕过直连，信仍到 NAS",
+      "summary": "直连被挡，到获准 relay 的 UDP 路径仍可达；LAN 的 return route 也在。",
+      "steps": [
+        {
+          "stamp": "UDP",
+          "label": "直连被挡",
+          "detail": "远端 peer 与 subnet gateway 之间无法建立 direct transport。"
+        },
+        {
+          "stamp": "RLY",
+          "label": "交给获准 relay",
+          "detail": "到获准 peer relay 的 UDP 端口仍然可达；它不是 Internet exit。"
+        },
+        {
+          "stamp": "GW",
+          "label": "gateway 接入 LAN",
+          "detail": "source-preserving subnet gateway 接到获准目的地。"
+        },
+        {
+          "stamp": "NAS",
+          "label": "NAS 放好回信",
+          "detail": "LAN return route 把回信带回同一个 gateway。"
+        },
+        {
+          "stamp": "PEER",
+          "label": "回信抵达",
+          "detail": "信完整返回，没有把普通互联网出口改到 relay。"
+        }
+      ],
+      "outcome": "delivered",
+      "result": "信经 permitted relay 与 subnet gateway 往返成功。",
+      "caveat": "没有可用 peer relay 时仍可能使用 DERP；不转 DIRECT。此案例另以 source-preserving return route 为前提。",
+      "article": {
+        "source": "docs/human/70-peer-relay.zh-CN.md",
+        "anchor": "vps-boundary",
+        "label": "分清 relay、gateway 与出口"
+      }
+    },
+    {
+      "id": "nas-source-preserving-missing-return-route",
+      "target_ref": "nas-source-preserving",
+      "condition_ref": "missing-return-route",
+      "title": "NAS 的回信没有路线",
+      "summary": "来源被保留，但旧 NAS 不知道把回信交给谁。",
+      "steps": [
+        {
+          "stamp": "GW",
+          "label": "gateway 送信进 LAN",
+          "detail": "source-preserving gateway 关闭 SNAT，远端来源被保留。"
+        },
+        {
+          "stamp": "NAS",
+          "label": "去程包到了 NAS",
+          "detail": "最初的连接包抵达 NAS；此时 TCP 连接还未建立，更没有完成 HTTPS 请求。"
+        },
+        {
+          "stamp": "STOP",
+          "label": "回信找不到 gateway",
+          "detail": "LAN 设备缺少指回 source-preserving gateway 的 route。"
+        }
+      ],
+      "outcome": "stopped",
+      "result": "去程包到了，回复没回来，连接尚未建立；这里停住，不换 relay，也不假装成功。",
+      "caveat": "这条 return route 是关闭 SNAT、保留来源的前提。默认 SNAT 不需要照着这一步推断；遇到默认 SNAT 时应另查实际路径。",
+      "article": {
+        "source": "docs/human/60-travel-router.zh-CN.md",
+        "anchor": "what-observations-show",
+        "label": "分辨哪个假设失败"
+      }
+    },
+    {
+      "id": "nas-source-preserving-access-denied",
+      "target_ref": "nas-source-preserving",
+      "condition_ref": "access-denied",
+      "title": "NAS 看见了信，却没有收",
+      "summary": "Tailnet 网络规则与往返路径都成立，NAS 应用仍拒绝登录身份。",
+      "steps": [
+        {
+          "stamp": "GW",
+          "label": "gateway 接信",
+          "detail": "Tailnet 网络访问获准，subnet gateway 按 source-preserving 模式进入 LAN。"
+        },
+        {
+          "stamp": "NAS",
+          "label": "抵达服务边界",
+          "detail": "LAN 回程路由成立，连接已到达 NAS 应用，接下来由它检查登录身份。"
+        },
+        {
+          "stamp": "STOP",
+          "label": "访问被拒绝",
+          "detail": "NAS 应用拒绝这次登录；网络放行并没有授予应用权限。"
+        }
+      ],
+      "outcome": "stopped",
+      "result": "信停在 NAS 门口。抵达不等于获准：不能靠 relay 或另一条 route 越过授权。",
+      "caveat": "这封信的 Tailnet 网络访问已经获准；peer relay 只是 transport，不能授予 NAS 应用登录权限。",
+      "article": {
+        "source": "docs/human/60-travel-router.zh-CN.md",
+        "anchor": "limits",
+        "label": "看 reachability 的边界"
+      }
+    }
+  ]
+}

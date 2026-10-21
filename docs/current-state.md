@@ -4,6 +4,34 @@ Last updated: 2026-10-22
 
 <!-- signalbox:f0.3-source-integration merged-into-canonical-main -->
 
+## Reader expansion candidate
+
+- The `feat/network-postcards` source candidate adds three paired practical
+  notes: travel routers and client-free devices, VPS peer relays, and
+  Tailscale/Cloudflare Mesh/OpenWrt arrangements. Two explanatory mechanism
+  cases cover 4via6 site identity and exact-prefix failover. The existing eight
+  canonical executable replays retain their own implementation and meaning.
+- The reading station's letter home projects authored public synthetic
+  journeys from `examples/postcards/`; it does not observe a network or
+  evaluate deployed connectivity. Article text remains canonical Markdown.
+- Local `make verify PYTHON=.venv/bin/python` passes 39 cataloged instances,
+  ten reference reports, one historical regression fixture, the synthetic
+  handoff, all eight canonical replays, deterministic site generation and
+  175 unit tests. The build contains 36 reading pages, one home and seven
+  authored teaching journeys.
+- Chromium preview checks at 1440×900 and 390×844 cover all seven journeys,
+  ready/send/terminal/replay/reset, keyboard focus, 44px controls, the
+  unavailable native-host return-route condition, all-case/no-JavaScript
+  reading and reduced motion. New bilingual diagrams render; the paragraph
+  style fix also preserves readable labels on the existing architecture page.
+  Language/anchor/refresh/back links work, including a local project-prefix
+  preview. Cat, Morse, cipher, workbench and exact-text Copy checks pass;
+  these are browser-viewport checks, not physical-device acceptance.
+- The [source comparison](https://github.com/IndelibleVivi/signalbox-routing/compare/main...feat/network-postcards)
+  remains separate from integrated `main`. No new hosted publication,
+  firmware installation or live-path acceptance is claimed. Hosted checks and
+  any later integration/publication retain their own receipts and gates.
+
 ## Current integrated source
 
 - The reading station progressively adds native Copy controls to non-Mermaid

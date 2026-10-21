@@ -25,9 +25,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts import build_site
 from scripts.build_site import (
+    POSTCARDS_SCHEMA,
+    POSTCARDS_SOURCE,
     REFERENCE_DOCS,
     SITE_README,
     SUPPLIED_ASSETS,
+    load_postcards,
     load_pairs,
 )
 from scripts.repository_paths import RepositoryPathError
@@ -57,7 +60,7 @@ class SiteBuildMixin:
 class BuildContentTests(SiteBuildMixin, unittest.TestCase):
     def test_every_registered_human_pair_and_reference_renders_a_page(self):
         pairs = load_pairs()
-        self.assertEqual(len(pairs), 7)
+        self.assertEqual(len(pairs), 10)
         for _doc_id, zh, en in pairs:
             for source in (zh, en):
                 self.assertTrue(
@@ -284,6 +287,282 @@ class ScenarioReceiptTests(SiteBuildMixin, unittest.TestCase):
         self.assertIn("Special+Elite", css)
         self.assertIn("IBM+Plex+Mono", css)
 
+
+class PostcardBuildTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls._orig_out = build_site.OUT_DIR
+        build_site.OUT_DIR = Path(cls._tmp.name) / "site"
+        build_site.build()
+        cls.out = build_site.OUT_DIR
+        cls.postcards = load_postcards()
+        cls.home = (cls.out / "index.html").read_text(encoding="utf-8")
+        match = re.search(
+            r'<script type="application/json" data-postcard-data>(.*?)</script>',
+            cls.home,
+            re.S,
+        )
+        assert match, "postcard scene data is missing"
+        cls.scene = json.loads(match.group(1))
+
+    @classmethod
+    def tearDownClass(cls):
+        build_site.OUT_DIR = cls._orig_out
+        cls._tmp.cleanup()
+
+    def read(self, rel: str) -> str:
+        return (self.out / rel).read_text(encoding="utf-8")
+
+    def test_authored_postcards_are_in_catalog_and_scene_is_not_drifted(self):
+        source = json.loads((ROOT / POSTCARDS_SOURCE).read_text(encoding="utf-8"))
+        self.assertEqual(self.scene["targets"], source["targets"])
+        self.assertEqual(self.scene["conditions"], source["conditions"])
+        self.assertEqual(self.scene["journeys"], source["journeys"])
+        catalog = json.loads((ROOT / "contracts/catalog.json").read_text(encoding="utf-8"))
+        entry = next(
+            item for item in catalog["entries"]
+            if item["schema_id"] == "signalbox.postcard-journeys/v1"
+        )
+        self.assertEqual(entry["owner"], POSTCARDS_SOURCE)
+        self.assertEqual(entry["schema_path"], POSTCARDS_SCHEMA)
+
+    def test_only_applicable_combinations_and_permission_truth_are_offered(self):
+        source = load_postcards()
+        conditions = {item["id"]: item for item in source["conditions"]}
+        journeys = {
+            (item["target_ref"], item["condition_ref"]): item
+            for item in source["journeys"]
+        }
+        self.assertEqual(len(journeys), 7)
+        self.assertNotIn(("tailnet-host", "missing-return-route"), journeys)
+        self.assertIn(("nas-source-preserving", "missing-return-route"), journeys)
+        for target, condition in journeys:
+            self.assertIn(target, conditions[condition]["targets"])
+        for (target, condition), journey in journeys.items():
+            if condition == "access-denied":
+                self.assertEqual(journey["outcome"], "stopped")
+                self.assertNotIn("RLY", [step["stamp"] for step in journey["steps"]])
+            if condition == "missing-return-route":
+                self.assertEqual(target, "nas-source-preserving")
+                self.assertIn("source-preserving", " ".join(
+                    step["detail"] for step in journey["steps"]
+                ))
+                self.assertEqual(journey["outcome"], "stopped")
+            if condition == "direct-udp-blocked":
+                self.assertIn("RLY", [step["stamp"] for step in journey["steps"]])
+                self.assertNotIn("direct", journey["result"].lower())
+                self.assertIn("DIRECT", journey["caveat"])
+
+    def test_ambiguous_or_unselectable_records_fail_the_build(self):
+        source = load_postcards()
+        mutations = [
+            ("duplicate target", lambda data: data["targets"].append(data["targets"][0])),
+            ("unknown target", lambda data: data["conditions"][0]["targets"].append("unknown")),
+            ("selection key", lambda data: data["journeys"][0].update(id="wrong-key")),
+        ]
+        for label, mutate in mutations:
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as directory:
+                data = json.loads(json.dumps(source))
+                mutate(data)
+                fixture = Path(directory) / "journeys.json"
+                fixture.write_text(json.dumps(data), encoding="utf-8")
+                with mock.patch.object(build_site, "POSTCARDS_SOURCE", str(fixture)):
+                    with self.assertRaisesRegex(ValueError, label):
+                        load_postcards()
+
+    def test_article_links_are_generated_anchors_and_old_selected_guide_survives(self):
+        self.assertIn("docs/human/60-travel-router.zh-CN.html", self.home)
+        self.assertIn("docs/human/40-tailnet-vps-private-ingress.zh-CN.html", self.home)
+        self.assertRegex(self.home, r'<a href="index\.html#sx-postcards">本期</a>')
+        for journey in self.scene["journeys"]:
+            article = journey["article"]
+            target = article["source"][:-3] + ".html"
+            page = self.read(target)
+            self.assertIn(f'id="{article["anchor"]}"', page)
+            self.assertIn(f"{target}#{article['anchor']}", self.home)
+
+    def test_articles_keep_practical_paths_limits_and_attributed_sources(self):
+        expectations = {
+            "60-travel-router": (
+                "SNAT",
+                "source-preserving",
+                "return route",
+                "https://tailscale.com/docs/features/subnet-routers/4via6-subnets",
+                "https://github.com/IndelibleVivi/infra-field-guide/blob/main/docs/07-network-and-proxies.md",
+            ),
+            "70-peer-relay": (
+                "1.86",
+                "DERP",
+                "Internet exit",
+                "https://tailscale.com/docs/features/peer-relay",
+                "https://github.com/IndelibleVivi/infra-field-guide/blob/main/docs/09-private-access.md",
+            ),
+            "80-mesh-and-openwrt": (
+                "Traffic-and-DNS",
+                "OpenWrt",
+                "https://developers.cloudflare.com/mesh/concepts/",
+                "https://raw.githubusercontent.com/openwrt/packages/master/net/tailscale/Makefile",
+            ),
+        }
+        for stem, required in expectations.items():
+            for language in ("zh-CN", "en"):
+                source = (ROOT / f"docs/human/{stem}.{language}.md").read_text(
+                    encoding="utf-8"
+                )
+                for text in required:
+                    self.assertIn(text, source, f"{stem}.{language}: {text}")
+                if stem == "80-mesh-and-openwrt":
+                    native_support_clause = (
+                        "没有把 OpenWrt 列为官方支持"
+                        if language == "zh-CN" else "does not list OpenWrt"
+                    )
+                    self.assertIn(native_support_clause, source)
+                self.assertIn("contract_revision: 6", source)
+                self.assertIn("2026-10-22", source)
+        for language in ("zh-CN", "en"):
+            source = (ROOT / f"docs/human/80-mesh-and-openwrt.{language}.md").read_text(
+                encoding="utf-8"
+            )
+            self.assertNotRegex(
+                source,
+                r'CONNECTOR -->\|inbound service path\| PUBLIC',
+                "Tunnel arrows must distinguish the inbound service path from the outbound connector",
+            )
+
+    def test_fallback_has_every_authored_case_and_reset_controls(self):
+        self.assertIn("直接阅读七封教学信", self.home)
+        self.assertNotIn("<noscript>", self.home)
+        self.assertIn('data-postcard-reset', self.home)
+        self.assertIn('data-postcard-next', self.home)
+        for journey in self.scene["journeys"]:
+            self.assertEqual(
+                self.home.count(f'data-postcard-case="{journey["id"]}"'),
+                1,
+                journey["id"],
+            )
+            self.assertIn(journey["result"], self.home)
+        self.assertIn('data-postcard-enhanced', self.home)
+        self.assertIn('aria-live="polite"', self.home)
+
+
+POSTCARD_JS_HARNESS = r"""
+const fs = require("fs");
+const source = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
+const mk = (o = {}) => {
+  const el = {
+    _a: { ...o }, textContent: o.textContent ?? "", hidden: !!o.hidden, disabled: false,
+    dataset: { ...(o.dataset || {}) }, className: "", innerHTML: "", href: "",
+    classList: Object.assign([], { contains: () => false }), L: {},
+    children: [], parentNode: null,
+    setAttribute(k, v) { this._a[k] = String(v); },
+    getAttribute(k) { return this._a[k] ?? null; },
+    hasAttribute(k) { return k in this._a; },
+    addEventListener(e, f) { (this.L[e] ||= []).push(f); },
+    dispatch(e, x = {}) { (this.L[e] || []).forEach((f) => f(x)); },
+    focus() { document.activeElement = el; }, insertAdjacentElement() {}, closest() { return null; },
+    querySelector() { return null; }, querySelectorAll() { return []; },
+  };
+  el.append = (...nodes) => { el.children.push(...nodes); nodes.forEach((node) => { node.parentNode = el; }); };
+  el.replaceWith = (replacement) => { replacement.parentNode = el.parentNode; el.parentNode = null; };
+  return el;
+};
+const button = (selector, value, pressed = "false") => {
+  const el = mk({ textContent: value });
+  el.dataset[selector] = value;
+  el._a["aria-pressed"] = pressed;
+  return el;
+};
+const targetButtons = source.targets.map((item) => button("postcardTarget", item.id));
+const conditionButtons = source.conditions.map((item) => button("postcardCondition", item.id));
+const fallbackCases = source.journeys.map((item) => {
+  const el = mk();
+  el.dataset.target = item.target_ref;
+  el.dataset.condition = item.condition_ref;
+  return el;
+});
+const data = mk({ textContent: JSON.stringify(source) });
+const enhanced = mk();
+enhanced.querySelector = (s) => s === "[data-postcard-target]" ? targetButtons[0] : null;
+const targetGroup = mk(), conditionGroup = mk(), nextButton = mk(), resetButton = mk();
+const articleLink = mk(), stage = mk(), route = mk(), result = mk();
+const targetLabel = mk(), conditionLabel = mk(), availability = mk();
+const progress = mk(), seal = mk();
+const section = mk();
+section.querySelector = (s) => ({
+  "[data-postcard-enhanced]": enhanced, "[data-postcard-targets]": targetGroup,
+  "[data-postcard-conditions]": conditionGroup, "[data-postcard-next]": nextButton,
+  "[data-postcard-reset]": resetButton, "[data-postcard-article]": articleLink,
+  "[data-postcard-stage]": stage, "[data-postcard-route]": route,
+  "[data-postcard-result]": result, "[data-postcard-target-label]": targetLabel,
+  "[data-postcard-condition-label]": conditionLabel,
+  "[data-postcard-availability]": availability,
+  "[data-postcard-progress]": progress, "[data-postcard-seal]": seal,
+}[s] || null);
+section.querySelectorAll = (s) => ({
+  "[data-postcard-target]": targetButtons,
+  "[data-postcard-condition]": conditionButtons,
+  "[data-postcard-case]": fallbackCases,
+}[s] || []);
+const root = mk();
+root.querySelector = (s) => ({
+  "[data-postcard-data]": data, "#sx-postcards": section,
+}[s] || null);
+root.querySelectorAll = () => [];
+global.document = {
+  getElementById: () => root, activeElement: null,
+  createElement: () => mk(), createRange: () => ({ selectNodeContents() {} }),
+};
+global.window = {
+  getSelection: () => null,
+  matchMedia: () => ({ matches: false, addEventListener() {} }),
+};
+Object.defineProperty(globalThis, "navigator", { configurable: true, value: {} });
+global.HTMLScriptElement = { prototype: {} };
+eval(fs.readFileSync(process.argv[2], "utf8"));
+
+const byId = (items, selector, id) => items.find((item) => item.dataset[selector] === id);
+const pressed = (items, selector) => items.filter((item) =>
+  item.getAttribute("aria-pressed") === "true"
+).map((item) => item.dataset[selector]);
+const missing = byId(conditionButtons, "postcardCondition", "missing-return-route");
+const initialOk = enhanced.dataset.ready === "true"
+  && section.dataset.ready === "true" && missing.disabled
+  && stage.dataset.outcome === "ready" && /READY TO POST/.test(result.innerHTML)
+  && /0 \/ 2/.test(progress.textContent) && !route.innerHTML.includes('aria-current="step"');
+let allSteps = true, terminalTruth = true, replay = true, reset = true;
+for (const journey of source.journeys) {
+  byId(targetButtons, "postcardTarget", journey.target_ref).dispatch("click");
+  byId(conditionButtons, "postcardCondition", journey.condition_ref).dispatch("click");
+  allSteps &&= stage.dataset.outcome === "ready";
+  for (let i = 0; i < journey.steps.length; i += 1) {
+    nextButton.dispatch("click");
+    allSteps &&= result.innerHTML.includes(journey.steps[i].label)
+      && progress.textContent.endsWith((i + 1) + " / " + journey.steps.length)
+      && (i === journey.steps.length - 1 || stage.dataset.outcome === "transit");
+  }
+  terminalTruth &&= stage.dataset.outcome === journey.outcome
+    && result.innerHTML.includes(journey.result) && !nextButton.disabled
+    && nextButton.textContent.includes(journey.outcome === "delivered" ? "信已送达" : "信暂存这里");
+  nextButton.dispatch("click");
+  replay &&= result.innerHTML.includes(journey.steps[0].label)
+    && stage.dataset.outcome === "transit";
+  resetButton.dispatch("click");
+  reset &&= stage.dataset.outcome === "ready" && /READY TO POST/.test(result.innerHTML)
+    && document.activeElement === nextButton;
+}
+byId(targetButtons, "postcardTarget", "nas-source-preserving").dispatch("click");
+missing.dispatch("click");
+byId(targetButtons, "postcardTarget", "tailnet-host").dispatch("click");
+const unavailableResets = missing.disabled
+  && pressed(conditionButtons, "postcardCondition")[0] === "normal"
+  && stage.dataset.outcome === "ready";
+console.log(JSON.stringify({
+  initialOk, allSteps, terminalTruth, replay, reset, unavailableResets,
+  allFallbacksReadable: fallbackCases.every((item) => !item.hidden),
+}));
+"""
+
 class IdentityTests(SiteBuildMixin, unittest.TestCase):
     def test_manifest_uses_actual_head_and_labels_dirty_state(self):
         identity = build_site.source_identity()
@@ -487,6 +766,30 @@ class InteractionLogicTests(unittest.TestCase):
             )
         finally:
             Path(harness).unlink(missing_ok=True)
+        outcome = json.loads(result.stdout.strip().splitlines()[-1])
+        self.assertTrue(all(outcome.values()), outcome)
+
+    @unittest.skipUnless(shutil.which("node"), "node not available")
+    def test_postcard_selection_progression_stop_and_reset(self):
+        source = json.dumps(load_postcards(), ensure_ascii=False)
+        with tempfile.NamedTemporaryFile("w", suffix=".cjs", delete=False) as handle:
+            handle.write(POSTCARD_JS_HARNESS)
+            harness = handle.name
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as handle:
+            handle.write(source)
+            scene = handle.name
+        try:
+            result = subprocess.run(
+                [
+                    "node", harness, str(ROOT / "site/assets/site.js"), scene,
+                ],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+            )
+            if result.returncode:
+                self.fail(f"postcard harness failed:\n{result.stderr}")
+        finally:
+            Path(harness).unlink(missing_ok=True)
+            Path(scene).unlink(missing_ok=True)
         outcome = json.loads(result.stdout.strip().splitlines()[-1])
         self.assertTrue(all(outcome.values()), outcome)
 

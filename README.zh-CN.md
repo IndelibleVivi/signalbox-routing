@@ -23,13 +23,19 @@ public-safe example 和验证工具。普通读者不必先啃完所有 contract
   指南](docs/human/40-tailnet-vps-private-ingress.zh-CN.md)：Mintie 接管实际覆盖的应用流量，
   专用 VPS gateway 加入 Tailnet，浏览器继续使用原来的 HTTPS 地址。手机 VPN 的流量封装
   与蜂窝网络客户端接入，需要各自的 compatibility 与证据。
+- **我想带着一小块家出门。** 从[旅行路由器札记](docs/human/60-travel-router.zh-CN.md)
+  开始，再看看 [VPS 怎样做 peer relay](docs/human/70-peer-relay.zh-CN.md)，以及
+  [Tailscale、Cloudflare Mesh 与 OpenWrt 的不同接法](docs/human/80-mesh-and-openwrt.zh-CN.md)。
+  这些文章解释日常安排与适用条件，不会替 Mintie 安装配置。
 
 如果这些词还很陌生，先读五分钟版的[从这里开始](docs/human/00-start-here.zh-CN.md)
 和[架构图](docs/human/10-architecture.zh-CN.md)即可。
 
-跟着 [五个完整案例](docs/human/50-worked-cases.zh-CN.md) 做一次判断：private/DIRECT
+跟着 [完整案例](docs/human/50-worked-cases.zh-CN.md) 做一次判断：private/DIRECT
 重叠、domain 与 IP-only 分流、router-local 与 LAN 覆盖、awake 与 sleeping client，
-以及新发布的旧证据。agent 可以沿 [可执行 workflow](docs/agent/workflow.md) 从 structured
+以及新发布的旧证据。另有两则机制札记，讲 4via6 怎样区分重叠站点，以及 failover
+为什么停在同一 advertised prefix 内；它们是解释案例，下文的 executable replay
+仍运行八个 canonical scenario。agent 可以沿 [可执行 workflow](docs/agent/workflow.md) 从 structured
 policy explanation 走到可校验的 claim/acceptance handoff。
 
 ### 翻开通信札记
@@ -39,6 +45,10 @@ Signalbox 的 **电报 reading station** 把这些内容放进同一个阅读入
 完整正文直接从仓库 Markdown 构建，内容维护在一处。启用 JavaScript 的阅读页会在
 命令与配置 fence 旁显示 Copy 按钮，原样复制可见代码；剪贴板不可用时则选中代码并
 给出手动复制提示。Mermaid source 仍沿用原有图解与 source fallback。
+
+首页的 **寄往家里的信** 可以选择原生 Tailnet host 或旧 NAS，改变声明好的网络条件，
+逐站跟着一封信走。直连受阻、缺少回程与未获访问许可会进入不同的故事；没有
+JavaScript 也能阅读完整走读。它使用公开合成场景，不探测你的网络，也不判断 live health。
 
 在线阅读：**[Signalbox — 通信札记](https://indeliblevivi.github.io/signalbox-routing/)**。
 经过验证的 `main` 更新会通过 GitHub Pages 发布生成的静态站点。
