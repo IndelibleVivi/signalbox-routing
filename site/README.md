@@ -128,6 +128,11 @@ pass/fail/unknown：一次 match 可能正是预期中的 fail 或 unknown，不
 
 ## 交互
 
+- 代码块：在阅读页的 shell、JSON、text 与未标语言 fence 上渐进加入原生 “Copy”
+  按钮；它只复制 `code.textContent`，保留换行、中文、引号与路径。操作中、成功和
+  失败都有可见或可朗读的反馈。剪贴板不可用或被拒绝时，保留整段文本选择，并显示
+  手动复制提示。Mermaid fence 不显示复制按钮，继续使用既有 diagram/source 流程。
+  没有 JavaScript 时完全不插入按钮，article code 仍按原样可读。
 - 收信匣 dialog：26 档字母位移、key wrap、解出后显示 hidden note；原生 `<dialog>`，
   键盘可用，Escape 关闭并把焦点还给触发按钮，打开时焦点落在位移旋钮。
 - 值班猫：点击主插画轮换句子，第三次显示 Maxwell 电报情诗一行，紧邻作者与

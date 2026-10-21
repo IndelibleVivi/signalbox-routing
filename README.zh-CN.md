@@ -36,7 +36,9 @@ policy explanation 走到可校验的 claim/acceptance handoff。
 
 Signalbox 的 **电报 reading station** 把这些内容放进同一个阅读入口：现成的猫插画、
 穿孔纸带标记、手册、图解、案例，以及可以选择 synthetic replay receipt 的工作台。
-完整正文直接从仓库 Markdown 构建，内容维护在一处。
+完整正文直接从仓库 Markdown 构建，内容维护在一处。启用 JavaScript 的阅读页会在
+命令与配置 fence 旁显示 Copy 按钮，原样复制可见代码；剪贴板不可用时则选中代码并
+给出手动复制提示。Mermaid source 仍沿用原有图解与 source fallback。
 
 在线阅读：**[Signalbox — 通信札记](https://indeliblevivi.github.io/signalbox-routing/)**。
 经过验证的 `main` 更新会通过 GitHub Pages 发布生成的静态站点。

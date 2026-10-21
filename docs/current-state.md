@@ -1,10 +1,24 @@
 # Current State
 
-Last updated: 2026-10-04
+Last updated: 2026-10-22
 
 <!-- signalbox:f0.3-source-integration merged-into-canonical-main -->
 
 ## Current integrated source
+
+- The reading station progressively adds native Copy controls to non-Mermaid
+  code fences, preserving exact text, manual selection when clipboard access
+  fails, and article readability without JavaScript. The implementation and
+  integration are tracked in
+  [PR #6](https://github.com/IndelibleVivi/signalbox-routing/pull/6).
+  Local `make verify` passes all repository gates and 168 unit tests. Chromium
+  preview checks at 1440×900 and 390×844 cover exact clipboard text, keyboard
+  activation, blocked/unavailable clipboard recovery, no-JavaScript readability
+  and Mermaid exclusion. Narrow-screen controls are 44px high with no page
+  overflow. These are source-preview checks, not physical-device acceptance.
+  Repository validation and loopback preview checks do not establish a hosted
+  deployment. The `github-pages` environment, Pages runs and served manifest
+  own the published source identity; publication follows the station runbook.
 
 - F2 Agent Surface and its telegraph reading-station follow-up are integrated
   into canonical `main` through

@@ -134,6 +134,84 @@
     });
   }
 
+  /* ---- Copyable code blocks, added only after JavaScript runs ---- */
+  const copyTimers = new WeakMap();
+  root.querySelectorAll(".sx-content pre").forEach((pre) => {
+    const code = pre.querySelector("code");
+    if (!code || code.classList.contains("sbx-mermaid-source")) return;
+    let pending = false;
+
+    const languageClass = [...code.classList].find((name) => name.startsWith("language-"));
+    const language = (languageClass ? languageClass.slice("language-".length) : "code").toUpperCase();
+    const figure = document.createElement("figure");
+    figure.className = "sx-code-block";
+    const bar = document.createElement("figcaption");
+    bar.className = "sx-code-bar";
+    const languageLabel = document.createElement("span");
+    languageLabel.className = "sx-code-language";
+    languageLabel.textContent = language;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "sx-copy-button";
+    button.textContent = "复制";
+    button.setAttribute("aria-label", "复制代码");
+    const feedback = document.createElement("span");
+    feedback.className = "sx-copy-feedback";
+    feedback.setAttribute("role", "status");
+    feedback.setAttribute("aria-live", "polite");
+    feedback.setAttribute("aria-atomic", "true");
+    const hint = document.createElement("p");
+    hint.className = "sx-copy-hint";
+    hint.hidden = true;
+    hint.textContent = "复制未完成。代码已选中，请按 ⌘C（Mac）或 Ctrl+C 手动复制。";
+
+    const setState = (state, buttonText, announcement) => {
+      button.dataset.state = state;
+      button.setAttribute("aria-busy", String(state === "pending"));
+      button.setAttribute("aria-disabled", String(state === "pending"));
+      button.textContent = buttonText;
+      feedback.textContent = announcement;
+    };
+
+    const selectCode = () => {
+      const selection = window.getSelection ? window.getSelection() : null;
+      if (!selection || !document.createRange) return;
+      const range = document.createRange();
+      range.selectNodeContents(code);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    };
+
+    button.addEventListener("click", async () => {
+      if (pending) return;
+      pending = true;
+      const priorTimer = copyTimers.get(button);
+      if (priorTimer) clearTimeout(priorTimer);
+      hint.hidden = true;
+      setState("pending", "复制中…", "正在复制代码。");
+      try {
+        if (!navigator.clipboard || typeof navigator.clipboard.writeText !== "function") {
+          throw new Error("clipboard unavailable");
+        }
+        await navigator.clipboard.writeText(code.textContent);
+        setState("success", "已复制", "代码已复制到剪贴板。");
+        copyTimers.set(button, setTimeout(() => {
+          setState("idle", "复制", "");
+        }, 2400));
+      } catch (_error) {
+        selectCode();
+        hint.hidden = false;
+        setState("failure", "重试复制", "复制失败，代码已选中，请手动复制。");
+      } finally {
+        pending = false;
+      }
+    });
+
+    bar.append(languageLabel, feedback, button);
+    pre.replaceWith(figure);
+    figure.append(bar, pre, hint);
+  });
+
   /* ---- Progressive Mermaid rendering from a pinned public CDN ---- */
   const mermaidBlocks = [...root.querySelectorAll("code.sbx-mermaid-source")];
   if (mermaidBlocks.length && "noModule" in HTMLScriptElement.prototype) {
