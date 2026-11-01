@@ -165,4 +165,4 @@ Python 3.13 site artifact. Standalone manual Pages dispatch still verifies and
 builds main. PR concurrency cancels obsolete PR runs; each non-PR source run
 has an independent group. Publication queues without cancelling earlier runs.
 This is candidate source, not merged or deployed; the existing live station
-is unchanged. Hosted evidence belongs to the optimization PR.
+is unchanged. Hosted [PR verification](https://github.com/IndelibleVivi/signalbox-routing/actions/runs/41312397890) passed all three Python versions and the required gate. The isolated no-deployment artifact-reuse probe passed twice; its build job took 5 seconds, versus the previous 49-second build. A deliberate Python 3.12 failure correctly failed `signalbox-verify` and skipped publication.
