@@ -166,3 +166,5 @@ builds main. PR concurrency cancels obsolete PR runs; each non-PR source run
 has an independent group. Publication queues without cancelling earlier runs.
 This is candidate source, not merged or deployed; the existing live station
 is unchanged. Hosted [PR verification](https://github.com/IndelibleVivi/signalbox-routing/actions/runs/41312397890) passed all three Python versions and the required gate. The isolated no-deployment artifact-reuse probe passed twice; its build jobs took 5 and 9 seconds, versus the previous 49-second build. A deliberate Python 3.12 failure correctly failed `signalbox-verify` and skipped publication.
+
+Publication freshness is checked inside the serialized Pages workflow: only the current main SHA may enter the deploy job, so a late older verification cannot overwrite newer published source. Stale source checks still complete; a failed main read blocks publication. The main-only guard is tested with matching, stale and failed-API cases, without a production deployment. Artifact-reuse timings above exclude this additional main-ref read.

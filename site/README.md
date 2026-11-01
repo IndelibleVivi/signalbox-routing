@@ -52,7 +52,9 @@ Python 3.13 job 确认 source 未改变后，保存唯一的 `build/site/` artif
 手动 Pages dispatch 仍在 `main` 重新安装依赖、完整验证、构建并检查 source。
 发布使用独立的 concurrency queue（最多 100 pending，不取消旧的主线发布）；
 PR 不调用 Pages workflow，主线 source 验证按 run ID 独立分组。
-deploy job 依赖 build 成功，用 GitHub OIDC
+发布前还会读回 `main` HEAD，只有该 run 的 source SHA 仍是当前 main 时才进入 deploy；
+过期 source 的检查保留，API 读回失败会阻断发布，避免迟到的旧 run 覆盖新站点。
+deploy job 依赖 build 成功和该 freshness 输出，用 GitHub OIDC
 与 Pages permission 发布；没有长期部署 secret，也不上传整个 checkout。
 
 在已有授权内重新发布当前 `main`：
