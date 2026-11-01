@@ -39,15 +39,22 @@ make site-serve PYTHON=.venv/bin/python SITE_PORT=8766
 ## GitHub Pages 发布与恢复
 
 公开地址是 [Signalbox — 通信札记](https://indeliblevivi.github.io/signalbox-routing/)。
-[Pages workflow](../.github/workflows/pages.yml) 在 `main` push 或手动 dispatch 时工作；
+[Pages workflow](../.github/workflows/pages.yml) 由 `main` push 的 source workflow 在完整矩阵成功后调用，也可手动 dispatch；
 feature branch 的 PR 只运行 source gate，不发布。合入 `main` 会触发公开发布，
 因此 merge 或手动重发都必须在相应的部署授权内进行。
 
 仓库 Pages publishing source 使用 **GitHub Actions**，`github-pages` environment
-只允许 `main` 部署；`main` 保留 repository branch protection。workflow 用 Python 3.13
-安装 development requirements，
-运行 `make verify`（包含 deterministic site build），确认 source worktree 未改变，
-再上传唯一的 `build/site/` artifact。deploy job 依赖 build 成功，用 GitHub OIDC
+只允许 `main` 部署；`main` 保留 repository branch protection。常规 push 在 source gate
+的 Python 3.11、3.12、3.13 上运行完整 `make verify`。
+Python 3.13 job 确认 source 未改变后，保存唯一的 `build/site/` artifact；
+稳定的 `signalbox-verify` gate 确认三版本全部成功，再调用 reusable Pages workflow，
+下载同一 run 内的 artifact，不再次安装依赖或执行第四次验证。
+手动 Pages dispatch 仍在 `main` 重新安装依赖、完整验证、构建并检查 source。
+发布使用独立的 concurrency queue（最多 100 pending，不取消旧的主线发布）；
+PR 不调用 Pages workflow，主线 source 验证按 run ID 独立分组。
+发布前还会读回 `main` HEAD，只有该 run 的 source SHA 仍是当前 main 时才进入 deploy；
+过期 source 的检查保留，API 读回失败会阻断发布，避免迟到的旧 run 覆盖新站点。
+deploy job 依赖 build 成功和该 freshness 输出，用 GitHub OIDC
 与 Pages permission 发布；没有长期部署 secret，也不上传整个 checkout。
 
 在已有授权内重新发布当前 `main`：

@@ -34,7 +34,7 @@ runtime tags.
 | `site/`, `scripts/build_site.py` | Authored reading-station shell, supplied assets and build projection; article authority remains its canonical Markdown |
 | `build/site/` | Ignored generated static output; never edit it as a source or treat it as deployment evidence |
 | `.github/workflows/verify.yml` | Hosted source gate across supported Python versions |
-| `.github/workflows/pages.yml` | Verified `main` static build and GitHub Pages publication; the `github-pages` environment owns deployment status |
+| `.github/workflows/pages.yml` | Reusable publication of the exact CI site artifact after the full matrix gate; standalone manual `main` dispatch verifies/builds first; `github-pages` owns deployment status |
 
 Attached specifications, transcripts, logs, incident notes, and external
 implementations are evidence unless the current task or canonical specification
@@ -134,7 +134,8 @@ requests. Source build and loopback preview do not authorize hosted deployment.
 Merging into `main` triggers public reading-station publication. Obtain the
 applicable publication authorization before merging; PR source checks do not
 publish. Manual Pages dispatch is limited to `main` and also requires deployment
-authorization. Publish only the generated `build/site/` artifact, never the
+authorization. The reusable build reads the current main SHA before publication;
+a stale source skips the deploy job, and a failed read must fail closed. Publish only the generated `build/site/` artifact, never the
 whole checkout or private continuity. Site availability is separate from live
 network realization and must be checked after deployment.
 

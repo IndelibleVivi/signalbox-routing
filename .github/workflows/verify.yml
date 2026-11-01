@@ -10,6 +10,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: verify-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   verify:
     name: verify-python-${{ matrix.python-version }}
@@ -40,6 +44,24 @@ jobs:
 
       - name: Confirm verification leaves the worktree unchanged
         run: test -z "$(git status --short)"
+
+      - name: Preserve the verified reading station
+        if: matrix.python-version == '3.13'
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-reading-station
+          path: build/site
+          if-no-files-found: error
+          retention-days: 1
+
+  publish-pages:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: required-gate
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml
 
   required-gate:
     name: signalbox-verify
