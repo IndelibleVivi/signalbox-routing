@@ -44,7 +44,8 @@ feature branch 的 PR 只运行 source gate，不发布。合入 `main` 会触�
 因此 merge 或手动重发都必须在相应的部署授权内进行。
 
 仓库 Pages publishing source 使用 **GitHub Actions**，`github-pages` environment
-只允许 `main` 部署；`main` 保留 repository branch protection。常规 push 在 source gate 的 Python 3.11、3.12、3.13 上运行完整 `make verify`。
+只允许 `main` 部署；`main` 保留 repository branch protection。常规 push 在 source gate
+的 Python 3.11、3.12、3.13 上运行完整 `make verify`。
 Python 3.13 job 确认 source 未改变后，保存唯一的 `build/site/` artifact；
 稳定的 `signalbox-verify` gate 确认三版本全部成功，再调用 reusable Pages workflow，
 下载同一 run 内的 artifact，不再次安装依赖或执行第四次验证。
