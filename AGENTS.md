@@ -34,7 +34,7 @@ runtime tags.
 | `site/`, `scripts/build_site.py` | Authored reading-station shell, supplied assets and build projection; article authority remains its canonical Markdown |
 | `build/site/` | Ignored generated static output; never edit it as a source or treat it as deployment evidence |
 | `.github/workflows/verify.yml` | Hosted source gate across supported Python versions |
-| `.github/workflows/pages.yml` | Verified `main` static build and GitHub Pages publication; the `github-pages` environment owns deployment status |
+| `.github/workflows/pages.yml` | Reusable publication of the exact CI site artifact after the full matrix gate; standalone manual `main` dispatch verifies/builds first; `github-pages` owns deployment status |
 
 Attached specifications, transcripts, logs, incident notes, and external
 implementations are evidence unless the current task or canonical specification
