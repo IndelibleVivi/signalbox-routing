@@ -255,7 +255,7 @@
     },
     {
       "schema_id": "signalbox.docs-pairs/v3",
-      "revision": 7,
+      "revision": 8,
       "owner": "contracts/docs-pairs.json",
       "schema_path": "schemas/docs-pairs.schema.json",
       "compatibility": {

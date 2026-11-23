@@ -8,17 +8,17 @@ contract_revision: 6
 
 [English](50-worked-cases.en.md) · **简体中文**
 
-# 七个可以细读的判断
+# 八个可以细读的判断
 
-synthetic replay 最初提供五个可以重放的判断，下面又补了两篇只用于解释外部
-机制的案例。replay 的 input 都是
+前五个案例使用 canonical replay，另外三则以公开文档或脱敏的历史观察解释机制。
+replay 的 input 都是
 [synthetic](../../examples/scenarios/cases.json)。replay 复用 canonical route grammar
 和 health evaluator；输入的 route match、observation label 是模型，不是 DNS query、
 packet capture 或 radio diagnosis。
 
-案例 6 与 7 处理 Tailscale 的 4via6 与 prefix failover。它们没有进入
-`examples/scenarios/cases.json`，也不调用 replay evaluator：两篇只用公开文档解释
-路由机制，不产生 live 或 synthetic 的 PASS/FAIL 结论。
+案例 6 与 7 解释 Tailscale 的 4via6 与 prefix failover，案例 8 分析内部 resolver
+transport 停滞。可执行 replay 运行 `examples/scenarios/cases.json` 中的八个
+canonical scenario。
 
 ```bash
 .venv/bin/python -m scripts.replay
@@ -219,3 +219,51 @@ authorization 作决定。
 同一 exact prefix 是否真有冗余；不要宣称它会落到较宽路由。参见
 [peer relay 与 transport](70-peer-relay.zh-CN.md#blocked-direct)以及
 [旅行路由器与 client-free 设备](60-travel-router.zh-CN.md#subnet-path)。
+
+<a id="resolver-transport-stall"></a>
+## 8. 代理本身能通，内部 DNS 却不动了
+
+**症状：** 外网与消息应用失败，国内 DIRECT 网站却仍正常。primary proxy server
+自己的外网 HTTPS 检查也成功，因此乍看像是 client、Wi-Fi 或账号出了问题。
+`CLAIM-02` `CLAIM-03` `HEALTH-06` `HEALTH-08` `HEALTH-10`
+
+**历史案例。** 下面的 observation 已脱敏，适用范围是事故及当时的验收窗口。
+
+**边界矩阵：** 下面几种看似都是“代理能通”的检查，实际跨过的边界不同：
+
+```text
+proxy host 自己发起的外部 HTTPS --------- PASS    主机可访问该 HTTPS 目标
+经 client proxy 的 pinned-IP HTTPS ----- PASS    被测 client 数据路径可用
+经 general egress 的手动 DoH ----------- PASS    另一条解析路径可用
+router 内部的外网 DNS ------------------ TIMEOUT 首个观测到的故障边界
+router 的国内 DIRECT DNS --------------- PASS    allowlist 内的 DNS 路径正常
+```
+
+固定 IP 请求是判别器，不是修复：它绕过了失败的 lookup。手动 DoH 成功也不能证明
+router 内部 resolver 使用相同实现或 detour。反过来，内部 resolver 停滞同样不能
+证明所有 egress lane 都已失败。
+
+**错误推断 / 反证：** “换回另一种 primary transport 就好。”trial 历史显示两种
+primary transport 此前都遇过 resolver timeout，而当前 detour 是一次有意的延迟优化
+trial。直接 revert 会改变另一个变量，既可能复活旧延迟问题，也没有触及共同的
+resolver 实现。
+
+缓存成功也是陷阱：新鲜外网查询全部超时时，旧 cache 仍可能返回答案。aggregate
+check 如果在独立的 residential 凭据故障处提前退出，也不能说明后面的 primary lane
+检查是否执行。每条 lane 都需要独立 observation，报告里也要保留已知的凭据故障。
+
+**有边界的修复：** 保留选定的 default route 与 DNS detour，只把 resolver transport
+从 HTTP/2 上的 DoH 改为 TCP 上的 DoT，并保留 resolver 的 TLS hostname 校验。激活前
+保留可完整还原的旧配置，并在授权主机上用 active inputs 校验完整的 staged config。
+保留独立可用的 rollback 路径和 fail-closed 策略。参见
+[DoH 与 HTTP/2（RFC 8484 §5.2）](https://www.rfc-editor.org/rfc/rfc8484.html#section-5.2)
+与 [DoT 会话建立（RFC 7858 §3.1）](https://www.rfc-editor.org/rfc/rfc7858.html#section-3.1)。
+
+**验收：** 分别经每条 required primary transport 验证 DoT handshake 与证书身份；
+随后从真实 client 查询没有有效缓存的域名，并重复发起普通 HTTPS 请求。新路径在该
+事故的激活后验收窗口内通过了这些检查。
+
+**允许的结论：** egress 健康不代表内部 resolver 健康，备选 resolver 健康也不代表
+当前配置的 resolver 正常。切换到 DoT 去掉了此路径的 HTTP/2 连接复用依赖，同时保留
+选定的代理 transport。除非新的 reproducer 把旧故障绑定到具体实现缺陷，根因仍保留为
+`UNKNOWN`。

@@ -33,10 +33,11 @@ public-safe example 和验证工具。普通读者不必先啃完所有 contract
 
 跟着 [完整案例](docs/human/50-worked-cases.zh-CN.md) 做一次判断：private/DIRECT
 重叠、domain 与 IP-only 分流、router-local 与 LAN 覆盖、awake 与 sleeping client，
-以及新发布的旧证据。另有两则机制札记，讲 4via6 怎样区分重叠站点，以及 failover
-为什么停在同一 advertised prefix 内；它们是解释案例，下文的 executable replay
-仍运行八个 canonical scenario。agent 可以沿 [可执行 workflow](docs/agent/workflow.md) 从 structured
-policy explanation 走到可校验的 claim/acceptance handoff。
+以及新发布的旧证据。另有三则机制札记，讲 4via6 怎样区分重叠站点、failover
+为什么停在同一 advertised prefix 内，以及 egress 健康时[内部 resolver 为何仍可能停滞](docs/human/50-worked-cases.zh-CN.md#resolver-transport-stall)。
+下文的 executable replay 运行八个 canonical scenario。agent 可以沿
+[可执行 workflow](docs/agent/workflow.md) 从 structured policy explanation 走到可校验的
+claim/acceptance handoff。
 
 ### 翻开通信札记
 

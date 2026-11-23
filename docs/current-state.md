@@ -1,16 +1,22 @@
 # Current State
 
-Last updated: 2026-10-22
+Last updated: 2026-11-24
 
 <!-- signalbox:f0.3-source-integration merged-into-canonical-main -->
 
-## Reader expansion candidate
+## Reader expansion
 
-- The `feat/network-postcards` source candidate adds three paired practical
-  notes: travel routers and client-free devices, VPS peer relays, and
-  Tailscale/Cloudflare Mesh/OpenWrt arrangements. Two explanatory mechanism
-  cases cover 4via6 site identity and exact-prefix failover. The existing eight
-  canonical executable replays retain their own implementation and meaning.
+- The reader expansion adds three paired practical notes on travel routers
+  and client-free devices, VPS peer relays, and
+  Tailscale/Cloudflare Mesh/OpenWrt arrangements. Three explanatory mechanism
+  cases cover 4via6 site identity, exact-prefix failover, and an internal
+  resolver transport stall. The existing eight canonical executable replays
+  retain their own implementation and meaning.
+- `FAIL-013` and the paired eighth worked case distinguish proxy-host outbound
+  HTTPS, pinned-IP, manual-resolver, internal-resolver and DIRECT-control evidence.
+  They record a bounded DoH-to-DoT mitigation without turning first-day success
+  into a permanent root-cause claim. The docs-pairs contract remains
+  `signalbox.docs-pairs/v3` and advances to backward-compatible revision 8.
 - The reading station's letter home projects authored public synthetic
   journeys from `examples/postcards/`; it does not observe a network or
   evaluate deployed connectivity. Article text remains canonical Markdown.
@@ -27,12 +33,11 @@ Last updated: 2026-10-22
   Language/anchor/refresh/back links work, including a local project-prefix
   preview. Cat, Morse, cipher, workbench and exact-text Copy checks pass;
   these are browser-viewport checks, not physical-device acceptance.
-- The [source comparison](https://github.com/IndelibleVivi/signalbox-routing/compare/main...feat/network-postcards)
-  remains separate from integrated `main`. No new hosted publication,
-  firmware installation or live-path acceptance is claimed. Hosted checks and
-  any later integration/publication retain their own receipts and gates.
+- The [integration receipt](https://github.com/IndelibleVivi/signalbox-routing/pull/7)
+  records the source merge. The `github-pages` environment, Pages runs and
+  served manifest record publication of the integrated source.
 
-## Current integrated source
+## Earlier integrated source
 
 - The reading station progressively adds native Copy controls to non-Mermaid
   code fences, preserving exact text, manual selection when clipboard access

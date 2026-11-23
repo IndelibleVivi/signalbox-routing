@@ -8,18 +8,17 @@ contract_revision: 6
 
 **English** · [简体中文](50-worked-cases.zh-CN.md)
 
-# Seven judgments worth reading closely
+# Eight judgments worth reading closely
 
-synthetic replay originally supplied five replayable judgments; two explanatory
-cases below examine external mechanisms. The replay inputs are
-[synthetic](../../examples/scenarios/cases.json). The replay uses the canonical
-route grammar and health evaluator; supplied route matches and observation
-labels are models, not DNS queries, packet capture or radio diagnosis.
+The first five cases use the canonical replay. Three further cases explain
+mechanisms using public documentation or redacted historical observations.
+The [synthetic replay](../../examples/scenarios/cases.json) uses the canonical
+route grammar and health evaluator. Its inputs model route matches and
+observations.
 
-Cases 6 and 7 cover Tailscale 4via6 and prefix failover. They are not entries in
-`examples/scenarios/cases.json` and do not call the replay evaluator: they use
-public documentation to explain routing mechanics and produce no live or
-synthetic PASS/FAIL conclusion.
+Cases 6 and 7 explain Tailscale 4via6 and prefix failover. Case 8 traces a
+stalled internal resolver transport. The executable replay covers eight
+canonical scenarios in `examples/scenarios/cases.json`.
 
 ```bash
 .venv/bin/python -m scripts.replay
@@ -250,3 +249,62 @@ check whether the same exact prefix really has redundancy. Do not claim that a
 broader route took over. See [peer relay and
 transport](70-peer-relay.en.md#blocked-direct) and [travel routers and
 client-free devices](60-travel-router.en.md#subnet-path).
+
+<a id="resolver-transport-stall"></a>
+## 8. The proxy works, but its internal DNS does not
+
+**Symptom:** external websites and messaging fail while domestic DIRECT sites
+still work. The primary proxy host can reach its own external HTTPS probe
+target, which initially puts suspicion on the client, Wi-Fi or account.
+`CLAIM-02` `CLAIM-03` `HEALTH-06` `HEALTH-08` `HEALTH-10`
+
+**Historical case.** The observations are redacted and apply to the incident
+and its acceptance window.
+
+**Boundary matrix:** several checks that all sound like "the proxy works" cross
+different boundaries:
+
+```text
+proxy host's own outbound HTTPS ------- PASS    host can reach that HTTPS target
+pinned-IP HTTPS through client proxy -- PASS    tested client data path works
+manual DoH through general egress ----- PASS    alternate resolver path works
+router's internal external DNS -------- TIMEOUT first observed failing boundary
+router's domestic DIRECT DNS ---------- PASS    allowlisted DNS path works
+```
+
+A fixed-IP request is a discriminator, not the repair: it bypasses the failing
+lookup. A manual DoH request also does not prove the router's internal resolver
+uses that same implementation or detour. Conversely, an internal resolver stall
+does not prove every egress lane has failed.
+
+**Wrong inference / disproof:** "change back to the other primary transport."
+Trial history showed that both primary transports had previously encountered
+resolver timeouts, and the current detour was an intentional latency trial.
+Reverting it would change an unrelated variable and could reintroduce the old
+latency problem without addressing the shared resolver implementation.
+
+A cached answer is another trap. It may succeed while every fresh external
+lookup times out. An aggregate check that exits at an independent residential
+credential failure also says nothing about whether the later primary-lane
+check ran. Those lanes require separate observations. Keep the credential
+failure visible in the report.
+
+**Bounded repair:** preserve the selected default route and DNS detour. Change
+only the resolver transport from DoH over HTTP/2 to DoT over TCP, retaining the
+resolver's TLS hostname verification. Before activation, preserve a restorable
+copy of the pre-change configuration and validate the complete staged
+configuration with its active inputs on the authorized host. Keep rollback
+independently available and preserve fail-closed policy. See
+[DoH and HTTP/2 (RFC 8484 §5.2)](https://www.rfc-editor.org/rfc/rfc8484.html#section-5.2)
+and [DoT session setup (RFC 7858 §3.1)](https://www.rfc-editor.org/rfc/rfc7858.html#section-3.1).
+
+**Acceptance:** verify the DoT handshake and certificate identity through each
+required primary transport independently. Then test DNS for names without a
+usable cache entry and repeat ordinary HTTPS requests from a real client. The
+new path passed those checks during the incident's post-activation window.
+
+**Allowed conclusion:** healthy egress does not imply a healthy internal
+resolver, and a healthy alternate resolver does not prove the configured one
+works. Moving DNS to DoT removed this path's HTTP/2 connection-reuse dependency
+and preserved the selected proxy transport. Keep the old stall's root cause
+`UNKNOWN` unless a fresh reproducer ties it to a concrete implementation defect.

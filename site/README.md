@@ -151,8 +151,9 @@ SNAT 的 NAS 接法，原生 Tailnet host 不提供这个选项。
 canonical replay。修改场景要重新运行 `make verify`，并在浏览器核验选择、推进、
 重新寄、键盘焦点、窄屏和 reduced-motion，以及缺少 JavaScript 时的内容。
 
-案例册里的 4via6 重叠站点和 exact-prefix failover 是两则解释案例，引用厂商机制；
-它们没有成为第九、第十个 executable replay，原来的八份回执继续由原实现求值。
+案例册有三则解释案例：4via6 重叠站点、exact-prefix failover 和
+[内部 DNS resolver 停滞](../docs/human/50-worked-cases.zh-CN.md#resolver-transport-stall)。
+工作台继续显示由 canonical replay 求值的八份合成回执。
 
 ## 交互
 

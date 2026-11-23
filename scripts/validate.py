@@ -2366,7 +2366,7 @@ def validate_doc_pairs(root: Path, document: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     if document.get("schema") != "signalbox.docs-pairs/v3":
         errors.append("docs-pairs: unexpected schema")
-    if document.get("contract_revision") != 7:
+    if document.get("contract_revision") != 8:
         errors.append("docs-pairs: unexpected revision")
     seen: set[str] = set()
     for pair in document.get("pairs", []):

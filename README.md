@@ -42,9 +42,10 @@ orientation.
 Try one complete judgment in the [worked cases](docs/human/50-worked-cases.en.md):
 private/DIRECT overlap, domain versus IP-only routing, router-local versus LAN
 coverage, awake versus sleeping clients, and newly published stale evidence.
-Two further mechanism notes examine overlapping sites with 4via6 and why
-failover stays within the same advertised prefix. They are explanatory cases;
-the executable replay command below still runs eight canonical scenarios.
+Three further mechanism notes examine overlapping sites with 4via6, why
+failover stays within the same advertised prefix, and how healthy egress can
+coexist with a [stalled internal resolver](docs/human/50-worked-cases.en.md#resolver-transport-stall).
+The executable replay command below runs eight canonical scenarios.
 An agent can follow the [executable workflow](docs/agent/workflow.md) from a
 structured policy explanation to a validated claim/acceptance handoff.
 

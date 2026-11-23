@@ -1,6 +1,6 @@
 {
   "schema": "signalbox.docs-pairs/v3",
-  "contract_revision": 7,
+  "contract_revision": 8,
   "pairs": [
     {
       "doc_id": "signalbox.readme",
@@ -199,6 +199,7 @@
         "CLAIM-02",
         "CLAIM-03",
         "HEALTH-06",
+        "HEALTH-08",
         "HEALTH-10",
         "HEALTH-12",
         "HEALTH-16",
@@ -212,7 +213,8 @@
         "awake-versus-sleeping",
         "new-report-old-observations",
         "4via6-site-identity",
-        "prefix-failure-vs-redundancy"
+        "prefix-failure-vs-redundancy",
+        "resolver-transport-stall"
       ]
     }
   ]
