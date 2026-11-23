@@ -23,6 +23,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from jsonschema import Draft202012Validator
 from markdown_it import MarkdownIt
 
 from scripts.repository_paths import RepositoryPathError, resolve_repository_path
@@ -116,12 +117,89 @@ SCENARIO_LABELS = {
 }
 
 EXPLICIT_ANCHOR = re.compile(r"^<a\s+id=\"([^\"]+)\"\s*></a>\s*$")
+POSTCARDS_SOURCE = "examples/postcards/journeys.json"
+POSTCARDS_SCHEMA = "schemas/postcard-journeys.schema.json"
 
 
 def load_pairs() -> list[tuple[str, str, str]]:
     """Read the bilingual documentation registry from the owning contract."""
     document = json.loads((ROOT / "contracts/docs-pairs.json").read_text(encoding="utf-8"))
     return [(pair["doc_id"], pair["zh-CN"], pair["en"]) for pair in document["pairs"]]
+
+def load_postcards() -> dict[str, object]:
+    """Load and cross-check the authored teaching journeys once per build.
+
+    The schema checks shape. These checks keep the projection from turning the
+    teaching records into an accidental networking evaluator or offering a
+    combination that the approved interaction does not support.
+    """
+    source = json.loads((ROOT / POSTCARDS_SOURCE).read_text(encoding="utf-8"))
+    schema = json.loads((ROOT / POSTCARDS_SCHEMA).read_text(encoding="utf-8"))
+    Draft202012Validator.check_schema(schema)
+    errors = sorted(
+        Draft202012Validator(schema).iter_errors(source),
+        key=lambda item: tuple(str(part) for part in item.absolute_path),
+    )
+    if errors:
+        raise ValueError(f"{POSTCARDS_SOURCE}: {errors[0].message}")
+
+    targets = {item["id"]: item for item in source["targets"]}
+    conditions = {item["id"]: item for item in source["conditions"]}
+    journeys = source["journeys"]
+    if len(targets) != len(source["targets"]) or len(conditions) != len(source["conditions"]):
+        raise ValueError(f"{POSTCARDS_SOURCE}: duplicate target or condition ID")
+    if any(target not in targets for condition in conditions.values() for target in condition["targets"]):
+        raise ValueError(f"{POSTCARDS_SOURCE}: condition refers to an unknown target")
+    pairs = {
+        (journey["target_ref"], journey["condition_ref"])
+        for journey in journeys
+    }
+    expected_pairs = {
+        (target_id, condition_id)
+        for condition_id, condition in conditions.items()
+        for target_id in condition["targets"]
+    }
+    if len(pairs) != len(journeys) or pairs != expected_pairs:
+        raise ValueError(f"{POSTCARDS_SOURCE}: offered journeys do not match applicable combinations")
+    if ("tailnet-host", "missing-return-route") in pairs:
+        raise ValueError(f"{POSTCARDS_SOURCE}: missing return route is not a native-host condition")
+    if "nas-source-preserving" not in targets:
+        raise ValueError(f"{POSTCARDS_SOURCE}: absent source-preserving NAS target")
+
+    for journey in journeys:
+        target_id = journey["target_ref"]
+        condition_id = journey["condition_ref"]
+        if journey["id"] != f"{target_id}-{condition_id}":
+            raise ValueError(f"{POSTCARDS_SOURCE}: journey ID must match its selection key")
+        if target_id not in conditions[condition_id]["targets"]:
+            raise ValueError(f"{POSTCARDS_SOURCE}: journey {journey['id']} is not applicable")
+        steps = journey["steps"]
+        relay_steps = [step for step in steps if step["stamp"] == "RLY"]
+        if condition_id == "access-denied" and relay_steps:
+            raise ValueError(f"{POSTCARDS_SOURCE}: access denial cannot advance through relay")
+        if condition_id == "missing-return-route" and (
+            target_id != "nas-source-preserving"
+            or not any("source-preserving" in step["detail"] for step in steps)
+        ):
+            raise ValueError(f"{POSTCARDS_SOURCE}: missing return route must retain its gateway premise")
+        if condition_id == "direct-udp-blocked":
+            if not relay_steps or journey["outcome"] != "delivered":
+                raise ValueError(f"{POSTCARDS_SOURCE}: authored relay journey needs its relay step and delivery outcome")
+            if not any("不转 DIRECT" in text or "不擅自改用 DIRECT" in text for text in (
+                journey["caveat"], *(step["detail"] for step in steps)
+            )):
+                raise ValueError(f"{POSTCARDS_SOURCE}: relay case cannot imply a DIRECT escape")
+        if condition_id in {"access-denied", "missing-return-route"}:
+            if journey["outcome"] != "stopped" or not any(
+                step["stamp"] == "STOP" for step in steps
+            ):
+                raise ValueError(f"{POSTCARDS_SOURCE}: non-delivery conditions need a visible stop")
+
+        article = journey["article"]
+        article_path = resolve_repository_path(ROOT, article["source"], expected_kind="file")
+        if f'<a id="{article["anchor"]}"></a>' not in article_path.read_text(encoding="utf-8"):
+            raise ValueError(f"{POSTCARDS_SOURCE}: missing article anchor {article['anchor']}")
+    return source
 
 
 def source_identity() -> dict[str, str]:
@@ -367,6 +445,9 @@ DOC_TITLES = {
     "signalbox.human.basic-router-guide": ("基础手册", "Basic router guide"),
     "signalbox.human.routing-dns-fail-closed": ("路由与 DNS", "Routing and DNS"),
     "signalbox.human.tailnet-vps-private-ingress": ("私有入口", "Private ingress"),
+    "signalbox.human.travel-router": ("旅行路由器", "Travel router"),
+    "signalbox.human.peer-relay": ("Peer relay", "Peer relay"),
+    "signalbox.human.mesh-and-openwrt": ("Mesh 与 OpenWrt", "Mesh and OpenWrt"),
     "signalbox.human.worked-cases": ("案例", "Worked cases"),
 }
 
@@ -498,6 +579,107 @@ def _scenario_buttons(scenarios: list[dict[str, object]]) -> tuple[str, str]:
     data = data.replace("</", "<\\/")
     return "\n".join(buttons), data
 
+def _postcard_markup(
+    postcards: dict[str, object], generated: set[str]
+) -> str:
+    """Render authored postcard controls, fallback, and scene data."""
+    targets = {item["id"]: item for item in postcards["targets"]}
+    conditions = {item["id"]: item for item in postcards["conditions"]}
+    journeys = postcards["journeys"]
+
+    target_buttons = "\n".join(
+        f'            <button type="button" data-postcard-target="{html.escape(item["id"])}" '
+        f'aria-pressed="{"true" if index == 0 else "false"}">'
+        f'{html.escape(item["label"])}<small>{html.escape(item["detail"])}</small></button>'
+        for index, item in enumerate(postcards["targets"])
+    )
+    condition_buttons = "\n".join(
+        f'            <button type="button" data-postcard-condition="{html.escape(item["id"])}" '
+        f'aria-pressed="{"true" if index == 0 else "false"}">'
+        f'{html.escape(item["label"])}<small>{html.escape(item["detail"])}</small></button>'
+        for index, item in enumerate(postcards["conditions"])
+    )
+
+    fallback = []
+    for journey in journeys:
+        target = targets[journey["target_ref"]]
+        condition = conditions[journey["condition_ref"]]
+        steps = "".join(
+            f'<li><b>{html.escape(step["label"])}</b> {html.escape(step["detail"])}</li>'
+            for step in journey["steps"]
+        )
+        article = journey["article"]
+        out_rel = article["source"][:-3] + ".html"
+        if article["source"] not in generated:
+            raise ValueError(f"postcard article is not generated: {article['source']}")
+        fallback.append(
+            f'<details data-postcard-case="{html.escape(journey["id"])}" '
+            f'data-target="{html.escape(journey["target_ref"])}" '
+            f'data-condition="{html.escape(journey["condition_ref"])}">'
+            f'<summary>{html.escape(target["label"])} · {html.escape(condition["label"])}</summary>'
+            f'<p>{html.escape(journey["summary"])}</p><ol>{steps}</ol>'
+            f'<p><strong>{html.escape(journey["result"])}</strong></p>'
+            f'<p class="sx-small sx-muted">{html.escape(journey["caveat"])}</p>'
+            f'<a href="{out_rel}#{html.escape(article["anchor"])}">'
+            f'{html.escape(article["label"])} ↗</a></details>'
+        )
+
+    scene_payload = json.dumps(
+        {
+            "targets": postcards["targets"],
+            "conditions": postcards["conditions"],
+            "journeys": journeys,
+        },
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ).replace("</", "<\\/")
+    fallback_html = "".join(fallback)
+    markup = (
+        '      <section class="sx-postcards" id="sx-postcards" aria-labelledby="sx-postcards-title">\n'
+        '        <div class="sx-postcard-heading">\n'
+        '          <div>\n'
+        '            <div class="sx-label">NEW ISSUE · SYNTHETIC LETTERS</div>\n'
+        '            <h3 id="sx-postcards-title">寄往家里的信</h3>\n'
+        '            <p>选一个收信点，再选一件路上可能发生的事。每封信只演示已经写好的教学步骤，不探测你的网络。</p>\n'
+        '          </div>\n'
+        '          <div class="sx-postmark" aria-hidden="true"><span>SIGNALBOX</span><strong>2026<br>10 · 22</strong></div>\n'
+        '        </div>\n'
+        '        <div class="sx-postcard-controls" data-postcard-enhanced>\n'
+        '          <fieldset><legend>收信点</legend><div class="sx-postcard-options" data-postcard-targets>\n'
+        f'{target_buttons}\n'
+        '          </div></fieldset>\n'
+        '          <fieldset><legend>路上发生的事</legend><div class="sx-postcard-options" data-postcard-conditions>\n'
+        f'{condition_buttons}\n'
+        '          </div><p class="sx-small sx-muted" data-postcard-availability aria-live="polite"></p></fieldset>\n'
+        '        </div>\n'
+        '        <div class="sx-postcard-stage" data-postcard-stage data-outcome="ready">\n'
+        '          <div class="sx-postcard-address">\n'
+        '            <span class="sx-envelope-seal" data-postcard-seal aria-hidden="true">待寄</span>\n'
+        '            <span class="sx-label">TO / HOME</span>\n'
+        '            <strong data-postcard-target-label>Tailnet 主机</strong>\n'
+        '            <span data-postcard-condition-label>一路正常</span>\n'
+        '          </div>\n'
+        '          <div class="sx-postcard-itinerary">\n'
+        '            <p class="sx-label" data-postcard-progress>邮路进度</p>\n'
+        '            <div class="sx-postcard-route" data-postcard-route role="list" aria-label="教学路径"></div>\n'
+        '          </div>\n'
+        '          <div class="sx-postcard-result" data-postcard-result aria-live="polite"></div>\n'
+        '        </div>\n'
+        '        <div class="sx-postcard-actions">\n'
+        '          <button type="button" class="sx-action" data-postcard-next>封好了，寄出 →</button>\n'
+        '          <button type="button" class="sx-quiet-button" data-postcard-reset>重新封信</button>\n'
+        '          <a class="sx-quiet-link" data-postcard-article href="docs/human/70-peer-relay.zh-CN.html#blocked-direct">翻开相关文章 ↗</a>\n'
+        '        </div>\n'
+        f'        <p class="sx-small sx-muted sx-postcard-disclaimer">{html.escape(postcards["disclaimer"])}</p>\n'
+        '        <details class="sx-postcard-nojs">\n'
+        '          <summary>直接阅读七封教学信</summary>\n'
+        f'          <div class="sx-postcard-fallbacks">{fallback_html}</div>\n'
+        '        </details>\n'
+        f'        <script type="application/json" data-postcard-data>{scene_payload}</script>\n'
+        '      </section>\n'
+    )
+    return markup
+
 
 def build() -> int:
     if not (ROOT / "contracts").is_dir():
@@ -505,6 +687,7 @@ def build() -> int:
 
     articles = build_articles()
     scenarios = compute_scenarios()
+    postcards = load_postcards()
     specs = build_pages(articles)
     generated = set(articles)
     pairs = counterpart_map()
@@ -539,9 +722,15 @@ def build() -> int:
             .replace("{{CONTENT}}", content)
         )
 
-    # Home page.
+    # Home page. The postcard records are loaded and checked once here; the
+    # emitted fallback and browser JSON come from that same object.
     buttons, scenario_json = _scenario_buttons(scenarios)
-    home_body = home_tpl.replace("{{BASE}}", "").replace("{{SCENARIO_BUTTONS}}", buttons)
+    postcard_html = _postcard_markup(postcards, generated)
+    home_body = (
+        home_tpl.replace("{{BASE}}", "")
+        .replace("{{SCENARIO_BUTTONS}}", buttons)
+        .replace("{{POSTCARD_EXPERIENCE}}", postcard_html)
+    )
     home_body += (
         f'\n    <script type="application/json" data-scenario-data>{scenario_json}</script>'
     )
@@ -611,6 +800,11 @@ def build() -> int:
         {"id": item["id"], "passed": item["passed"], "kind": item["kind"]}
         for item in scenarios
     ]
+    manifest["postcards"] = {
+        "source": POSTCARDS_SOURCE,
+        "reviewed_at": postcards["reviewed_at"],
+        "journeys": [item["id"] for item in postcards["journeys"]],
+    }
     (OUT_DIR / "build-manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
@@ -621,7 +815,8 @@ def build() -> int:
         where = OUT_DIR
     print(
         f"signalbox site build: {len(specs)} reading pages, 1 home, "
-        f"{len(scenarios)} synthetic scenario receipts -> {where}"
+        f"{len(scenarios)} synthetic scenario receipts, "
+        f"{len(postcards['journeys'])} postcard journeys -> {where}"
     )
     return 0
 

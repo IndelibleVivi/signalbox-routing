@@ -162,3 +162,35 @@ or current live-system truth.
   resource state changes, RF changes or interactions with changed peers.
 - Protecting contracts: `CLAIM-02`, `HEALTH-06`.
 - Worked evidence: [awake versus sleeping clients](../human/50-worked-cases.en.md#awake-versus-sleeping).
+
+## `FAIL-013` — Green egress masks a stalled internal resolver transport
+
+- First observed failing boundary: the router's internal DNS transport for
+  applications that need a fresh lookup before connecting.
+- Pattern: the proxy host can make its own outbound HTTPS request, pinned-IP
+  HTTPS succeeds through the client proxy path, and a manual resolver request
+  succeeds through general egress. Uncached external lookups through the
+  router's internal resolver time out. Allowlisted DIRECT lookups can remain healthy.
+  Old cached answers and independent lane probes conceal the stalled resolver.
+- Unsafe interpretation: the VPS is down; every lane failed; switching between
+  primary transports must cure DNS; a source/runtime detour difference is
+  automatically accidental drift; or one early-exit aggregate check proves all
+  other lanes failed. Transport changes alone do not explain a shared resolver
+  implementation failure, and a known third-lane credential error must not be
+  hidden to manufacture an all-green receipt.
+- Portable response: compare proxy-host outbound HTTPS, pinned-IP proxied,
+  manual-resolver, internal-resolver and DIRECT-control observations from the appropriate client
+  and time window. Read intentional trial history before reverting detours.
+  Change one resolver variable with an exact backup, full staged validation and
+  rollback while preserving the selected route and protected fail-closed
+  policy. Validate each required lane independently, then require uncached and
+  repeated real-client DNS/HTTPS acceptance. Do not add automatic restarts,
+  DIRECT escape or a permanent-fix claim from first-day success.
+- Implementation-specific mitigation: replacing DoH/HTTP2 with DoT/TCP can
+  remove the HTTP/2 connection-reuse dependency while retaining end-to-end TLS.
+  Verify the DoT handshake and hostname through every required transport. This
+  is a bounded mitigation, not proof of the old queue's root mechanism or a
+  universal reason to prefer DoT everywhere.
+- Protecting contracts: `CLAIM-02`, `CLAIM-03`, `HEALTH-06`, `HEALTH-08`,
+  `HEALTH-10`.
+- Worked evidence: [proxy works, internal DNS does not](../human/50-worked-cases.en.md#resolver-transport-stall).

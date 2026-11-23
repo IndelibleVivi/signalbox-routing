@@ -99,6 +99,77 @@ body { margin: 0 auto; max-width: 1180px; padding: 24px; }
 #sbx-station .sx-drawer a { font-size: 12px; }
 #sbx-station .sx-cabinet-end { font-size: 12px; color: var(--sx-muted); padding-top: 22px; }
 
+/* Postcard teaching journey. Paper, cancellations and a route of stamped
+   stops; controls stay native and the no-JS fallback uses disclosures. */
+#sbx-station .sx-postcards {
+  margin-top: 12px; padding: 22px 0 24px; border-top: 1px solid var(--sx-rule);
+  border-bottom: 1px solid var(--sx-rule); scroll-margin-top: 22px;
+}
+#sbx-station .sx-postcard-heading { display: grid; grid-template-columns: minmax(0, 1fr) 104px; gap: 24px; align-items: start; }
+#sbx-station .sx-postcard-heading .sx-label { color: var(--sx-rust); }
+#sbx-station .sx-postcard-heading h3 { margin-top: 8px; font-family: Georgia, "Songti SC", serif; font-size: 27px; font-weight: 500; line-height: 1.4; letter-spacing: -.4px; }
+#sbx-station .sx-postcard-heading p { margin-top: 7px; max-width: 42em; color: var(--sx-muted); font-size: 14px; line-height: 1.8; }
+#sbx-station .sx-postmark { justify-self: end; width: 96px; min-height: 112px; padding: 12px 8px; border: 2px solid var(--sx-rust); outline: 1px solid var(--sx-rust); outline-offset: -5px; color: var(--sx-rust); text-align: center; transform: rotate(2.5deg); }
+#sbx-station .sx-postmark span { display: block; font: 10px/1.3 "IBM Plex Mono", "Courier New", monospace; letter-spacing: .5px; }
+#sbx-station .sx-postmark strong { display: block; margin-top: 12px; font: 17px/1.35 "Special Elite", "Courier New", monospace; font-weight: 400; letter-spacing: 1px; }
+#sbx-station .sx-postcard-controls { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 20px; margin-top: 20px; }
+#sbx-station .sx-postcard-controls fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+#sbx-station .sx-postcard-controls legend { padding: 0 0 7px; color: var(--sx-muted); font: 11px/1.5 "IBM Plex Mono", "Courier New", monospace; letter-spacing: 1.25px; }
+#sbx-station .sx-postcard-options { display: flex; flex-wrap: wrap; gap: 7px; }
+#sbx-station .sx-postcard-options button { min-height: 44px; padding: 8px 11px; border: 1px solid var(--sx-rule); background: #f6f7ef; text-align: left; font-size: 13px; line-height: 1.5; }
+#sbx-station .sx-postcard-options button small { display: block; margin-top: 2px; color: var(--sx-muted); font: 11px/1.5 "IBM Plex Mono", "Courier New", monospace; }
+#sbx-station .sx-postcard-options button:hover { border-color: #a99462; background: #f1ebd9; }
+#sbx-station .sx-postcard-options button[aria-pressed="true"] { border-color: var(--sx-frame); background: var(--sx-pale); box-shadow: inset 0 -2px 0 var(--sx-brass); }
+#sbx-station .sx-postcard-options button[disabled] { cursor: not-allowed; opacity: .42; background: transparent; }
+#sbx-station .sx-postcard-controls [data-postcard-availability] { min-height: 20px; margin-top: 7px; }
+
+#sbx-station .sx-postcard-stage { position: relative; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 0 24px; align-items: center; margin-top: 18px; padding: 26px 24px 20px; border: 1px solid #cfd5c2; background: #f7f5eb; }
+#sbx-station .sx-postcard-address { position: relative; isolation: isolate; min-height: 160px; padding: 48px 18px 24px; border: 1px solid #c9b98f; background: #fcf4dd; box-shadow: 0 5px 10px #25483d12; transform: rotate(-3deg); transition: transform .2s ease, background .2s ease; }
+#sbx-station .sx-postcard-address::before { content: ""; position: absolute; z-index: -1; inset: 0; background: linear-gradient(150deg, transparent 49.5%, #d8c9a9 50%, transparent 50.8%) top left / 50% 60% no-repeat, linear-gradient(210deg, transparent 49.5%, #d8c9a9 50%, transparent 50.8%) top right / 50% 60% no-repeat, linear-gradient(30deg, #f1e4c5 49.5%, transparent 50%) bottom left / 50% 47% no-repeat, linear-gradient(-30deg, #f1e4c5 49.5%, transparent 50%) bottom right / 50% 47% no-repeat; }
+#sbx-station .sx-postcard-address .sx-label { color: var(--sx-rust); font-size: 10px; }
+#sbx-station .sx-postcard-address strong { display: block; margin-top: 3px; font: 22px/1.4 Georgia, "Songti SC", serif; font-weight: 500; }
+#sbx-station .sx-postcard-address > span:last-child { display: block; margin-top: 4px; color: #756d55; font-size: 12px; }
+#sbx-station .sx-envelope-seal { position: absolute; top: 13px; right: 12px; padding: 3px 6px; border: 2px double #9c704c; color: #895d3f; transform: rotate(9deg); font: 12px/1.5 "IBM Plex Mono", "Courier New", monospace; letter-spacing: 1px; }
+#sbx-station .sx-postcard-stage[data-outcome="transit"] .sx-postcard-address { transform: rotate(1deg) translateY(-3px); }
+#sbx-station .sx-postcard-stage[data-outcome="delivered"] .sx-envelope-seal { color: var(--sx-frame); border-color: var(--sx-frame); }
+#sbx-station .sx-postcard-stage[data-outcome="stopped"] .sx-envelope-seal { color: var(--sx-rust); border-color: var(--sx-rust); }
+#sbx-station .sx-postcard-stage[data-outcome="stopped"] .sx-postcard-address { transform: rotate(-1deg); }
+#sbx-station .sx-postcard-itinerary { min-width: 0; }
+#sbx-station .sx-postcard-itinerary > .sx-label { margin-bottom: 12px; color: var(--sx-muted); }
+#sbx-station .sx-postcard-route { position: relative; display: flex; align-items: center; min-height: 74px; gap: 0; padding: 0; overflow-x: auto; }
+#sbx-station .sx-postcard-stop { position: relative; flex: 1 1 0; min-width: 84px; max-width: 145px; padding: 2px 12px 0 15px; color: #7e8677; font-size: 11px; line-height: 1.45; }
+#sbx-station .sx-postcard-stop::before { content: ""; position: absolute; top: 15px; left: 0; right: 0; border-top: 1px dashed #adb89d; }
+#sbx-station .sx-postcard-stop:last-child::before { right: 12px; }
+#sbx-station .sx-postcard-stamp { position: relative; z-index: 1; display: inline-flex; width: 31px; height: 31px; align-items: center; justify-content: center; border: 1px solid #b1b59a; border-radius: 50%; background: #fbf8ed; color: #879177; font: 9px/1 "IBM Plex Mono", "Courier New", monospace; letter-spacing: .2px; transition: background .18s ease, border-color .18s ease, transform .18s ease; }
+#sbx-station .sx-postcard-stop[data-state="done"] .sx-postcard-stamp { border-color: var(--sx-brass); background: var(--sx-brass-pale); color: #685531; transform: rotate(-8deg); }
+#sbx-station .sx-postcard-stop[data-state="current"] .sx-postcard-stamp { border-color: var(--sx-rust); background: #f7e4d6; color: var(--sx-rust); transform: rotate(-8deg); }
+#sbx-station .sx-postcard-stop[data-state="stop"] .sx-postcard-stamp { border-color: var(--sx-rust); background: var(--sx-rust); color: #fffefa; }
+#sbx-station .sx-postcard-stop b { position: relative; z-index: 1; display: block; margin-top: 5px; color: var(--sx-ink); font-size: 11px; font-weight: 500; }
+#sbx-station .sx-postcard-result { position: relative; grid-column: 1 / -1; margin-top: 24px; padding: 17px 0 2px; border-top: 1px solid #d9ddcd; }
+#sbx-station .sx-postcard-result .sx-postcard-kicker { color: var(--sx-rust); font: 10px/1.5 "IBM Plex Mono", "Courier New", monospace; letter-spacing: 1.2px; }
+#sbx-station .sx-postcard-result h4 { margin-top: 4px; font-family: Georgia, "Songti SC", serif; font-size: 19px; font-weight: 500; line-height: 1.5; }
+#sbx-station .sx-postcard-result p { max-width: 52em; margin-top: 5px; font-size: 14px; line-height: 1.85; }
+#sbx-station .sx-postcard-result .sx-postcard-caveat { color: var(--sx-muted); }
+#sbx-station .sx-postcard-stage[data-outcome="stopped"] { background: #fbf7ea; }
+#sbx-station .sx-postcard-stage[data-outcome="stopped"] .sx-postcard-address { color: var(--sx-rust); }
+#sbx-station .sx-postcard-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 15px; }
+#sbx-station .sx-postcard-actions .sx-action { margin-top: 0; min-height: 44px; }
+#sbx-station .sx-postcard-actions .sx-quiet-button, #sbx-station .sx-postcard-actions .sx-quiet-link { min-height: 44px; padding: 6px 0; }
+#sbx-station .sx-postcard-disclaimer { margin-top: 12px; }
+#sbx-station .sx-postcard-nojs { margin-top: 15px; border-top: 1px dashed #d8cda9; padding-top: 12px; }
+#sbx-station .sx-postcard-nojs > summary { cursor: pointer; font-size: 12px; color: var(--sx-muted); }
+#sbx-station .sx-postcard-fallbacks { margin-top: 12px; }
+#sbx-station .sx-postcard-fallbacks details { border-top: 1px solid var(--sx-rule); padding: 9px 0; }
+#sbx-station .sx-postcard-fallbacks summary { cursor: pointer; font-size: 13px; }
+#sbx-station .sx-postcard-fallbacks p, #sbx-station .sx-postcard-fallbacks ol { margin: 8px 0; padding-left: 20px; font-size: 12px; line-height: 1.75; }
+#sbx-station .sx-postcard-fallbacks a { display: inline-block; min-height: 44px; padding: 9px 0; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
+#sbx-station [data-postcard-enhanced] { display: none; }
+#sbx-station [data-postcard-enhanced][data-ready="true"] { display: grid; }
+#sbx-station .sx-postcards:not([data-ready="true"]) .sx-postcard-stage,
+#sbx-station .sx-postcards:not([data-ready="true"]) .sx-postcard-actions { display: none; }
+#sbx-station .sx-issue-index { padding-left: 22px; font: 12px/2 "IBM Plex Mono", "Courier New", monospace; }
+#sbx-station .sx-issue-index li { padding: 2px 0; }
+
 /* Workbench replay receipt */
 #sbx-station .sx-workbench { margin-top: 18px; border-top: 1px solid var(--sx-rule); padding-top: 20px; }
 #sbx-station .sx-scenario-list { display: flex; flex-wrap: wrap; gap: 8px 10px; list-style: none; padding: 0; margin: 16px 0; }
@@ -204,6 +275,9 @@ body { margin: 0 auto; max-width: 1180px; padding: 24px; }
 #sbx-station .sx-mermaid-rendered { margin: 16px 0; overflow-x: auto; }
 #sbx-station .sx-mermaid-rendered:focus-visible { outline: none; box-shadow: inset 0 -2px 0 var(--sx-brass); }
 #sbx-station .sx-mermaid-rendered svg { max-width: 100%; height: auto; }
+/* Mermaid measures its own labels before insertion. Article paragraph margins
+   must not change those labels after they enter the reading column. */
+#sbx-station .sx-content .sx-mermaid-rendered p { margin: 0; font: inherit; line-height: inherit; }
 
 @media (max-width: 760px) {
   #sbx-station .sx-header { padding: 20px 23px; gap: 15px; }
@@ -215,6 +289,9 @@ body { margin: 0 auto; max-width: 1180px; padding: 24px; }
   #sbx-station .sx-selected { grid-template-columns: minmax(0, 1fr) minmax(200px, .65fr); gap: 20px; }
   #sbx-station h2 { font-size: 25px; }
   #sbx-station .sx-cabinet { column-gap: 24px; }
+  #sbx-station .sx-postcard-controls { grid-template-columns: 1fr; gap: 14px; }
+  #sbx-station .sx-postcard-stage { grid-template-columns: 180px minmax(0, 1fr); padding: 22px 18px; gap: 0 18px; }
+  #sbx-station .sx-postcard-route { padding-left: 0; }
   #sbx-station .sx-mail-corner { padding: 25px 42px 13px; gap: 20px; }
   #sbx-station .sx-reader { margin: 0 19px 19px; padding: 23px 27px; }
   #sbx-station .sx-reader-layout { grid-template-columns: 144px minmax(0, 1fr); gap: 23px; }
@@ -239,6 +316,23 @@ body { margin: 0 auto; max-width: 1180px; padding: 24px; }
   #sbx-station h2 { font-size: 26px; }
   #sbx-station .sx-route-slip { transform: none; padding: 17px; }
   #sbx-station .sx-cabinet { grid-template-columns: 1fr; }
+  #sbx-station .sx-postcard-heading { grid-template-columns: minmax(0, 1fr) 80px; gap: 14px; }
+  #sbx-station .sx-postcard-heading h3 { font-size: 24px; }
+  #sbx-station .sx-postmark { width: 76px; min-height: 92px; padding: 9px 5px; }
+  #sbx-station .sx-postmark strong { margin-top: 8px; font-size: 14px; }
+  #sbx-station .sx-postcard-options { display: grid; grid-template-columns: 1fr 1fr; }
+  #sbx-station .sx-postcard-options button { width: 100%; }
+  #sbx-station .sx-postcard-stage { grid-template-columns: 1fr; padding: 22px 16px 16px; gap: 20px; }
+  #sbx-station .sx-postcard-address { width: calc(100% - 12px); justify-self: center; }
+  #sbx-station .sx-postcard-address strong { margin-top: 4px; font-size: 22px; }
+  #sbx-station .sx-postcard-route { align-items: flex-start; flex-direction: column; gap: 6px; min-height: 0; padding: 0; overflow: visible; }
+  #sbx-station .sx-postcard-stop { display: grid; grid-template-columns: 31px minmax(0, 1fr); min-width: 0; width: 100%; max-width: none; padding: 0; }
+  #sbx-station .sx-postcard-stop::before { top: 31px; bottom: -3px; left: 15px; right: auto; border-top: 0; border-left: 1px dashed #adb89d; }
+  #sbx-station .sx-postcard-stop:last-child::before { display: none; }
+  #sbx-station .sx-postcard-stop b { align-self: center; margin: 0 0 0 9px; font-size: 13px; }
+  #sbx-station .sx-postcard-result { margin-top: 0; padding: 16px 0 0; }
+  #sbx-station .sx-postcard-actions { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  #sbx-station .sx-postcard-actions .sx-action, #sbx-station .sx-postcard-actions .sx-quiet-button { width: 100%; justify-content: center; }
   #sbx-station .sx-drawer { padding: 20px 0; }
   #sbx-station .sx-mail-corner { grid-template-columns: 1fr; padding: 25px 32px 13px; gap: 10px; }
   #sbx-station .sx-envelope { max-width: 310px; margin: 0 auto; }
@@ -263,7 +357,10 @@ body { margin: 0 auto; max-width: 1180px; padding: 24px; }
 }
 @media (pointer: coarse) {
   #sbx-station .sx-nav a, #sbx-station .sx-nav button, #sbx-station .sx-tape button,
-  #sbx-station .sx-close, #sbx-station .sx-scenario-list button { min-height: 44px; display: inline-flex; align-items: center; }
+  #sbx-station .sx-close, #sbx-station .sx-scenario-list button,
+  #sbx-station .sx-postcard-options button, #sbx-station .sx-postcard-nojs > summary {
+    min-height: 44px; display: inline-flex; align-items: center;
+  }
   #sbx-station .sx-key-control button { width: 44px; height: 44px; }
   #sbx-station .sx-action, #sbx-station .sx-quiet-button, #sbx-station .sx-mail-link { min-height: 44px; }
 }

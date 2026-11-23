@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:signalbox:schema:postcard-journeys:v1",
+  "title": "Signalbox synthetic postcard teaching journeys",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "reviewed_at", "disclaimer", "targets", "conditions", "journeys"],
+  "properties": {
+    "schema": {"const": "signalbox.postcard-journeys/v1"},
+    "reviewed_at": {"const": "2026-10-22"},
+    "disclaimer": {"type": "string", "minLength": 1},
+    "targets": {
+      "type": "array",
+      "minItems": 2,
+      "items": {"$ref": "#/$defs/namedRecord"}
+    },
+    "conditions": {
+      "type": "array",
+      "minItems": 4,
+      "items": {"$ref": "#/$defs/condition"}
+    },
+    "journeys": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/journey"}
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "namedRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "detail"],
+      "properties": {
+        "id": {"$ref": "#/$defs/identifier"},
+        "label": {"type": "string", "minLength": 1},
+        "detail": {"type": "string", "minLength": 1}
+      }
+    },
+    "card": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stamp", "label", "detail"],
+      "properties": {
+        "stamp": {"type": "string", "minLength": 1, "maxLength": 8},
+        "label": {"type": "string", "minLength": 1},
+        "detail": {"type": "string", "minLength": 1}
+      }
+    },
+    "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "detail", "targets"],
+      "properties": {
+        "id": {"$ref": "#/$defs/identifier"},
+        "label": {"type": "string", "minLength": 1},
+        "detail": {"type": "string", "minLength": 1},
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/identifier"}
+        }
+      }
+    },
+    "article": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "anchor", "label"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "pattern": "^docs/human/(?:40-tailnet-vps-private-ingress|60-travel-router|70-peer-relay|80-mesh-and-openwrt)\\.zh-CN\\.md$"
+        },
+        "anchor": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1}
+      }
+    },
+    "journey": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "target_ref", "condition_ref", "title", "summary", "steps",
+        "outcome", "result", "caveat", "article"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/identifier"},
+        "target_ref": {"$ref": "#/$defs/identifier"},
+        "condition_ref": {"$ref": "#/$defs/identifier"},
+        "title": {"type": "string", "minLength": 1},
+        "summary": {"type": "string", "minLength": 1},
+        "steps": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 6,
+          "items": {"$ref": "#/$defs/card"}
+        },
+        "outcome": {"enum": ["delivered", "stopped"]},
+        "result": {"type": "string", "minLength": 1},
+        "caveat": {"type": "string", "minLength": 1},
+        "article": {"$ref": "#/$defs/article"}
+      }
+    }
+  }
+}

@@ -1,10 +1,43 @@
 # Current State
 
-Last updated: 2026-10-22
+Last updated: 2026-11-24
 
 <!-- signalbox:f0.3-source-integration merged-into-canonical-main -->
 
-## Current integrated source
+## Reader expansion
+
+- The reader expansion adds three paired practical notes on travel routers
+  and client-free devices, VPS peer relays, and
+  Tailscale/Cloudflare Mesh/OpenWrt arrangements. Three explanatory mechanism
+  cases cover 4via6 site identity, exact-prefix failover, and an internal
+  resolver transport stall. The existing eight canonical executable replays
+  retain their own implementation and meaning.
+- `FAIL-013` and the paired eighth worked case distinguish proxy-host outbound
+  HTTPS, pinned-IP, manual-resolver, internal-resolver and DIRECT-control evidence.
+  They record a bounded DoH-to-DoT mitigation without turning first-day success
+  into a permanent root-cause claim. The docs-pairs contract remains
+  `signalbox.docs-pairs/v3` and advances to backward-compatible revision 8.
+- The reading station's letter home projects authored public synthetic
+  journeys from `examples/postcards/`; it does not observe a network or
+  evaluate deployed connectivity. Article text remains canonical Markdown.
+- Local `make verify PYTHON=.venv/bin/python` passes 39 cataloged instances,
+  ten reference reports, one historical regression fixture, the synthetic
+  handoff, all eight canonical replays, deterministic site generation and
+  175 unit tests. The build contains 36 reading pages, one home and seven
+  authored teaching journeys.
+- Chromium preview checks at 1440×900 and 390×844 cover all seven journeys,
+  ready/send/terminal/replay/reset, keyboard focus, 44px controls, the
+  unavailable native-host return-route condition, all-case/no-JavaScript
+  reading and reduced motion. New bilingual diagrams render; the paragraph
+  style fix also preserves readable labels on the existing architecture page.
+  Language/anchor/refresh/back links work, including a local project-prefix
+  preview. Cat, Morse, cipher, workbench and exact-text Copy checks pass;
+  these are browser-viewport checks, not physical-device acceptance.
+- The [integration receipt](https://github.com/IndelibleVivi/signalbox-routing/pull/7)
+  records the source merge. The `github-pages` environment, Pages runs and
+  served manifest record publication of the integrated source.
+
+## Earlier integrated source
 
 - The reading station progressively adds native Copy controls to non-Mermaid
   code fences, preserving exact text, manual selection when clipboard access

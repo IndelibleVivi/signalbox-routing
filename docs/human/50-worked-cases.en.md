@@ -8,12 +8,17 @@ contract_revision: 6
 
 **English** · [简体中文](50-worked-cases.zh-CN.md)
 
-# Five judgments you can replay
+# Eight judgments worth reading closely
 
-These cases teach where a conclusion becomes justified. All inputs are
-[synthetic](../../examples/scenarios/cases.json). The replay uses the canonical
-route grammar and health evaluator; supplied route matches and observation
-labels are models, not DNS queries, packet capture or radio diagnosis.
+The first five cases use the canonical replay. Three further cases explain
+mechanisms using public documentation or redacted historical observations.
+The [synthetic replay](../../examples/scenarios/cases.json) uses the canonical
+route grammar and health evaluator. Its inputs model route matches and
+observations.
+
+Cases 6 and 7 explain Tailscale 4via6 and prefix failover. Case 8 traces a
+stalled internal resolver transport. The executable replay covers eight
+canonical scenarios in `examples/scenarios/cases.json`.
 
 ```bash
 .venv/bin/python -m scripts.replay
@@ -166,3 +171,140 @@ preflight. Publication alone cannot renew evidence or restore authority.
 
 For generation 42→43, late completion and restart uncertainty, replay the three
 [agent recovery races](../agent/workflow.md#recovery-sequencing).
+
+<a id="4via6-site-identity"></a>
+## 6. The same IPv4 range, two site identities
+
+**Symptom:** home and office use the same private IPv4 range. Looking only at
+`site A LAN ↔ site B LAN`, the routers seem to belong to "the same network,"
+yet they are distinct sites and their old devices may share an IPv4 address.
+
+**This is not an executable replay.** It is an explanatory case about an external
+mechanism and is not added to `examples/scenarios/cases.json`. It does not compute
+subnet routes, probe nodes, or issue a live or synthetic PASS/FAIL conclusion.
+
+**Mechanism:** a bare IPv4 subnet route cannot distinguish two sites from one
+identical prefix alone. Tailscale's
+[4via6 subnet documentation](https://tailscale.com/docs/features/subnet-routers/4via6-subnets)
+encodes a site identity into a unique IPv6 mapping, so the existing IPv4
+addresses can stay unchanged while "the LAN at site A" and "the LAN at site B"
+remain distinct.
+
+```text
+IPv4 prefix P at site A --site A mapping--> Tailnet reachability
+IPv4 prefix P at site B --site B mapping--> different Tailnet reachability
+                 same P                              distinct identity
+```
+
+**Redundancy for one site:** if two routers use the same site ID and mapping,
+they can advertise the same prefix for the same site and provide redundancy.
+Using that same site ID for another site would collapse two different
+destinations into one identity.
+
+**Version check before deployment:** the official 4via6 page, read on 2026-10-22,
+says to upgrade routers to Tailscale 1.102.3 or later for security and links the
+relevant advisory. A site mapping is not evidence that an older release is safe
+to deploy. For ordinary IPv4 subnet SNAT and return paths, see the
+[travel-router article](60-travel-router.en.md#subnet-path).
+
+**Allowed conclusion:** 4via6 expresses the identity of overlapping IPv4 sites.
+It neither renumbers devices nor proves policy, DNS, firewall, or path health.
+The deployment still needs named path evidence.
+
+<a id="prefix-failure-vs-redundancy"></a>
+## 7. A failed specific prefix does not fall through to a broader route
+
+**Symptom:** configuration contains a broader route and a more specific prefix;
+the router behind the specific route goes offline. It is tempting to assume the
+broader route will take over after the page fails.
+
+**This is not an executable replay.** Like case 6, it explains an external
+product mechanism and is not added to the eight canonical scenarios. The text
+path is not route-table readback or evidence of any node's current state.
+
+```text
+specific prefix ---- offline router ---- X
+                    no automatic fallthrough
+broader prefix  ---- other router ----> separate candidate only
+```
+
+**Mechanism:** Tailscale's
+[overlapping subnet route failover
+documentation](https://tailscale.com/docs/reference/troubleshooting/network-configuration/overlapping-subnet-route-failover)
+distinguishes exact-prefix failover from less-specific fallback: a more specific
+route does not automatically use a broader route merely because its router
+is unavailable. A `via` filter chooses which routers are eligible; it does
+not assign an ordered automatic fallback.
+
+**Redundancy at the same prefix:** multiple eligible routers for one exact prefix
+provide a set of repeated candidates. Their actual availability, advertisements,
+and policy selection still require readback.
+
+**Wrong inference / disproof:** "a broader prefix is a fallback." Observe the
+selected route and the exact-prefix candidates; the broader path was not selected
+automatically. A routing layer also cannot decide application authorization.
+
+**Allowed conclusion:** retain fail or `UNKNOWN` when the specific route fails and
+check whether the same exact prefix really has redundancy. Do not claim that a
+broader route took over. See [peer relay and
+transport](70-peer-relay.en.md#blocked-direct) and [travel routers and
+client-free devices](60-travel-router.en.md#subnet-path).
+
+<a id="resolver-transport-stall"></a>
+## 8. The proxy works, but its internal DNS does not
+
+**Symptom:** external websites and messaging fail while domestic DIRECT sites
+still work. The primary proxy host can reach its own external HTTPS probe
+target, which initially puts suspicion on the client, Wi-Fi or account.
+`CLAIM-02` `CLAIM-03` `HEALTH-06` `HEALTH-08` `HEALTH-10`
+
+**Historical case.** The observations are redacted and apply to the incident
+and its acceptance window.
+
+**Boundary matrix:** several checks that all sound like "the proxy works" cross
+different boundaries:
+
+```text
+proxy host's own outbound HTTPS ------- PASS    host can reach that HTTPS target
+pinned-IP HTTPS through client proxy -- PASS    tested client data path works
+manual DoH through general egress ----- PASS    alternate resolver path works
+router's internal external DNS -------- TIMEOUT first observed failing boundary
+router's domestic DIRECT DNS ---------- PASS    allowlisted DNS path works
+```
+
+A fixed-IP request is a discriminator, not the repair: it bypasses the failing
+lookup. A manual DoH request also does not prove the router's internal resolver
+uses that same implementation or detour. Conversely, an internal resolver stall
+does not prove every egress lane has failed.
+
+**Wrong inference / disproof:** "change back to the other primary transport."
+Trial history showed that both primary transports had previously encountered
+resolver timeouts, and the current detour was an intentional latency trial.
+Reverting it would change an unrelated variable and could reintroduce the old
+latency problem without addressing the shared resolver implementation.
+
+A cached answer is another trap. It may succeed while every fresh external
+lookup times out. An aggregate check that exits at an independent residential
+credential failure also says nothing about whether the later primary-lane
+check ran. Those lanes require separate observations. Keep the credential
+failure visible in the report.
+
+**Bounded repair:** preserve the selected default route and DNS detour. Change
+only the resolver transport from DoH over HTTP/2 to DoT over TCP, retaining the
+resolver's TLS hostname verification. Before activation, preserve a restorable
+copy of the pre-change configuration and validate the complete staged
+configuration with its active inputs on the authorized host. Keep rollback
+independently available and preserve fail-closed policy. See
+[DoH and HTTP/2 (RFC 8484 §5.2)](https://www.rfc-editor.org/rfc/rfc8484.html#section-5.2)
+and [DoT session setup (RFC 7858 §3.1)](https://www.rfc-editor.org/rfc/rfc7858.html#section-3.1).
+
+**Acceptance:** verify the DoT handshake and certificate identity through each
+required primary transport independently. Then test DNS for names without a
+usable cache entry and repeat ordinary HTTPS requests from a real client. The
+new path passed those checks during the incident's post-activation window.
+
+**Allowed conclusion:** healthy egress does not imply a healthy internal
+resolver, and a healthy alternate resolver does not prove the configured one
+works. Moving DNS to DoT removed this path's HTTP/2 connection-reuse dependency
+and preserved the selected proxy transport. Keep the old stall's root cause
+`UNKNOWN` unless a fresh reproducer ties it to a concrete implementation defect.

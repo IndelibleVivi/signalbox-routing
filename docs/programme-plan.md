@@ -3,6 +3,7 @@
 Status: active
 Most recent follow-up: reading-station publication complete; network runtime remains separate
 Reader follow-up: telegraph reading station and same-source content integration, published on GitHub Pages
+Active reader candidate: travel-router, peer-relay and Mesh/OpenWrt notes with an authored letter-home interaction; source branch only
 Most recently integrated tranche: F2 Agent Surface and reading station via PR #3
 Previous source boundary: F0.2.2 executable-authority closure
 Next programme tranche after F2: F3 complete Mintie reference deployment
@@ -57,6 +58,11 @@ installation, activation, or deployment.
   the verified source through protected-main PRs and publish its generated static
   site on GitHub Pages. This does not authorize a router/Tailnet/VPS mutation,
   runtime installation, release or license change.
+- Faye approved the 2026-10-22 reader expansion as source work: three paired
+  practical notes on travel routers, peer relays and Mesh/OpenWrt; two
+  explanatory mechanism cases; and an interactive synthetic letter home.
+  It follows the existing source-branch and PR workflow. This approval does
+  not add a new Pages deployment or live-network mutation grant.
 
 ## Dependency order
 
@@ -262,6 +268,13 @@ evidence references underneath. A new Mesh return-route laboratory is not an
 execution tranche: it was superseded as the proposed centre of the work.
 Full mobile-client access recipes, concrete engine configuration and deployment
 acceptance remain F3/implementation work; visual navigation cannot establish them.
+
+The 2026-10-22 reader expansion adds everyday arrangements alongside that
+existing entrance. Its letter home advances authored synthetic scenes; it
+does not reinstate a general Mesh laboratory as the programme's centre or
+create a second networking evaluator. The two new external-mechanism cases
+are explanatory and do not change the eight canonical executable replays.
+Full F3 configuration and live-client evidence remain separately scoped.
 
 ## Full acceptance
 

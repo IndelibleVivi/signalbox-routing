@@ -28,6 +28,9 @@ validates actual decisions rather than a required-field descriptor. Reports
 and aggregates retain v2 because their shapes are unchanged. Profile config
 revisions are independent of catalog contract revisions. See the
 [compatibility and task entry](../docs/agent/workflow.md).
+The reader-only postcard journeys use `postcard-journeys/v1`: its schema keeps
+the authored teaching records structural, while the site build checks
+applicable target/condition pairs and article anchors separately.
 Concrete claim/handoff semantics are owned by
 [`scripts/handoff.py`](../scripts/handoff.py); freshness and report semantics
 remain in the canonical health evaluator.
