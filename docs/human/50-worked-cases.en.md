@@ -258,8 +258,8 @@ still work. The primary proxy host can reach its own external HTTPS probe
 target, which initially puts suspicion on the client, Wi-Fi or account.
 `CLAIM-02` `CLAIM-03` `HEALTH-06` `HEALTH-08` `HEALTH-10`
 
-**Historical case.** The observations are redacted and apply to the incident
-and its acceptance window.
+**Historical case.** The redacted observations cover the initial incident and
+the follow-up after the stall recurred.
 
 **Boundary matrix:** several checks that all sound like "the proxy works" cross
 different boundaries:
@@ -289,22 +289,32 @@ credential failure also says nothing about whether the later primary-lane
 check ran. Those lanes require separate observations. Keep the credential
 failure visible in the report.
 
-**Bounded repair:** preserve the selected default route and DNS detour. Change
-only the resolver transport from DoH over HTTP/2 to DoT over TCP, retaining the
-resolver's TLS hostname verification. Before activation, preserve a restorable
-copy of the pre-change configuration and validate the complete staged
+**First mitigation.** The first trial kept the default route and DNS detour
+fixed and changed the resolver transport from DoH over HTTP/2 to DoT over TCP,
+retaining the resolver's TLS hostname verification. Before activation, preserve
+a restorable copy of the pre-change configuration and validate the complete staged
 configuration with its active inputs on the authorized host. Keep rollback
 independently available and preserve fail-closed policy. See
 [DoH and HTTP/2 (RFC 8484 §5.2)](https://www.rfc-editor.org/rfc/rfc8484.html#section-5.2)
 and [DoT session setup (RFC 7858 §3.1)](https://www.rfc-editor.org/rfc/rfc7858.html#section-3.1).
 
-**Acceptance:** verify the DoT handshake and certificate identity through each
-required primary transport independently. Then test DNS for names without a
+**Initial acceptance.** Verify the DoT handshake and certificate identity
+through each required primary transport independently. Then test DNS for names without a
 usable cache entry and repeat ordinary HTTPS requests from a real client. The
-new path passed those checks during the incident's post-activation window.
+DoT path passed those checks during the first post-activation window.
 
-**Allowed conclusion:** healthy egress does not imply a healthy internal
-resolver, and a healthy alternate resolver does not prove the configured one
-works. Moving DNS to DoT removed this path's HTTP/2 connection-reuse dependency
-and preserved the selected proxy transport. Keep the old stall's root cause
-`UNKNOWN` unless a fresh reproducer ties it to a concrete implementation defect.
+**Recurrence and follow-up.** Later, the stall returned under DoT, with queries
+again waiting on a persistent resolver connection. The next trial changed the
+resolver to UDP over the existing DNS detour, removing its dependence on that
+persistent connection. A larger set of uncached queries still showed occasional
+timeouts. With UDP and the default application route held fixed, the operator
+tested a second DNS detour. That detour completed its expanded sample without
+timeouts and was retained. Repeated client DNS and HTTPS checks passed in that
+acceptance window. The resolver leg from the proxy egress to the upstream
+resolver now used plaintext DNS.
+
+**Allowed conclusion.** Use separate observations for application egress and
+the configured resolver. Compare resolver transports with the detour held
+fixed, then compare DNS detours with the resolver transport held fixed. An
+expanded sample supports a choice for the tested window. The specific cause
+of the stalls remains `UNKNOWN`.
