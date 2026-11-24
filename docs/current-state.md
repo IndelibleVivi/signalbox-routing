@@ -14,8 +14,8 @@ Last updated: 2026-11-24
   retain their own implementation and meaning.
 - `FAIL-013` and the paired eighth worked case distinguish proxy-host outbound
   HTTPS, pinned-IP, manual-resolver, internal-resolver and DIRECT-control evidence.
-  They record a bounded DoH-to-DoT mitigation without turning first-day success
-  into a permanent root-cause claim. The docs-pairs contract remains
+  They trace the first DoT acceptance window, the later stall and the
+  subsequent UDP trial and DNS detour comparison. The docs-pairs contract remains
   `signalbox.docs-pairs/v3` and advances to backward-compatible revision 8.
 - The reading station's letter home projects authored public synthetic
   journeys from `examples/postcards/`; it does not observe a network or

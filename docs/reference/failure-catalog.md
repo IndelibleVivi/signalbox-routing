@@ -179,18 +179,18 @@ or current live-system truth.
   implementation failure, and a known third-lane credential error must not be
   hidden to manufacture an all-green receipt.
 - Portable response: compare proxy-host outbound HTTPS, pinned-IP proxied,
-  manual-resolver, internal-resolver and DIRECT-control observations from the appropriate client
-  and time window. Read intentional trial history before reverting detours.
-  Change one resolver variable with an exact backup, full staged validation and
-  rollback while preserving the selected route and protected fail-closed
-  policy. Validate each required lane independently, then require uncached and
-  repeated real-client DNS/HTTPS acceptance. Do not add automatic restarts,
-  DIRECT escape or a permanent-fix claim from first-day success.
-- Implementation-specific mitigation: replacing DoH/HTTP2 with DoT/TCP can
-  remove the HTTP/2 connection-reuse dependency while retaining end-to-end TLS.
-  Verify the DoT handshake and hostname through every required transport. This
-  is a bounded mitigation, not proof of the old queue's root mechanism or a
-  universal reason to prefer DoT everywhere.
+  manual-resolver, internal-resolver and DIRECT-control observations from the
+  appropriate client and time window. Record the active detour and preserve
+  an exact rollback. Keep the application route and protected fail-closed
+  policy in place. Validate the staged configuration and vary
+  resolver transport and DNS detour in separate trials. Validate each required
+  lane independently, repeat uncached DNS and HTTPS from a real client, and
+  check for renewed queueing after the initial acceptance window.
+- Historical follow-up: DoT removed the HTTP/2 dependency and passed its
+  initial checks. A persistent DoT connection later stalled. With UDP, larger
+  samples distinguished sporadic timeouts on one detour from a clean window
+  on another. The selected path used plaintext DNS between the proxy egress
+  and the upstream resolver. The implementation root cause remains `UNKNOWN`.
 - Protecting contracts: `CLAIM-02`, `CLAIM-03`, `HEALTH-06`, `HEALTH-08`,
   `HEALTH-10`.
 - Worked evidence: [proxy works, internal DNS does not](../human/50-worked-cases.en.md#resolver-transport-stall).

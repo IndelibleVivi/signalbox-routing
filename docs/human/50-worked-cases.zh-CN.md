@@ -227,7 +227,7 @@ authorization 作决定。
 自己的外网 HTTPS 检查也成功，因此乍看像是 client、Wi-Fi 或账号出了问题。
 `CLAIM-02` `CLAIM-03` `HEALTH-06` `HEALTH-08` `HEALTH-10`
 
-**历史案例。** 下面的 observation 已脱敏，适用范围是事故及当时的验收窗口。
+**历史案例。** 下文记录了脱敏后的初次事故，以及停滞复发后的对照。
 
 **边界矩阵：** 下面几种看似都是“代理能通”的检查，实际跨过的边界不同：
 
@@ -252,18 +252,24 @@ resolver 实现。
 check 如果在独立的 residential 凭据故障处提前退出，也不能说明后面的 primary lane
 检查是否执行。每条 lane 都需要独立 observation，报告里也要保留已知的凭据故障。
 
-**有边界的修复：** 保留选定的 default route 与 DNS detour，只把 resolver transport
+**第一次缓解。** 当时固定 default route 与 DNS detour，把 resolver transport
 从 HTTP/2 上的 DoH 改为 TCP 上的 DoT，并保留 resolver 的 TLS hostname 校验。激活前
 保留可完整还原的旧配置，并在授权主机上用 active inputs 校验完整的 staged config。
 保留独立可用的 rollback 路径和 fail-closed 策略。参见
 [DoH 与 HTTP/2（RFC 8484 §5.2）](https://www.rfc-editor.org/rfc/rfc8484.html#section-5.2)
 与 [DoT 会话建立（RFC 7858 §3.1）](https://www.rfc-editor.org/rfc/rfc7858.html#section-3.1)。
 
-**验收：** 分别经每条 required primary transport 验证 DoT handshake 与证书身份；
-随后从真实 client 查询没有有效缓存的域名，并重复发起普通 HTTPS 请求。新路径在该
-事故的激活后验收窗口内通过了这些检查。
+**初次验收。** 分别经每条 required primary transport 验证 DoT handshake 与证书身份。
+随后从真实 client 查询没有有效缓存的域名，并重复发起普通 HTTPS 请求。DoT 路径
+在首次激活后的验收窗口内通过了这些检查。
 
-**允许的结论：** egress 健康不代表内部 resolver 健康，备选 resolver 健康也不代表
-当前配置的 resolver 正常。切换到 DoT 去掉了此路径的 HTTP/2 连接复用依赖，同时保留
-选定的代理 transport。除非新的 reproducer 把旧故障绑定到具体实现缺陷，根因仍保留为
-`UNKNOWN`。
+**复发与后续对照。** 后来 DoT 也出现停滞，查询再次积压在持久 resolver 连接上。
+下一轮沿用原来的 DNS detour，把 resolver transport 改为 UDP，移除对该持久连接的
+依赖。扩大 uncached query 样本后仍出现个别超时。随后固定 UDP 与默认业务路由，
+只比较另一条 DNS detour。第二条路径在扩大样本中没有超时，因此继续使用。真实
+client 的重复 DNS 和 HTTPS 检查在该验收窗口内通过。此时，从代理出口到上游
+resolver 的一段改为明文 DNS。
+
+**允许的结论。** 分别采集业务 egress 和当前 resolver 的证据。先固定 detour 对照
+resolver transport，再固定 resolver transport 对照 DNS detour。扩大样本能支持
+被测窗口内的选择。造成停滞的具体实现根因仍是 `UNKNOWN`。
